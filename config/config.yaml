@@ -1,0 +1,18 @@
+# Stores system paths (ONLY immutable structure)
+# These define WHERE pipeline artifacts are stored — no tunable values here.
+
+data_ingestion:
+  root_dir: artifacts/data_ingestion
+  source_URL: data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+  local_data_file: artifacts/data_ingestion/WA_Fn-UseC_-Telco-Customer-Churn.csv
+  unzip_dir: artifacts/data_ingestion
+
+data_validation:
+  root_dir: artifacts/data_validation
+  STATUS_FILE: artifacts/data_validation/status.txt
+  unzip_data_dir: artifacts/data_ingestion/WA_Fn-UseC_-Telco-Customer-Churn.csv
+
+data_enrichment:
+  root_dir: artifacts/data_enrichment
+  enriched_data_file: artifacts/data_enrichment/enriched_telco_churn.csv
+  prompts_dir: src/enrichment/prompts

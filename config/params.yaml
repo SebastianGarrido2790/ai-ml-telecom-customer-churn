@@ -1,0 +1,16 @@
+# Stores hyperparameters (ONLY tunable values)
+# These control model behavior and experiment settings.
+
+mlflow:
+  uri: "file:./mlruns"
+  experiment_name: "telco-churn-prediction"
+
+training:
+  test_size: 0.2
+  random_state: 42
+  target_column: "Churn"
+
+enrichment:
+  model_name: "gemini-2.0-flash"
+  batch_size: 50
+  max_note_length: 150
