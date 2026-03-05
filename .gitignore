@@ -113,3 +113,7 @@ logs/
 # MLflow Tracking
 mlruns/
 mlflow.db
+
+# Assistant / Agent Global Rules
+.agents/
+GEMINI.md
