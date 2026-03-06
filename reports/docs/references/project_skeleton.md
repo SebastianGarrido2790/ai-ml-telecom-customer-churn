@@ -8,7 +8,6 @@ telecom-customer-churn
 ├── pyproject.toml             <- UV dependency definitions & tool config (ruff, mypy, pytest)
 ├── main.py                    <- Pipeline Orchestrator (Script mode)
 ├── Dockerfile                 <- Production container definition
-├── GEMINI.md                  <- Antigravity global rules for the AI assistant
 │
 ├── .github/
 │   └── workflows/             <- CI/CD workflows (GitHub Actions)
@@ -32,12 +31,12 @@ telecom-customer-churn
 │
 ├── notebooks/                 <- Jupyter notebooks (EDA, prototyping)
 │
-├── references/                <- Data dictionaries, manuals, and all other explanatory materials
-│   └── project_skeleton.md    <- This file
-│
-├── reports/                   <- Generated analysis as HTML, PDF, LaTeX, etc.
+├── reports/                   <- Generated analysis, documentation, and visualizations for stakeholders
 │   ├── docs/                  <- Generated documents to be used in reporting
-│   │   └── ticket_notes_enrichment.md  <- Strategy for synthetic note generation
+│   │   ├── architecture/      <- System architecture diagrams and descriptions (The What)
+│   │   ├── decisions/         <- Decisions made during the project (The Why)
+│   │   ├── references/        <- Data dictionaries, manuals, and all other explanatory materials
+│   │   └── runbooks/          <- Instructions for the project (The How)
 │   └── figures/               <- Generated graphics and figures to be used in reporting
 │
 ├── tests/                     <- Unit tests and integration tests (pytest)
