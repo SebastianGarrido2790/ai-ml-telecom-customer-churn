@@ -33,10 +33,11 @@ telecom-customer-churn
 │
 ├── reports/                   <- Generated analysis, documentation, and visualizations for stakeholders
 │   ├── docs/                  <- Generated documents to be used in reporting
-│   │   ├── architecture/      <- System architecture diagrams and descriptions (The What)
+│   │   ├── architecture/      <- System workflows, diagrams and descriptions (The What)
 │   │   ├── decisions/         <- Decisions made during the project (The Why)
-│   │   ├── references/        <- Data dictionaries, manuals, and all other explanatory materials
-│   │   └── runbooks/          <- Instructions for the project (The How)
+│   │   ├── references/        <- Data dictionaries, manuals, and all other high-level explanatory materials
+│   │   ├── runbooks/          <- Instructions for the project, what’s allowed / not allowed (The Rules)
+│   │   └── workflows/         <- Technical implementation of the project (The How)
 │   └── figures/               <- Generated graphics and figures to be used in reporting
 │
 ├── tests/                     <- Unit tests and integration tests (pytest)
