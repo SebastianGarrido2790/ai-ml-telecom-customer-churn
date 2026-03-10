@@ -1,6 +1,6 @@
 """
 Utility functions for MLflow configuration across modules.
-Fully environment-aware, using ENV loaded from src.utils.paths.
+Fully environment-aware.
 """
 
 import os
@@ -61,9 +61,7 @@ def get_mlflow_uri(params_path: Path = PARAMS_FILE_PATH) -> str:
                     params = yaml.safe_load(f)
                     if params and "mlflow" in params and "uri" in params["mlflow"]:
                         uri = params["mlflow"]["uri"]
-                        logger.info(
-                            f"[ENV={ENV}] Using MLflow URI from {params_path}: {uri}"
-                        )
+                        logger.info(f"[ENV={ENV}] Using MLflow URI from {params_path}: {uri}")
                         return uri
             except Exception as e:
                 logger.warning(f"Error reading {params_path}: {e}")

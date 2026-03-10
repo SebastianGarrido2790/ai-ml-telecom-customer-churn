@@ -2,8 +2,8 @@
 Common utility functions for the Telecom Customer Churn system.
 
 This module provides reusable helper functions for handling YAML configuration,
-directory management, JSON serialization, and file metadata. These utilities
-ensure consistency across different pipeline stages.
+directory management, JSON serialization, and file metadata, among others.
+These utilities ensure consistency across different pipeline stages.
 """
 
 import json
