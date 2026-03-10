@@ -85,7 +85,7 @@ The **best strategy** is **synthetic data generation using AI agents**, which al
    - **Validation**: Post-generation, use GX to check note diversity (e.g., expect unique values >80%).
 
 #### 5. **Evaluation and Iteration**
-   - **Metrics**: Compare ML model accuracy pre/post-enrichment (e.g., AUC-ROC). Evaluate note quality via LLM-as-Judge (faithfulness to features).
+    - **Metrics**: Compare ML model performance pre/post-enrichment prioritizing **Recall** and **F1-Score**. Evaluate note quality via LLM-as-Judge (faithfulness to features).
    - **Innovation Angle**: Extend to real-time: Agent monitors incoming tickets, embeds them, and triggers retention alerts.
    - **Timeline**: Prototype in 1-2 days; full MLOps in 1 week with Docker/AWS.
 

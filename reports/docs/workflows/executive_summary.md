@@ -39,7 +39,7 @@ The architecture follows the **"Brain vs. Brawn"** model:
 ### Phase 5: Model Development & Experiment Tracking (MLflow)
 - [ ] Implement **Data Transformation Component**: Sklearn pipeline for scaling, encoding, and handling class imbalance (SMOTE).
 - [ ] Conduct **Hyperparameter Optimization** using **Optuna** (searching XGBoost, LightGBM, and Random Forest).
-- [ ] **MLflow Tracking**: Log all runs, ROC-AUC, F1 metrics, confusion matrices, and feature importance artifacts.
+- [ ] **MLflow Tracking**: Log all runs, Recall (Primary), F1 metrics, ROC-AUC, confusion matrices, and feature importance artifacts. Evaluate the recall-precision trade-off based on retention campaign costs.
 - [ ] Serialize the "Best Model" and log it to the **Model Registry**.
 
 ### Phase 6: Inference Pipeline (FastAPI)

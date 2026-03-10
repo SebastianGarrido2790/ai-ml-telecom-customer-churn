@@ -58,7 +58,7 @@ Responsible for ingesting, validating, and transforming raw telecom data into hi
 ### 3.2 Training Pipeline (Model Development)
 Consumes offline versioned data from the Feature Store to train robust ML artifacts.
 - **Algorithms:** LightGBM, XGBoost, Scikit-learn.
-- **Tracking:** Entire training runs, hyperparameters, metrics (F1, ROC-AUC), and lineage are tracked meticulously in MLflow.
+- **Tracking:** Entire training runs, hyperparameters, metrics (Recall, F1, ROC-AUC), and lineage are tracked meticulously in MLflow. We prioritize **Recall** to minimize the business cost of False Negatives.
 - **Output:** Serialized model artifacts passed to the Model Registry.
 
 ### 3.3 Inference Pipeline (Model Serving)

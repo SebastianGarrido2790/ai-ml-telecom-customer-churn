@@ -51,7 +51,7 @@ The **Telecom Customer Churn MLOps** system is a production-grade predictive pla
 | **Deployment** | AWS ECS Fargate + GitHub Actions |
 
 ## 7. Success Metrics
-*   **Technical:** F1-Score > 0.80 on the test set.
+*   **Technical:** Recall > 0.85 (primary) and F1-Score > 0.80 (secondary) on the test set. Given the asymmetric cost of churn (False Negatives are more expensive than False Positives), we prioritize catching as many churners as possible (High Recall).
 *   **Operational:** 100% CI/CD pass rate; < 500ms API latency.
 *   **Business:** Clearly demonstrable patterns of sentiment-to-churn correlation in synthetic data.
 

@@ -33,6 +33,7 @@ The project follows the **FTI (Feature, Training, Inference)** design pattern:
 - A **live, cloud-deployed dashboard** (Gradio) on AWS ECS Fargate.
 - A **99% reproducible pipeline** where a single command can retrain and redeploy the system.
 - A **Feature Store** mindset using DVC to track data lineage.
+- **Recall-First Evaluation Strategy**: Prioritizing the detection of every potential churner to minimize expensive False Negatives.
 - **Observable AI Agent workflows** using Tracing.
 
 ### 6. What steps do I need to take to achieve this result?
