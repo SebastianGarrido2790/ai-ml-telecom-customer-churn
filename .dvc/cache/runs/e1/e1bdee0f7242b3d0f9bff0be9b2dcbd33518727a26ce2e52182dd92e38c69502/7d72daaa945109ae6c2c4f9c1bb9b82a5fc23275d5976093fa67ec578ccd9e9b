@@ -1,0 +1,35 @@
+cmd: uv run python -m src.enrichment.run
+deps:
+- path: data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+  hash: md5
+  md5: 0f9de68e012bd3aed5fa7cdc9fc421af
+  size: 977501
+- path: src/enrichment/generator.py
+  hash: md5
+  md5: 71548e69bf049672ff04878166b900c2
+  size: 3482
+- path: src/enrichment/orchestrator.py
+  hash: md5
+  md5: 5e18d5243f4be8189b3f2356a820e816
+  size: 5093
+- path: src/enrichment/prompts.py
+  hash: md5
+  md5: 44a6a667147c9d2e5c27dd9ce7280d43
+  size: 2244
+- path: src/enrichment/run.py
+  hash: md5
+  md5: bad2abf022d945a7702a8d68555f4cc3
+  size: 1383
+- path: src/enrichment/schemas.py
+  hash: md5
+  md5: 1fdf007187bc8bdff776cb329b1b97a3
+  size: 1777
+- path: src/utils/logger.py
+  hash: md5
+  md5: 3c3c932400b61aefc43b4885d7e90e47
+  size: 3063
+outs:
+- path: data/processed/enriched_telco_churn.csv
+  hash: md5
+  md5: 9ebe3b18932ed7dc074da7e8566247a6
+  size: 2470

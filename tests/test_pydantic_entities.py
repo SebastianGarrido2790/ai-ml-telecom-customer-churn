@@ -1,8 +1,9 @@
 """Phase 1 Verification: Pydantic data contract validation test."""
 
-from src.entity.config_entity import TelcoCustomerRow
 import pytest
 from pydantic import ValidationError
+
+from src.entity.config_entity import TelcoCustomerRow
 
 
 def test_valid_row() -> None:

@@ -17,7 +17,6 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-
 # ============================================================================
 # Pipeline Configuration Entities (Immutable Dataclasses)
 # ============================================================================
@@ -63,13 +62,23 @@ class DataEnrichmentConfig:
 
     Attributes:
         root_dir: Root directory for enrichment artifacts.
+        raw_data_path: Path to the input raw dataset.
         enriched_data_file: Output path for the enriched dataset.
         prompts_dir: Directory containing prompt templates.
+        all_schema: Dictionary containing the expected enriched column schema.
+        model_name: Name of the LLM to use for enrichment.
+        limit: Max number of rows to process (None for all).
+        batch_size: Number of concurrent API calls.
     """
 
     root_dir: Path
+    raw_data_path: Path
     enriched_data_file: Path
     prompts_dir: Path
+    all_schema: dict
+    model_name: str
+    limit: int | None
+    batch_size: int
 
 
 # ============================================================================
@@ -112,9 +121,12 @@ class EnrichedTelcoRow(TelcoCustomerRow):
     """Extended schema with synthetic ticket note (Phase 2 output).
 
     Inherits all fields from TelcoCustomerRow and adds the
-    AI-generated ticket note field used for NLP-based feature engineering.
+    AI-generated ticket note and sentiment fields.
     """
 
-    ticket_notes: str | None = Field(
+    ticket_note: str | None = Field(
         None, description="AI-generated customer complaint or interaction note"
+    )
+    primary_sentiment_tag: str | None = Field(
+        None, description="AI-classified sentiment of the customer"
     )

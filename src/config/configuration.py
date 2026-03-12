@@ -109,10 +109,38 @@ class ConfigurationManager:
 
         create_directories([config.root_dir])
 
+        # Pull from params.yaml with fallback
+        enrich_params = getattr(self.params, "enrichment", None)
+
+        model_name = (
+            enrich_params.model_name
+            if enrich_params and "model_name" in enrich_params
+            else "gemini-1.5-flash"
+        )
+        batch_size = (
+            enrich_params.batch_size
+            if enrich_params and "batch_size" in enrich_params
+            else 20
+        )
+        limit = (
+            enrich_params.limit
+            if enrich_params and "limit" in enrich_params
+            else None
+        )
+
+        # Convert limit 0 to None (full dataset)
+        if limit == 0:
+            limit = None
+
         data_enrichment_config = DataEnrichmentConfig(
             root_dir=Path(config.root_dir),
+            raw_data_path=Path(config.raw_data_path),
             enriched_data_file=Path(config.enriched_data_file),
             prompts_dir=Path(config.prompts_dir),
+            all_schema=self.schema.ENRICHED_COLUMNS,
+            model_name=model_name,
+            limit=limit,
+            batch_size=batch_size,
         )
 
         return data_enrichment_config

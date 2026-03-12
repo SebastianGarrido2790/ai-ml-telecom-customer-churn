@@ -1,0 +1,38 @@
+stages:
+  validate_raw:
+    cmd: uv run python -m src.pipeline.stage_01_data_validation
+    deps:
+      - data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+      - src/pipeline/stage_01_data_validation.py
+      - src/components/data_validation.py
+      - src/config/configuration.py
+      - src/utils/logger.py
+      - src/utils/exceptions.py
+      - config/config.yaml
+      - config/schema.yaml
+
+  enrich_data:
+    cmd: uv run python -m src.pipeline.stage_02_data_enrichment
+    deps:
+      - data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+      - src/pipeline/stage_02_data_enrichment.py
+      - src/components/data_enrichment/orchestrator.py
+      - src/components/data_enrichment/generator.py
+      - src/components/data_enrichment/schemas.py
+      - src/components/data_enrichment/prompts.py
+      - src/config/configuration.py
+      - src/utils/logger.py
+      - config/config.yaml
+      - config/params.yaml
+    outs:
+      - artifacts/data_enrichment/enriched_telco_churn.csv
+
+  validate_enriched:
+    cmd: uv run python -m src.pipeline.stage_03_enriched_validation
+    deps:
+      - artifacts/data_enrichment/enriched_telco_churn.csv
+      - src/pipeline/stage_03_enriched_validation.py
+      - src/components/data_validation.py
+      - src/config/configuration.py
+      - src/utils/logger.py
+      - config/config.yaml

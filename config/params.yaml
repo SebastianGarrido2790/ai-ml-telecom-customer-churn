@@ -12,5 +12,5 @@ training:
 
 enrichment:
   model_name: "gemini-2.0-flash"
-  batch_size: 50
   max_note_length: 150
+  limit: 10  # Set to 0 to process the entire dataset

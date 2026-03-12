@@ -1,0 +1,112 @@
+schema: '2.0'
+stages:
+  validate_raw:
+    cmd: uv run python -m src.pipeline.stage_01_data_validation
+    deps:
+    - path: config/config.yaml
+      hash: md5
+      md5: a2debd3ee76c544adb3ff65c207b243b
+      size: 774
+    - path: config/schema.yaml
+      hash: md5
+      md5: 1f2cd8f0f11979b03eb929101b165847
+      size: 1171
+    - path: data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+      hash: md5
+      md5: 0f9de68e012bd3aed5fa7cdc9fc421af
+      size: 977501
+    - path: src/components/data_validation.py
+      hash: md5
+      md5: 8cc8b922b8abed2f9df81f0e0894c706
+      size: 8451
+    - path: src/config/configuration.py
+      hash: md5
+      md5: 583b89e46820aebfc9ef982b4823e426
+      size: 4902
+    - path: src/pipeline/stage_01_data_validation.py
+      hash: md5
+      md5: 59e1f72bc67a1954109818b347fb7889
+      size: 2126
+    - path: src/utils/exceptions.py
+      hash: md5
+      md5: b7c386f8654dc80f2bae69f359f35e9a
+      size: 2750
+    - path: src/utils/logger.py
+      hash: md5
+      md5: 3c3c932400b61aefc43b4885d7e90e47
+      size: 3063
+  enrich_data:
+    cmd: uv run python -m src.pipeline.stage_02_data_enrichment
+    deps:
+    - path: config/config.yaml
+      hash: md5
+      md5: a2debd3ee76c544adb3ff65c207b243b
+      size: 774
+    - path: config/params.yaml
+      hash: md5
+      md5: 2c4f5fdc04b6300de3988781087f59f1
+      size: 390
+    - path: data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+      hash: md5
+      md5: 0f9de68e012bd3aed5fa7cdc9fc421af
+      size: 977501
+    - path: src/components/data_enrichment/generator.py
+      hash: md5
+      md5: 792926db030213ead0b5fd08f228ecfb
+      size: 3436
+    - path: src/components/data_enrichment/orchestrator.py
+      hash: md5
+      md5: a1d5948ca1cdde1d323b288639b5d860
+      size: 5261
+    - path: src/components/data_enrichment/prompts.py
+      hash: md5
+      md5: 44a6a667147c9d2e5c27dd9ce7280d43
+      size: 2244
+    - path: src/components/data_enrichment/schemas.py
+      hash: md5
+      md5: 1fdf007187bc8bdff776cb329b1b97a3
+      size: 1777
+    - path: src/config/configuration.py
+      hash: md5
+      md5: 583b89e46820aebfc9ef982b4823e426
+      size: 4902
+    - path: src/pipeline/stage_02_data_enrichment.py
+      hash: md5
+      md5: 5a0f5ead858c24035c4fed0de43a9bc2
+      size: 1353
+    - path: src/utils/logger.py
+      hash: md5
+      md5: 3c3c932400b61aefc43b4885d7e90e47
+      size: 3063
+    outs:
+    - path: artifacts/data_enrichment/enriched_telco_churn.csv
+      hash: md5
+      md5: 1ce75d2b5d6750dc674ea9a79c7b01a4
+      size: 1501
+  validate_enriched:
+    cmd: uv run python -m src.pipeline.stage_03_enriched_validation
+    deps:
+    - path: artifacts/data_enrichment/enriched_telco_churn.csv
+      hash: md5
+      md5: 1ce75d2b5d6750dc674ea9a79c7b01a4
+      size: 1501
+    - path: config/config.yaml
+      hash: md5
+      md5: a2debd3ee76c544adb3ff65c207b243b
+      size: 774
+    - path: src/components/data_validation.py
+      hash: md5
+      md5: 8cc8b922b8abed2f9df81f0e0894c706
+      size: 8451
+    - path: src/config/configuration.py
+      hash: md5
+      md5: 583b89e46820aebfc9ef982b4823e426
+      size: 4902
+    - path: src/pipeline/stage_03_enriched_validation.py
+      hash: md5
+      md5: 6b597adef4cba41bf51eddae27736853
+      size: 2264
+    - path: src/utils/logger.py
+      hash: md5
+      md5: 3c3c932400b61aefc43b4885d7e90e47
+      size: 3063

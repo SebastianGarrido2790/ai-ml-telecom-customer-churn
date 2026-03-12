@@ -8,11 +8,12 @@ standards with strict type hinting and modular design.
 """
 
 import os
-import pandas as pd
+
 import matplotlib.pyplot as plt
-import seaborn as sns
 import nbformat
-from nbformat.v4 import new_notebook, new_markdown_cell, new_code_cell
+import pandas as pd
+import seaborn as sns
+from nbformat.v4 import new_code_cell, new_markdown_cell, new_notebook
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 
