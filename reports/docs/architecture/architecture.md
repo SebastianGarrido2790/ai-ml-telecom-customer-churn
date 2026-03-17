@@ -64,7 +64,7 @@ predictive signals.
 - **Data Contracts:** Uses Great Expectations v1.0+ to ensure schema drift does not corrupt the data.
 - **Agentic Enrichment:** A pydantic-ai Agent synthesizes qualitative ticket notes from quantitative features.
 - **Versioning:** Handled by DVC, generating reproducible data artifacts.
-- **Output:** Curated, enriched, validated ML features at `artifacts/data_enrichment/`.
+- **Output:** Curated, enriched, validated ML features + **Validation Artifacts** (`status.txt`, `validation_report.json`) at `artifacts/`.
 
 ### 3.2 Training Pipeline (Model Development) — PLANNED
 
@@ -161,7 +161,9 @@ To avoid "spaghetti prompt" logic, the system utilizes modular design patterns f
 The codebase strictly shadows the FTI decoupling and Agentic separation.
 
 ```text
-├── artifacts/              # Pipeline outputs (data, models, GX reports)
+├── artifacts/              # Pipeline outputs (data, models, binary reports)
+│   ├── data_validation/    # Raw validation status & JSON reports
+│   └── data_enrichment/    # Enriched CSV + validation status & JSON reports
 ├── config/                 # System configuration (YAML)
 │   ├── config.yaml         # Artifact paths & directories
 │   ├── params.yaml         # Tunable hyperparameters (LLM model, limits)

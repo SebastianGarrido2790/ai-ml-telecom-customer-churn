@@ -76,7 +76,11 @@ class DataEnrichmentConfig:
     enriched_data_file: Path
     prompts_dir: Path
     all_schema: dict
+    model_provider: str
     model_name: str
+    base_url: str | None
+    secondary_model_name: str | None
+    secondary_base_url: str | None
     limit: int | None
     batch_size: int
 

@@ -21,20 +21,29 @@ stages:
       size: 8451
     - path: src/config/configuration.py
       hash: md5
-      md5: 583b89e46820aebfc9ef982b4823e426
-      size: 4902
+      md5: b780e55ef7a5bba685c1d4cceada28af
+      size: 5965
     - path: src/pipeline/stage_01_data_validation.py
       hash: md5
-      md5: 59e1f72bc67a1954109818b347fb7889
-      size: 2126
+      md5: 63ba1df830635257e756bca209bb2f9a
+      size: 2502
     - path: src/utils/exceptions.py
       hash: md5
-      md5: b7c386f8654dc80f2bae69f359f35e9a
-      size: 2750
+      md5: 6447649895965ed55781c1fb06b45bd1
+      size: 4943
     - path: src/utils/logger.py
       hash: md5
-      md5: 3c3c932400b61aefc43b4885d7e90e47
-      size: 3063
+      md5: a3468f405db0c76ac7be17d42e705289
+      size: 3005
+    outs:
+    - path: artifacts/data_validation/status.txt
+      hash: md5
+      md5: 514150676227c344010ebb1b04a807bf
+      size: 23
+    - path: artifacts/data_validation/validation_report.json
+      hash: md5
+      md5: d011768f991663188c074ecbc65ea733
+      size: 8409
   enrich_data:
     cmd: uv run python -m src.pipeline.stage_02_data_enrichment
     deps:
@@ -44,52 +53,52 @@ stages:
       size: 774
     - path: config/params.yaml
       hash: md5
-      md5: 2c4f5fdc04b6300de3988781087f59f1
-      size: 390
+      md5: ed9f836af52bb08b639a49bf54b6fe07
+      size: 605
     - path: data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
       hash: md5
       md5: 0f9de68e012bd3aed5fa7cdc9fc421af
       size: 977501
     - path: src/components/data_enrichment/generator.py
       hash: md5
-      md5: 792926db030213ead0b5fd08f228ecfb
-      size: 3436
+      md5: 9e8ae0b424827e969084d3c7ebc00575
+      size: 7330
     - path: src/components/data_enrichment/orchestrator.py
       hash: md5
-      md5: a1d5948ca1cdde1d323b288639b5d860
-      size: 5261
+      md5: ee7955461e9ae12751a574af64286b89
+      size: 6645
     - path: src/components/data_enrichment/prompts.py
       hash: md5
-      md5: 44a6a667147c9d2e5c27dd9ce7280d43
-      size: 2244
+      md5: 7469670d9784c7d5ad0be0d659b023d8
+      size: 2479
     - path: src/components/data_enrichment/schemas.py
       hash: md5
-      md5: 1fdf007187bc8bdff776cb329b1b97a3
-      size: 1777
+      md5: 7fbd90701cd4d164d33d2865a6c41f22
+      size: 1834
     - path: src/config/configuration.py
       hash: md5
-      md5: 583b89e46820aebfc9ef982b4823e426
-      size: 4902
+      md5: b780e55ef7a5bba685c1d4cceada28af
+      size: 5965
     - path: src/pipeline/stage_02_data_enrichment.py
       hash: md5
-      md5: 5a0f5ead858c24035c4fed0de43a9bc2
-      size: 1353
+      md5: df72fb8674ffaa4d4bed31b9324a236a
+      size: 1748
     - path: src/utils/logger.py
       hash: md5
-      md5: 3c3c932400b61aefc43b4885d7e90e47
-      size: 3063
+      md5: a3468f405db0c76ac7be17d42e705289
+      size: 3005
     outs:
     - path: artifacts/data_enrichment/enriched_telco_churn.csv
       hash: md5
-      md5: 1ce75d2b5d6750dc674ea9a79c7b01a4
-      size: 1501
+      md5: f24a69d3913d320689aa8e242edf8fe6
+      size: 1721641
   validate_enriched:
     cmd: uv run python -m src.pipeline.stage_03_enriched_validation
     deps:
     - path: artifacts/data_enrichment/enriched_telco_churn.csv
       hash: md5
-      md5: 1ce75d2b5d6750dc674ea9a79c7b01a4
-      size: 1501
+      md5: f24a69d3913d320689aa8e242edf8fe6
+      size: 1721641
     - path: config/config.yaml
       hash: md5
       md5: a2debd3ee76c544adb3ff65c207b243b
@@ -100,13 +109,22 @@ stages:
       size: 8451
     - path: src/config/configuration.py
       hash: md5
-      md5: 583b89e46820aebfc9ef982b4823e426
-      size: 4902
+      md5: b780e55ef7a5bba685c1d4cceada28af
+      size: 5965
     - path: src/pipeline/stage_03_enriched_validation.py
       hash: md5
-      md5: 6b597adef4cba41bf51eddae27736853
-      size: 2264
+      md5: b35cc24f23170836e3d30699b15167f4
+      size: 2627
     - path: src/utils/logger.py
       hash: md5
-      md5: 3c3c932400b61aefc43b4885d7e90e47
-      size: 3063
+      md5: a3468f405db0c76ac7be17d42e705289
+      size: 3005
+    outs:
+    - path: artifacts/data_enrichment/status.txt
+      hash: md5
+      md5: 514150676227c344010ebb1b04a807bf
+      size: 23
+    - path: artifacts/data_enrichment/validation_report.json
+      hash: md5
+      md5: 54cab9a77a1ac7df55496b615e6c6cae
+      size: 8098

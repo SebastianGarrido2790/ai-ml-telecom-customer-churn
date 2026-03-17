@@ -54,7 +54,7 @@ The project follows the **FTI (Feature, Training, Inference)** design pattern:
 
 ### 8. What tools should I use to develop this project?
 - **Dependency Management:** `uv` (Lightning-fast Python package installer).
-- **Agentic Orchestration:** LangGraph + Google Gemini 2.0 Flash.
+- **Agentic Orchestration:** LangGraph + Google Gemini 2.0 Flash + Ollama Qwen2.5:7b.
 - **ML & Data:** Pandas, Scikit-learn, XGBoost, Optuna.
 - **MLOps Foundations:** MLflow (Tracking), DVC (Versioning), Great Expectations (Quality).
 - **Deployment:** FastAPI (API), Gradio (UI), Docker (Containers), GitHub Actions (CI/CD), AWS (Cloud).

@@ -5,6 +5,9 @@ Consumes the system configuration to locate the raw data and executes
 a predefined suite of statistical and schema contracts.
 """
 
+import json
+from pathlib import Path
+
 import pandas as pd
 from dotenv import load_dotenv
 
@@ -50,20 +53,28 @@ def main() -> None:
 
     # 5. Validate
     logger.info("Running validation...")
+    status_file = Path(val_config.STATUS_FILE)
+    report_file = val_config.root_dir / "validation_report.json"
+
     try:
-        validator.validate_dataset(
+        results = validator.validate_dataset(
             df=df,
             suite_name="raw_telco_churn_suite",
             dataset_id="telco_raw",
             pipeline_stage="ingestion",
         )
         logger.info("Raw Data Validation PASSED ✅")
+        status_file.write_text("Validation Status: PASS")
+        with report_file.open("w") as f:
+            json.dump(results, f, indent=4)
     except Exception as e:
         logger.error("Raw Data Validation FAILED ❌")
+        status_file.write_text("Validation Status: FAIL")
         if hasattr(e, "to_agent_context"):
             logger.error(e.to_agent_context())  # type: ignore
         else:
             logger.error(str(e))
+        raise
 
 
 if __name__ == "__main__":

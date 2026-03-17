@@ -6,6 +6,8 @@ adhere to the defined data contracts before the features are consumed
 by the training pipeline.
 """
 
+import json
+
 import pandas as pd
 from dotenv import load_dotenv
 
@@ -51,20 +53,28 @@ def main() -> None:
 
     # 5. Validate
     logger.info("Running validation...")
+    status_file = enrich_config.root_dir / "status.txt"
+    report_file = enrich_config.root_dir / "validation_report.json"
+
     try:
-        validator.validate_dataset(
+        results = validator.validate_dataset(
             df=df,
             suite_name="enriched_telco_churn_suite",
             dataset_id="telco_enriched",
             pipeline_stage="enrichment",
         )
         logger.info("Enriched Data Validation PASSED ✅")
+        status_file.write_text("Validation Status: PASS")
+        with report_file.open("w") as f:
+            json.dump(results, f, indent=4)
     except Exception as e:
         logger.error("Enriched Data Validation FAILED ❌")
+        status_file.write_text("Validation Status: FAIL")
         if hasattr(e, "to_agent_context"):
             logger.error(e.to_agent_context())  # type: ignore
         else:
             logger.error(str(e))
+        raise
 
 
 if __name__ == "__main__":

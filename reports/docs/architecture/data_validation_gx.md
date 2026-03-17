@@ -133,33 +133,52 @@ raise StatisticalContractViolation(
 
 ## 6. DVC Integration
 
-Both validation stages are tracked in `dvc.yaml`:
+Both validation stages are tracked in `dvc.yaml` and now produce concrete artifacts for downstream auditing and CI/CD gating:
 
 ```yaml
-validate_raw:
-  cmd: uv run python -m src.pipeline.stage_01_data_validation
-  deps:
-    - data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
-    - src/components/data_validation.py
-    - config/schema.yaml
-  # No outs — pure quality gate
+  validate_raw:
+    cmd: uv run python -m src.pipeline.stage_01_data_validation
+    deps:
+      - data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+      - src/pipeline/stage_01_data_validation.py
+      - src/components/data_validation.py
+      - src/config/configuration.py
+      - src/utils/logger.py
+      - src/utils/exceptions.py
+      - config/config.yaml
+      - config/schema.yaml
+    outs:
+      - artifacts/data_validation/status.txt
+      - artifacts/data_validation/validation_report.json
 
-validate_enriched:
-  cmd: uv run python -m src.pipeline.stage_03_enriched_validation
-  deps:
-    - artifacts/data_enrichment/enriched_telco_churn.csv
-    - src/components/data_validation.py
-    - config/schema.yaml
-  # No outs — pure quality gate
+  validate_enriched:
+    cmd: uv run python -m src.pipeline.stage_03_enriched_validation
+    deps:
+      - artifacts/data_enrichment/enriched_telco_churn.csv
+      - src/pipeline/stage_03_enriched_validation.py
+      - src/components/data_validation.py
+      - src/config/configuration.py
+      - src/utils/logger.py
+      - config/config.yaml
+    outs:
+      - artifacts/data_enrichment/status.txt
+      - artifacts/data_enrichment/validation_report.json
 ```
 
-> **Design Note:** Validation stages produce **no DVC-tracked output artifacts**.
-> They are purely gate stages. If they fail, `dvc repro` exits with code `1`,
-> blocking downstream stages from running.
+> **Design Note:** Validation stages now produce **DVC-tracked output artifacts** (`status.txt` and `validation_report.json`). This satisfies the Agentic Data Science principles by allowing CI/CD pipelines to programmatically check the `status.txt` bit without parsing console logs, while preserving the full JSON report for lineage and auditing.
 
 ---
 
-## 7. Validation Flow Diagram
+## 7. Validation Artifacts
+
+Each validation stage produces the following artifacts in its respective directory (`artifacts/data_validation/` or `artifacts/data_enrichment/`):
+
+1. **`status.txt`**: A simple text file containing either `Validation Status: PASS` or `Validation Status: FAIL`. Used as a clear gate indicator for CI/CD or DVC pipelines.
+2. **`validation_report.json`**: The complete Great Expectations validation results serialized to JSON for automated auditing and lineage tracking.
+
+---
+
+## 8. Validation Flow Diagram
 
 ```mermaid
 sequenceDiagram
@@ -181,10 +200,12 @@ sequenceDiagram
     alt All expectations PASS
         GX-->>DV: success=True
         DV-->>Stage: return results dict
+        Stage->>Stage: Write status.txt (PASS) & json report
         Stage-->>DVC: Exit code 0 ✅
     else One or more expectations FAIL
         GX-->>DV: success=False + failed_results
         DV->>Stage: raise StatisticalContractViolation
+        Stage->>Stage: Write status.txt (FAIL)
         Stage-->>DVC: Exit code 1 ❌ (blocks downstream)
     end
 ```

@@ -112,19 +112,39 @@ class ConfigurationManager:
         # Pull from params.yaml with fallback
         enrich_params = getattr(self.params, "enrichment", None)
 
+        model_provider = (
+            enrich_params.model_provider
+            if enrich_params and getattr(enrich_params, "model_provider", None) is not None
+            else "google"
+        )
         model_name = (
             enrich_params.model_name
-            if enrich_params and "model_name" in enrich_params
-            else "gemini-1.5-flash"
+            if enrich_params and getattr(enrich_params, "model_name", None) is not None
+            else "gemini-2.0-flash"
+        )
+        base_url = (
+            enrich_params.base_url
+            if enrich_params and getattr(enrich_params, "base_url", None) is not None
+            else None
+        )
+        secondary_model_name = (
+            enrich_params.secondary_model_name
+            if enrich_params and getattr(enrich_params, "secondary_model_name", None) is not None
+            else None
+        )
+        secondary_base_url = (
+            enrich_params.secondary_base_url
+            if enrich_params and getattr(enrich_params, "secondary_base_url", None) is not None
+            else None
         )
         batch_size = (
             enrich_params.batch_size
-            if enrich_params and "batch_size" in enrich_params
+            if enrich_params and getattr(enrich_params, "batch_size", None) is not None
             else 20
         )
         limit = (
             enrich_params.limit
-            if enrich_params and "limit" in enrich_params
+            if enrich_params and getattr(enrich_params, "limit", None) is not None
             else None
         )
 
@@ -138,7 +158,11 @@ class ConfigurationManager:
             enriched_data_file=Path(config.enriched_data_file),
             prompts_dir=Path(config.prompts_dir),
             all_schema=self.schema.ENRICHED_COLUMNS,
+            model_provider=model_provider,
             model_name=model_name,
+            base_url=base_url,
+            secondary_model_name=secondary_model_name,
+            secondary_base_url=secondary_base_url,
             limit=limit,
             batch_size=batch_size,
         )

@@ -28,6 +28,8 @@ flowchart LR
     S3["Stage 3: validate_enriched\nstage_03_enriched_validation.py"]
 
     EnrichedCSV[("artifacts/\nenriched_telco_churn.csv")]
+    StatusRaw[("artifacts/data_validation/\nstatus.txt\nvalidation_report.json")]
+    StatusEnr[("artifacts/data_enrichment/\nstatus.txt\nvalidation_report.json")]
 
     RawCSV --> S1
     SchemaYAML --> S1
@@ -42,6 +44,9 @@ flowchart LR
     EnrichedCSV --> S3
     SchemaYAML --> S3
     ConfigYAML --> S3
+
+    S1 --> StatusRaw
+    S3 --> StatusEnr
 ```
 
 ---
@@ -56,7 +61,7 @@ flowchart LR
 |---|---|
 | **Purpose** | Validates the raw Telco CSV against GX suite before enrichment |
 | **Inputs** | Raw CSV + schema.yaml + config.yaml + source scripts |
-| **Output** | None (Pure quality gate — blocks pipeline on failure) |
+| **Output** | `artifacts/data_validation/status.txt`, `validation_report.json` |
 | **Cache** | Invalidated if raw data, schema, or validation code changes |
 
 ### Stage 2: `enrich_data`
@@ -82,7 +87,7 @@ flowchart LR
 |---|---|
 | **Purpose** | Validates the LLM-generated columns before promoting to Feature Store |
 | **Inputs** | Enriched CSV + schema.yaml + config.yaml + validation scripts |
-| **Output** | None (Pure quality gate) |
+| **Output** | `artifacts/data_enrichment/status.txt`, `validation_report.json` |
 | **Cache** | Invalidated if enriched artifact or validation code changes |
 
 ---
@@ -102,6 +107,9 @@ stages:
       - src/utils/exceptions.py
       - config/config.yaml
       - config/schema.yaml
+    outs:
+      - artifacts/data_validation/status.txt
+      - artifacts/data_validation/validation_report.json
 
   enrich_data:
     cmd: uv run python -m src.pipeline.stage_02_data_enrichment
@@ -117,7 +125,8 @@ stages:
       - config/config.yaml
       - config/params.yaml
     outs:
-      - artifacts/data_enrichment/enriched_telco_churn.csv
+      - artifacts/data_enrichment/enriched_telco_churn.csv:
+          persist: true  # This ensures DVC preserves existing data
 
   validate_enriched:
     cmd: uv run python -m src.pipeline.stage_03_enriched_validation
@@ -128,6 +137,9 @@ stages:
       - src/config/configuration.py
       - src/utils/logger.py
       - config/config.yaml
+    outs:
+      - artifacts/data_enrichment/status.txt
+      - artifacts/data_enrichment/validation_report.json
 ```
 
 ---

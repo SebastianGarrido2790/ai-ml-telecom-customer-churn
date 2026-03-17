@@ -11,6 +11,7 @@ from pydantic import ValidationError
 
 from src.components.data_enrichment.generator import generate_ticket_note
 from src.components.data_enrichment.schemas import CustomerInputContext, SyntheticNoteOutput
+from src.entity.config_entity import DataEnrichmentConfig
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -24,33 +25,29 @@ class EnrichmentOrchestrator:
     tracking errors, retries, and returning the updated DataFrame.
     """
 
-    def __init__(self, raw_data_path: str | Path, output_path: str | Path, model_name: str):
+    def __init__(
+        self, raw_data_path: str | Path, output_path: str | Path, config: DataEnrichmentConfig
+    ):
         """
         Initializes the orchestrator with input and output paths.
 
         Args:
             raw_data_path (str | Path): Path to the raw Telco dataset.
             output_path (str | Path): Path where the enriched dataset will be saved.
-            model_name (str): Name of the LLM to use.
+            config (DataEnrichmentConfig): Comprehensive configuration for enrichment.
         """
         self.raw_data_path = Path(raw_data_path)
         self.output_path = Path(output_path)
-        self.model_name = model_name
+        self.config = config
 
-    async def _process_batch(self, batch_df: pd.DataFrame) -> list[SyntheticNoteOutput | None]:
+    async def _process_row(
+        self, row: pd.Series, real_idx: int, semaphore: asyncio.Semaphore
+    ) -> tuple[int, SyntheticNoteOutput | None]:
         """
-        Processes a single batch of rows concurrently.
-
-        Args:
-            batch_df (pd.DataFrame): Segment of the dataset to process.
-
-        Returns:
-            list[SyntheticNoteOutput | None]: List of synthesized outputs or None on failure.
+        Processes a single row concurrently, bounded by a global semaphore.
         """
-        tasks = []
-        for _, row in batch_df.iterrows():
+        async with semaphore:
             try:
-                # Enforce strict data contract before passing to the tool
                 context = CustomerInputContext(
                     customerID=str(row.get("customerID", "unknown")),
                     tenure=int(row.get("tenure", 0)),
@@ -60,73 +57,109 @@ class EnrichmentOrchestrator:
                     TechSupport=str(row.get("TechSupport", "No")),
                     Churn=str(row.get("Churn", "No")),
                 )
-                tasks.append(generate_ticket_note(context, model_name=self.model_name))
+                res = await generate_ticket_note(context, config=self.config)
+                return real_idx, res
             except ValidationError as ve:
                 logger.warning(f"[ValidationError] Skipping row {row.get('customerID')}: {ve}")
+                return real_idx, None
+            except Exception as e:
+                logger.error(f"[GeneratorError] Output synthesis failed for row {real_idx}: {e}")
+                return real_idx, None
 
-                # Mock a dummy coroutine for failed inputs to keep index alignment
-                async def dummy_fail():
-                    return None
-
-                tasks.append(dummy_fail())
-
-        # 2. Execute NLP batch concurrently, returning exceptions rather than crashing pipeline
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        parsed_results = []
-        for res in results:
-            if isinstance(res, Exception):
-                logger.error(f"[GeneratorError] Output synthesis failed: {res}")
-                parsed_results.append(None)
-            else:
-                parsed_results.append(res)
-
-        return parsed_results
-
-    async def run_enrichment(self, batch_size: int = 20, limit: int | None = None) -> pd.DataFrame:
+    async def run_enrichment(self, batch_size: int = 50, limit: int | None = None) -> pd.DataFrame:
         """
-        Reads the CSV, processes in batches asynchronously, and saves PROGRESSIVELY.
-
-        Args:
-            batch_size (int): Number of parallel API calls. Defaults to 20.
-            limit (int | None): Max number of rows to process. Useful for dry runs.
-
-        Returns:
-            pd.DataFrame: The enriched DataFrame with 'ticket_note' and 'primary_sentiment_tag'.
+        Reads the CSV, identifies rows already processed in the output file,
+        and continues processing missing rows.
         """
         logger.info(f"Loading raw data from {self.raw_data_path}")
         df = pd.read_csv(self.raw_data_path)
 
-        if limit is not None:
+        if limit is not None and limit > 0:
             df = df.head(limit)
 
+        # Initialize columns if they don't exist
+        if "ticket_note" not in df.columns:
+            df["ticket_note"] = None
+        if "primary_sentiment_tag" not in df.columns:
+            df["primary_sentiment_tag"] = None
+
+        # Resume logic: Check if output already exists
+        if self.output_path.exists():
+            logger.info(
+                f"Found existing enrichment file at {self.output_path}. Resuming progress..."
+            )
+            existing_df = pd.read_csv(self.output_path)
+
+            # Map existing results back to raw df based on customerID (unique)
+            # Use 'customerID' to join because indices might differ if limit changed
+            existing_map = existing_df.set_index("customerID")[
+                ["ticket_note", "primary_sentiment_tag"]
+            ].to_dict("index")
+
+            for idx, row in df.iterrows():
+                cid = str(row["customerID"])
+                if cid in existing_map:
+                    df.at[idx, "ticket_note"] = existing_map[cid].get("ticket_note")
+                    df.at[idx, "primary_sentiment_tag"] = existing_map[cid].get(
+                        "primary_sentiment_tag"
+                    )
+
+
+        # Identify indices needing processing
+        # We need work if either column is null (using pd.isna to handle None/NaN)
+        mask = df["ticket_note"].isna() | df["primary_sentiment_tag"].isna()
+        indices_to_process = df[mask].index.tolist()
+
         total_rows = len(df)
-        logger.info(f"Total rows to enrich: {total_rows}")
+        processed_count = total_rows - len(indices_to_process)
+        to_process_count = len(indices_to_process)
 
-        # We will keep parallel lists tracking the generation
-        ticket_notes = [None] * total_rows
-        sentiments = [None] * total_rows
 
-        for i in range(0, total_rows, batch_size):
-            batch_df = df.iloc[i : i + batch_size]
-            logger.info(f"Processing batch {i} to {i + len(batch_df)} / {total_rows}...")
+        logger.info(
+            f"Total rows: {total_rows} | "
+            f"Already processed: {processed_count} | "
+            f"To process: {to_process_count}"
+        )
 
-            batch_results = await self._process_batch(batch_df)
 
-            # Map back to lists based on index alignment
-            for j, res in enumerate(batch_results):
-                real_idx = i + j
-                if res is not None:
-                    ticket_notes[real_idx] = res.ticket_note
-                    sentiments[real_idx] = res.primary_sentiment_tag
+        if not indices_to_process:
+            logger.info("All rows already enriched. Skipping LLM processing.")
+            return df
 
-        # Ensure our dataset reflects the newly joined properties
-        df["ticket_note"] = ticket_notes
-        df["primary_sentiment_tag"] = sentiments
+        # Parallel lists for the session (full length)
+        # Note: We keep the dataframe logic consistent
+        semaphore = asyncio.Semaphore(batch_size)
+        tasks = []
+        for idx in indices_to_process:
+            row = df.loc[idx]
+            tasks.append(asyncio.create_task(self._process_row(row, idx, semaphore)))
 
-        # 3. Create parent directories if they don't exist, and save our enriched artifact
+        save_interval = 10
+        completed = 0
+        total_to_process = len(tasks)
+
+        for future in asyncio.as_completed(tasks):
+            real_idx, res = await future
+            completed += 1
+
+            if res is not None:
+                df.at[real_idx, "ticket_note"] = res.ticket_note
+                df.at[real_idx, "primary_sentiment_tag"] = res.primary_sentiment_tag
+
+            # LOGGING FREQUENCY (Rule 1.7 - Better Prompting/UX)
+            if completed % 5 == 0 or completed == total_to_process:
+                logger.info(
+                    f"Progress: {completed} / {total_to_process} batches (Total: {total_rows})"
+                )
+
+            if completed % save_interval == 0:
+                logger.info(f"Checkpoint at {completed}: Saving progress to {self.output_path}")
+                self.output_path.parent.mkdir(parents=True, exist_ok=True)
+                df.to_csv(self.output_path, index=False)
+
+        # Final dataset construction
         self.output_path.parent.mkdir(parents=True, exist_ok=True)
-        logger.info(f"Saving enriched dataset to {self.output_path}")
+        logger.info(f"Saving final enriched dataset to {self.output_path}")
         df.to_csv(self.output_path, index=False)
         logger.info("Enrichment phase completed successfully.")
 

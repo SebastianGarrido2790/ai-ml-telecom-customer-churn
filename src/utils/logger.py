@@ -10,10 +10,9 @@ Usage:
 import logging
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
-from pathlib import Path
 
-LOGS_DIR = Path("logs")
-LOGS_DIR.mkdir(parents=True, exist_ok=True)
+from src.constants import LOGS_DIR
+
 LOG_FILE = LOGS_DIR / "running_logs.log"
 
 

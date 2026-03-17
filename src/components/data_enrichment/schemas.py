@@ -44,5 +44,10 @@ class SyntheticNoteOutput(BaseModel):
         description="A short, realistic synthetic ticket note describing a customer interaction.",
     )
     primary_sentiment_tag: Literal[
-        "Frustrated", "Neutral", "Satisfied", "Billing Inquiry", "Technical Issue"
+        "Frustrated",
+        "Dissatisfied",
+        "Neutral",
+        "Satisfied",
+        "Billing Inquiry",
+        "Technical Issue",
     ] = Field(..., description="The main sentiment or topic category of the note.")

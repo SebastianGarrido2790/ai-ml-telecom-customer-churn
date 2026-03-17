@@ -16,6 +16,9 @@ GUIDELINES:
 - **Strict Faithfulness**: The story MUST match the provided structural signals.
 - **Output Constraint**: YOU MUST produce a valid JSON object adhering to the specified schema,
   including `ticket_note` and `primary_sentiment_tag`.
+  Allowed `primary_sentiment_tag` values are:
+  "Frustrated", "Dissatisfied", "Neutral", "Satisfied", "Billing Inquiry", "Technical Issue".
+  YOU MUST RETURN EXACTLY ONE OF THESE AS A SINGLE STRING. DO NOT use any other tags or lists.
 
 LOGIC GATES (Adhere strictly based on the Customer Profile):
 

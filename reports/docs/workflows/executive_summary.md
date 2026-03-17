@@ -40,6 +40,7 @@ The architecture follows the **"Brain vs. Brawn"** model:
 - [x] Integrate `schema.yaml` as the authoritative column definition for both suites.
 - [x] Implement `StatisticalContractViolation` custom exception with full `DataQualityContext`.
 - [x] Register all three stages in `dvc.yaml` with proper dependency tracking.
+- [x] Generate hard validation artifacts (`status.txt`, `validation_report.json`) tracked in `dvc.yaml` to serve as quality gates.
 
 ### Phase 4: NLP Engineering & Feature Store (DVC)
 - [ ] Implement **Vector Embedding Generator**: Convert ticket notes into 384-dim vectors

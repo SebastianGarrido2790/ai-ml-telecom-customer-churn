@@ -11,6 +11,13 @@ training:
   target_column: "Churn"
 
 enrichment:
-  model_name: "gemini-2.0-flash"
-  max_note_length: 150
-  limit: 10  # Set to 0 to process the entire dataset
+  model_provider: "hybrid" # Options: google, openai, hybrid
+  model_name: "gemini-2.0-flash" 
+  base_url: null 
+  secondary_model_name: "ollama:qwen2.5:7b"
+  secondary_base_url: "http://localhost:11434/v1"
+  batch_size: 2 # Reduced for Gemini Free Tier RPM limits (15 RPM)
+  limit: 0  # Process the entire dataset
+
+
+

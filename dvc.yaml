@@ -10,6 +10,9 @@ stages:
       - src/utils/exceptions.py
       - config/config.yaml
       - config/schema.yaml
+    outs:
+      - artifacts/data_validation/status.txt
+      - artifacts/data_validation/validation_report.json
 
   enrich_data:
     cmd: uv run python -m src.pipeline.stage_02_data_enrichment
@@ -25,7 +28,9 @@ stages:
       - config/config.yaml
       - config/params.yaml
     outs:
-      - artifacts/data_enrichment/enriched_telco_churn.csv
+      - artifacts/data_enrichment/enriched_telco_churn.csv:
+          persist: true  # This ensures DVC preserves existing data
+
 
   validate_enriched:
     cmd: uv run python -m src.pipeline.stage_03_enriched_validation
@@ -36,3 +41,6 @@ stages:
       - src/config/configuration.py
       - src/utils/logger.py
       - config/config.yaml
+    outs:
+      - artifacts/data_enrichment/status.txt
+      - artifacts/data_enrichment/validation_report.json
