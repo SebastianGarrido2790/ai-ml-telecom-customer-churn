@@ -3,18 +3,18 @@ stages:
   validate_raw:
     cmd: uv run python -m src.pipeline.stage_01_data_validation
     deps:
+    - path: artifacts/data_ingestion/WA_Fn-UseC_-Telco-Customer-Churn.csv
+      hash: md5
+      md5: 0f9de68e012bd3aed5fa7cdc9fc421af
+      size: 977501
     - path: config/config.yaml
       hash: md5
-      md5: a2debd3ee76c544adb3ff65c207b243b
-      size: 774
+      md5: 4807ab1d46a050eaa4030d257f601e9c
+      size: 790
     - path: config/schema.yaml
       hash: md5
       md5: 1f2cd8f0f11979b03eb929101b165847
       size: 1171
-    - path: data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
-      hash: md5
-      md5: 0f9de68e012bd3aed5fa7cdc9fc421af
-      size: 977501
     - path: src/components/data_validation.py
       hash: md5
       md5: 8cc8b922b8abed2f9df81f0e0894c706
@@ -42,15 +42,15 @@ stages:
       size: 23
     - path: artifacts/data_validation/validation_report.json
       hash: md5
-      md5: d011768f991663188c074ecbc65ea733
+      md5: 9489a8cb6b12adbf5d8bed3b12b68417
       size: 8409
   enrich_data:
     cmd: uv run python -m src.pipeline.stage_02_data_enrichment
     deps:
     - path: config/config.yaml
       hash: md5
-      md5: a2debd3ee76c544adb3ff65c207b243b
-      size: 774
+      md5: 4807ab1d46a050eaa4030d257f601e9c
+      size: 790
     - path: config/params.yaml
       hash: md5
       md5: ed9f836af52bb08b639a49bf54b6fe07
@@ -128,3 +128,27 @@ stages:
       hash: md5
       md5: 54cab9a77a1ac7df55496b615e6c6cae
       size: 8098
+  data_ingestion:
+    cmd: uv run python -m src.pipeline.stage_00_data_ingestion
+    deps:
+    - path: config/config.yaml
+      hash: md5
+      md5: 4807ab1d46a050eaa4030d257f601e9c
+      size: 790
+    - path: data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+      hash: md5
+      md5: 0f9de68e012bd3aed5fa7cdc9fc421af
+      size: 977501
+    - path: src/components/data_ingestion.py
+      hash: md5
+      md5: 510e60599cf19c5787b14b8a871e92da
+      size: 2697
+    - path: src/pipeline/stage_00_data_ingestion.py
+      hash: md5
+      md5: be1d255fb034a95ff4a0ef3884d61d43
+      size: 977
+    outs:
+    - path: artifacts/data_ingestion/WA_Fn-UseC_-Telco-Customer-Churn.csv
+      hash: md5
+      md5: 0f9de68e012bd3aed5fa7cdc9fc421af
+      size: 977501

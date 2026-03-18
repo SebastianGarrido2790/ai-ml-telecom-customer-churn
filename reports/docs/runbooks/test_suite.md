@@ -27,7 +27,21 @@ around** the LLM — the Pydantic schemas that validate its inputs and outputs.
 
 ## 3. Test Files
 
-### 3.1 `tests/test_pydantic_entities.py` — Phase 1 Data Contracts
+### 3.1 `tests/unit/test_data_ingestion.py` — Data Ingestion Component
+
+**Purpose:** Validates the core downloading, copying, and extraction logic for the pipeline's Stage 0 metadata. Ensures robust handling of remote HTTP URLs and local environment files.
+
+**Module Under Test:** `src/components/data_ingestion.py`
+
+| Test | Component Tested | What It Proves |
+|---|---|---|
+| `test_download_file_local_path` | `download_file` | Accurately copies local datasets using `shutil`. |
+| `test_download_file_http_url` | `download_file` | Captures HTTP/HTTPS sources and successfully triggers `urllib`. |
+| `test_download_file_already_exists` | `download_file` | Avoids redundant copies/downloads using idempotent logic. |
+
+---
+
+### 3.2 `tests/unit/test_pydantic_entities.py` — Phase 1 Data Contracts
 
 **Purpose:** Validates the core Pydantic data contracts for the raw Telco dataset.
 
@@ -51,7 +65,7 @@ def test_bad_row_rejected():
 
 ---
 
-### 3.2 `tests/test_enrichment.py` — Phase 2 Enrichment Contracts
+### 3.3 `tests/unit/test_enrichment.py` — Phase 2 Enrichment Contracts
 
 **Purpose:** Validates the Pydantic schemas that form the I/O boundary of the Agentic
 enrichment pipeline.
@@ -96,6 +110,29 @@ uv run pytest tests/test_enrichment.py -v
 uv run pytest tests/test_enrichment.py::test_synthetic_note_output_invalid_tag -v
 ```
 
+**Output**:
+```bash
+============================= test session starts =============================
+platform win32 -- Python 3.11.13, pytest-9.0.2, pluggy-1.6.0
+rootdir: C:\Users\sebas\Desktop\ai-ml-telecom-customer-churn
+configfile: pyproject.toml
+plugins: anyio-4.12.1, langsmith-0.7.12, logfire-4.28.0, cov-7.0.0
+collected 10 items
+
+tests/unit/test_data_ingestion.py::test_download_file_local_path PASSED  [ 10%]
+tests/unit/test_data_ingestion.py::test_download_file_http_url PASSED    [ 20%]
+tests/unit/test_data_ingestion.py::test_download_file_already_exists PASSED [ 30%]
+tests/unit/test_enrichment.py::test_customer_input_context_valid PASSED  [ 40%]
+tests/unit/test_enrichment.py::test_customer_input_context_invalid_tenure PASSED [ 50%]
+tests/unit/test_enrichment.py::test_customer_input_context_invalid_literals PASSED [ 60%]
+tests/unit/test_enrichment.py::test_synthetic_note_output_valid PASSED   [ 70%]
+tests/unit/test_enrichment.py::test_synthetic_note_output_invalid_tag PASSED [ 80%]
+tests/unit/test_pydantic_entities.py::test_valid_row PASSED              [ 90%]
+tests/unit/test_pydantic_entities.py::test_bad_row_rejected PASSED       [100%]
+
+============================= 10 passed in 0.46s ==============================
+```
+
 ---
 
 ## 5. Schema Contract Coverage Map
@@ -103,16 +140,19 @@ uv run pytest tests/test_enrichment.py::test_synthetic_note_output_invalid_tag -
 ```mermaid
 graph LR
     subgraph "Pydantic Schemas (Tested)"
+        DataIngestionConfig["DataIngestionConfig\n(config_entity.py)"]
         TelcoCustomerRow["TelcoCustomerRow\n(config_entity.py)"]
         CustomerInputContext["CustomerInputContext\n(schemas.py)"]
         SyntheticNoteOutput["SyntheticNoteOutput\n(schemas.py)"]
     end
 
     subgraph "Tests"
+        T0["test_data_ingestion.py\n(3 tests)"]
         T1["test_pydantic_entities.py\n(2 tests)"]
-        T2["test_enrichment.py\n(4 tests)"]
+        T2["test_enrichment.py\n(5 tests)"]
     end
 
+    T0 --> DataIngestionConfig
     T1 --> TelcoCustomerRow
     T2 --> CustomerInputContext
     T2 --> SyntheticNoteOutput

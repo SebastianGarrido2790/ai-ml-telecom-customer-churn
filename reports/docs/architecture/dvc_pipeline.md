@@ -14,7 +14,7 @@ It manages the full DAG (Directed Acyclic Graph) of pipeline stages, ensuring th
 
 ## 2. Current Pipeline DAG
 
-Three stages are currently registered in `dvc.yaml`, representing the Feature Pipeline (the "F" in FTI).
+Three stages are currently registered in `dvc.yaml`, representing the Feature Pipeline (the "F" in FTI) handling validation and enrichment, alongside a newly added Data Ingestion stage.
 
 ```mermaid
 flowchart LR
@@ -23,19 +23,25 @@ flowchart LR
     SchemaYAML["config/schema.yaml"]
     ConfigYAML["config/config.yaml"]
 
+    S0["Stage 0: data_ingestion\nstage_00_data_ingestion.py"]
     S1["Stage 1: validate_raw\nstage_01_data_validation.py"]
     S2["Stage 2: enrich_data\nstage_02_data_enrichment.py"]
     S3["Stage 3: validate_enriched\nstage_03_enriched_validation.py"]
 
+    IngestedCSV[("artifacts/\nWA_Fn-...-Churn.csv")]
     EnrichedCSV[("artifacts/\nenriched_telco_churn.csv")]
-    StatusRaw[("artifacts/data_validation/\nstatus.txt\nvalidation_report.json")]
-    StatusEnr[("artifacts/data_enrichment/\nstatus.txt\nvalidation_report.json")]
+    StatusRaw[("artifacts/data_validation/\nstatus.txt...")]
+    StatusEnr[("artifacts/data_enrichment/\nstatus.txt...")]
 
-    RawCSV --> S1
+    RawCSV --> S0
+    ConfigYAML --> S0
+    S0 --> IngestedCSV
+
+    IngestedCSV --> S1
     SchemaYAML --> S1
     ConfigYAML --> S1
 
-    RawCSV --> S2
+    IngestedCSV --> S2
     ParamsYAML --> S2
     ConfigYAML --> S2
     S1 --> S2
@@ -52,6 +58,17 @@ flowchart LR
 ---
 
 ## 3. Stage Specifications
+
+### Stage 0: `data_ingestion`
+
+**Command:** `uv run python -m src.pipeline.stage_00_data_ingestion`
+
+| Property | Value |
+|---|---|
+| **Purpose** | Fetches/copies the raw data into an artifact, preventing out-of-band updates |
+| **Inputs** | Raw CSV (or external URL) + config.yaml + source scripts |
+| **Output** | `artifacts/data_ingestion/WA_Fn-...-Churn.csv` |
+| **Cache** | Invalidated if data or ingestion script changes |
 
 ### Stage 1: `validate_raw`
 
@@ -96,10 +113,20 @@ flowchart LR
 
 ```yaml
 stages:
+  data_ingestion:
+    cmd: uv run python -m src.pipeline.stage_00_data_ingestion
+    deps:
+      - config/config.yaml
+      - src/pipeline/stage_00_data_ingestion.py
+      - src/components/data_ingestion.py
+      - data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+    outs:
+      - artifacts/data_ingestion/WA_Fn-UseC_-Telco-Customer-Churn.csv
+
   validate_raw:
     cmd: uv run python -m src.pipeline.stage_01_data_validation
     deps:
-      - data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+      - artifacts/data_ingestion/WA_Fn-UseC_-Telco-Customer-Churn.csv
       - src/pipeline/stage_01_data_validation.py
       - src/components/data_validation.py
       - src/config/configuration.py
@@ -114,7 +141,7 @@ stages:
   enrich_data:
     cmd: uv run python -m src.pipeline.stage_02_data_enrichment
     deps:
-      - data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+      - artifacts/data_ingestion/WA_Fn-UseC_-Telco-Customer-Churn.csv
       - src/pipeline/stage_02_data_enrichment.py
       - src/components/data_enrichment/orchestrator.py
       - src/components/data_enrichment/generator.py

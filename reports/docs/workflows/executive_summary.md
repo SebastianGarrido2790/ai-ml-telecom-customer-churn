@@ -13,12 +13,13 @@ The architecture follows the **"Brain vs. Brawn"** model:
 
 ## 2. Technical Roadmap: Phase-by-Phase
 
-### Phase 1: Project Scaffolding & Environment (DONE ✅)
+### Phase 1: Project Scaffolding, Environment & Data Ingestion (DONE ✅)
 - [x] Configure `pyproject.toml` with `uv` dependency management.
 - [x] Set up modular `src/` structure (`api`, `components`, `pipeline`, `utils`).
 - [x] Implement `ConfigurationManager` for centralized YAML-based artifact/path orchestration.
 - [x] Define **Pydantic Data Contracts** (`TelcoCustomerRow`) for the raw Telco dataset.
 - [x] Verify environment with automated import and validation smoke tests (`tests/test_pydantic_entities.py`).
+- [x] Implement **Data Ingestion** component and pipeline stage to sync external URL/local data safely to DVC-tracked `artifacts/data_ingestion`.
 
 ### Phase 2: Data Enrichment — Synthetic Ticket Notes (AI Agent) (DONE ✅)
 - [x] Define versioned system prompts in `src/components/data_enrichment/prompts.py`.
@@ -90,6 +91,7 @@ The architecture follows the **"Brain vs. Brawn"** model:
 | Topic | Document |
 |---|---|
 | Overall System & FTI Pattern | [architecture.md](../architecture/architecture.md) |
+| Phase 0: Data Ingestion | [data_ingestion.md](../architecture/data_ingestion.md) |
 | Phase 2: Agentic Data Enrichment | [data_enrichment.md](../architecture/data_enrichment.md) |
 | Phase 3: Great Expectations Validation | [data_validation_gx.md](../architecture/data_validation_gx.md) |
 | DVC Pipeline DAG | [dvc_pipeline.md](../architecture/dvc_pipeline.md) |

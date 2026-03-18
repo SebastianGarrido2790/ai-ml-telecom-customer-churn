@@ -1,8 +1,18 @@
 stages:
+  data_ingestion:
+    cmd: uv run python -m src.pipeline.stage_00_data_ingestion
+    deps:
+      - config/config.yaml
+      - src/pipeline/stage_00_data_ingestion.py
+      - src/components/data_ingestion.py
+      - data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+    outs:
+      - artifacts/data_ingestion/WA_Fn-UseC_-Telco-Customer-Churn.csv
+
   validate_raw:
     cmd: uv run python -m src.pipeline.stage_01_data_validation
     deps:
-      - data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+      - artifacts/data_ingestion/WA_Fn-UseC_-Telco-Customer-Churn.csv
       - src/pipeline/stage_01_data_validation.py
       - src/components/data_validation.py
       - src/config/configuration.py
@@ -17,7 +27,7 @@ stages:
   enrich_data:
     cmd: uv run python -m src.pipeline.stage_02_data_enrichment
     deps:
-      - data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+      - artifacts/data_ingestion/WA_Fn-UseC_-Telco-Customer-Churn.csv
       - src/pipeline/stage_02_data_enrichment.py
       - src/components/data_enrichment/orchestrator.py
       - src/components/data_enrichment/generator.py

@@ -92,10 +92,11 @@ flowchart LR
 
     subgraph FP ["Feature Pipeline (Active)"]
         direction TB
+        S0[Stage 0: Data Ingestion]:::active
         S1[Stage 1: Validate Raw]:::active
         S2[Stage 2: Agentic Enrichment]:::active
         S3[Stage 3: Validate Enriched]:::active
-        S1 --> S2 --> S3
+        S0 --> S1 --> S2 --> S3
     end
 
     FeatureStore[(Feature Store\n& DVC Repo)]:::registry
@@ -162,6 +163,7 @@ The codebase strictly shadows the FTI decoupling and Agentic separation.
 
 ```text
 ├── artifacts/              # Pipeline outputs (data, models, binary reports)
+│   ├── data_ingestion/     # Fetched and unzipped raw data
 │   ├── data_validation/    # Raw validation status & JSON reports
 │   └── data_enrichment/    # Enriched CSV + validation status & JSON reports
 ├── config/                 # System configuration (YAML)
@@ -173,6 +175,7 @@ The codebase strictly shadows the FTI decoupling and Agentic separation.
 ├── src/
 │   ├── api/                # FastAPI microservice for Inference Serving (Planned)
 │   ├── components/         # Business Logic / Workers (The "How")
+│   │   ├── data_ingestion.py         # URL/File data sync
 │   │   ├── data_validation.py        # GX Expectation Suites & validation runner
 │   │   └── data_enrichment/          # Agentic LLM enrichment logic
 │   │       ├── schemas.py            # Pydantic I/O contracts for the Agent
@@ -182,6 +185,7 @@ The codebase strictly shadows the FTI decoupling and Agentic separation.
 │   ├── config/             # ConfigurationManager (single config entry point)
 │   ├── entity/             # Pydantic data contracts & config entities
 │   ├── pipeline/           # Execution Stages / Conductors (The "When")
+│   │   ├── stage_00_data_ingestion.py
 │   │   ├── stage_01_data_validation.py
 │   │   ├── stage_02_data_enrichment.py
 │   │   └── stage_03_enriched_validation.py
