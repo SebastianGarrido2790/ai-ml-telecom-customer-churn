@@ -95,6 +95,7 @@ The architecture follows the **"Brain vs. Brawn"** model:
 | Phase 0: Data Ingestion | [data_ingestion.md](../architecture/data_ingestion.md) |
 | Phase 2: Agentic Data Enrichment | [data_enrichment.md](../architecture/data_enrichment.md) |
 | Phase 3: Great Expectations Validation | [data_validation_gx.md](../architecture/data_validation_gx.md) |
+| Phase 4: NLP & Feature Engineering | [feature_engineering.md](../architecture/feature_engineering.md) |
 | **Decision: Data Quality Checker** | [data_quality_checker.md](../decisions/data_quality_checker.md) |
 | DVC Pipeline DAG | [dvc_pipeline.md](../architecture/dvc_pipeline.md) |
 | Test Suite Coverage | [test_suite.md](../runbooks/test_suite.md) |
