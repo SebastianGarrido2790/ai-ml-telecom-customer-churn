@@ -54,3 +54,20 @@ stages:
     outs:
       - artifacts/data_enrichment/status.txt
       - artifacts/data_enrichment/validation_report.json
+
+  feature_engineering:
+    cmd: uv run python -m src.pipeline.stage_04_feature_engineering
+    deps:
+      - artifacts/data_enrichment/enriched_telco_churn.csv
+      - src/pipeline/stage_04_feature_engineering.py
+      - src/components/feature_engineering.py
+      - src/utils/feature_utils.py
+      - src/config/configuration.py
+      - src/utils/logger.py
+      - config/config.yaml
+      - config/params.yaml
+    outs:
+      - artifacts/feature_engineering/train_features.csv
+      - artifacts/feature_engineering/test_features.csv
+      - artifacts/feature_engineering/val_features.csv
+      - artifacts/feature_engineering/preprocessor.pkl

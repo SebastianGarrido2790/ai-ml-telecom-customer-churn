@@ -47,18 +47,18 @@ stages:
   enrich_data:
     cmd: uv run python -m src.pipeline.stage_02_data_enrichment
     deps:
-    - path: config/config.yaml
-      hash: md5
-      md5: 4807ab1d46a050eaa4030d257f601e9c
-      size: 790
-    - path: config/params.yaml
-      hash: md5
-      md5: ed9f836af52bb08b639a49bf54b6fe07
-      size: 605
-    - path: data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+    - path: artifacts/data_ingestion/WA_Fn-UseC_-Telco-Customer-Churn.csv
       hash: md5
       md5: 0f9de68e012bd3aed5fa7cdc9fc421af
       size: 977501
+    - path: config/config.yaml
+      hash: md5
+      md5: fbf120d0554aeeaa6d2bcf4b30eea803
+      size: 1214
+    - path: config/params.yaml
+      hash: md5
+      md5: 3be0d95bccb8f078924b9c5569432de6
+      size: 752
     - path: src/components/data_enrichment/generator.py
       hash: md5
       md5: 9e8ae0b424827e969084d3c7ebc00575
@@ -77,8 +77,8 @@ stages:
       size: 1834
     - path: src/config/configuration.py
       hash: md5
-      md5: b780e55ef7a5bba685c1d4cceada28af
-      size: 5965
+      md5: 77de4fd6ab5746b4140822cb43951b56
+      size: 7253
     - path: src/pipeline/stage_02_data_enrichment.py
       hash: md5
       md5: df72fb8674ffaa4d4bed31b9324a236a
@@ -133,16 +133,16 @@ stages:
     deps:
     - path: config/config.yaml
       hash: md5
-      md5: 4807ab1d46a050eaa4030d257f601e9c
-      size: 790
+      md5: fbf120d0554aeeaa6d2bcf4b30eea803
+      size: 1214
     - path: data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
       hash: md5
       md5: 0f9de68e012bd3aed5fa7cdc9fc421af
       size: 977501
     - path: src/components/data_ingestion.py
       hash: md5
-      md5: 510e60599cf19c5787b14b8a871e92da
-      size: 2697
+      md5: 0d0b98e78c7c22ae904fd60951121556
+      size: 3429
     - path: src/pipeline/stage_00_data_ingestion.py
       hash: md5
       md5: be1d255fb034a95ff4a0ef3884d61d43
@@ -152,3 +152,55 @@ stages:
       hash: md5
       md5: 0f9de68e012bd3aed5fa7cdc9fc421af
       size: 977501
+  feature_engineering:
+    cmd: uv run python -m src.pipeline.stage_04_feature_engineering
+    deps:
+    - path: artifacts/data_enrichment/enriched_telco_churn.csv
+      hash: md5
+      md5: f24a69d3913d320689aa8e242edf8fe6
+      size: 1721641
+    - path: config/config.yaml
+      hash: md5
+      md5: fbf120d0554aeeaa6d2bcf4b30eea803
+      size: 1214
+    - path: config/params.yaml
+      hash: md5
+      md5: 3be0d95bccb8f078924b9c5569432de6
+      size: 752
+    - path: src/components/feature_engineering.py
+      hash: md5
+      md5: 3d09de145c72cd5585a012351e99849c
+      size: 7548
+    - path: src/config/configuration.py
+      hash: md5
+      md5: 77de4fd6ab5746b4140822cb43951b56
+      size: 7253
+    - path: src/pipeline/stage_04_feature_engineering.py
+      hash: md5
+      md5: 7334afcb820029b1c0cec7238e13d362
+      size: 1120
+    - path: src/utils/feature_utils.py
+      hash: md5
+      md5: e9984dd0e64bd90304a4854d11afee4b
+      size: 4921
+    - path: src/utils/logger.py
+      hash: md5
+      md5: a3468f405db0c76ac7be17d42e705289
+      size: 3005
+    outs:
+    - path: artifacts/feature_engineering/preprocessor.pkl
+      hash: md5
+      md5: 6e0af464a944aa0cb96e4a8a26312f84
+      size: 46915
+    - path: artifacts/feature_engineering/test_features.csv
+      hash: md5
+      md5: 2021540dd86f47975dd3df09b3cb37da
+      size: 539858
+    - path: artifacts/feature_engineering/train_features.csv
+      hash: md5
+      md5: 0f2f6ec7a201001ca8062add2b72efc9
+      size: 2510097
+    - path: artifacts/feature_engineering/val_features.csv
+      hash: md5
+      md5: 75b4ea75f2167ec2aa231c11ce80e6ae
+      size: 539601

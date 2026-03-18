@@ -18,6 +18,7 @@ from src.entity.config_entity import (
     DataEnrichmentConfig,
     DataIngestionConfig,
     DataValidationConfig,
+    FeatureEngineeringConfig,
 )
 from src.utils.common import create_directories, read_yaml
 from src.utils.logger import get_logger
@@ -168,3 +169,33 @@ class ConfigurationManager:
         )
 
         return data_enrichment_config
+
+    def get_feature_engineering_config(self) -> FeatureEngineeringConfig:
+        """Returns the configuration for the feature engineering stage.
+
+        Creates the feature engineering root directory if it does not exist.
+
+        Returns:
+            FeatureEngineeringConfig: Immutable config for feature engineering.
+        """
+        config = self.config.feature_engineering
+        params = self.params.feature_engineering
+
+        create_directories([config.root_dir])
+
+        feature_engineering_config = FeatureEngineeringConfig(
+            root_dir=Path(config.root_dir),
+            input_data_path=Path(config.input_data_path),
+            train_data_path=Path(config.train_data_path),
+            test_data_path=Path(config.test_data_path),
+            val_data_path=Path(config.val_data_path),
+            preprocessor_path=Path(config.preprocessor_path),
+            embedding_model_name=params.embedding_model_name,
+            pca_components=params.pca_components,
+            test_size=params.test_size,
+            val_size=params.val_size,
+            random_state=params.random_state,
+            target_column=self.params.training.target_column,
+        )
+
+        return feature_engineering_config

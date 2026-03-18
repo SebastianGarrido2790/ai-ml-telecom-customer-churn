@@ -14,7 +14,7 @@ It manages the full DAG (Directed Acyclic Graph) of pipeline stages, ensuring th
 
 ## 2. Current Pipeline DAG
 
-Three stages are currently registered in `dvc.yaml`, representing the Feature Pipeline (the "F" in FTI) handling validation and enrichment, alongside a newly added Data Ingestion stage.
+Four stages are currently registered in `dvc.yaml`, representing the Feature Pipeline (the "F" in FTI) handling validation, enrichment, and transformation into a final feature matrix.
 
 ```mermaid
 flowchart LR
@@ -27,11 +27,14 @@ flowchart LR
     S1["Stage 1: validate_raw\nstage_01_data_validation.py"]
     S2["Stage 2: enrich_data\nstage_02_data_enrichment.py"]
     S3["Stage 3: validate_enriched\nstage_03_enriched_validation.py"]
+    S4["Stage 4: feature_engineering\nstage_04_feature_engineering.py"]
 
     IngestedCSV[("artifacts/\nWA_Fn-...-Churn.csv")]
     EnrichedCSV[("artifacts/\nenriched_telco_churn.csv")]
     StatusRaw[("artifacts/data_validation/\nstatus.txt...")]
     StatusEnr[("artifacts/data_enrichment/\nstatus.txt...")]
+    FinalData[("artifacts/feature_engineering/\ntrain/val/test.csv")]
+    Preprocessor["artifacts/feature_engineering/\npreprocessor.pkl"]
 
     RawCSV --> S0
     ConfigYAML --> S0
@@ -50,6 +53,13 @@ flowchart LR
     EnrichedCSV --> S3
     SchemaYAML --> S3
     ConfigYAML --> S3
+
+    EnrichedCSV --> S4
+    ParamsYAML --> S4
+    ConfigYAML --> S4
+    S3 --> S4
+    S4 --> FinalData
+    S4 --> Preprocessor
 
     S1 --> StatusRaw
     S3 --> StatusEnr
@@ -106,6 +116,17 @@ flowchart LR
 | **Inputs** | Enriched CSV + schema.yaml + config.yaml + validation scripts |
 | **Output** | `artifacts/data_enrichment/status.txt`, `validation_report.json` |
 | **Cache** | Invalidated if enriched artifact or validation code changes |
+
+### Stage 4: `feature_engineering`
+
+**Command:** `uv run python -m src.pipeline.stage_04_feature_engineering`
+
+| Property | Value |
+|---|---|
+| **Purpose** | Transforms validated data into ML-ready features (Scalar, OHE, NLP Embeddings + PCA) |
+| **Inputs** | Enriched CSV + params.yaml + config.yaml + feature engineering scripts |
+| **Output** | `train_features.csv`, `test_features.csv`, `val_features.csv`, `preprocessor.pkl` |
+| **Cache** | Invalidated if data, transformers (utils), or configuration params change |
 
 ---
 
@@ -167,6 +188,23 @@ stages:
     outs:
       - artifacts/data_enrichment/status.txt
       - artifacts/data_enrichment/validation_report.json
+
+  feature_engineering:
+    cmd: uv run python -m src.pipeline.stage_04_feature_engineering
+    deps:
+      - artifacts/data_enrichment/enriched_telco_churn.csv
+      - src/pipeline/stage_04_feature_engineering.py
+      - src/components/feature_engineering.py
+      - src/utils/feature_utils.py
+      - src/config/configuration.py
+      - src/utils/logger.py
+      - config/config.yaml
+      - config/params.yaml
+    outs:
+      - artifacts/feature_engineering/train_features.csv
+      - artifacts/feature_engineering/test_features.csv
+      - artifacts/feature_engineering/val_features.csv
+      - artifacts/feature_engineering/preprocessor.pkl
 ```
 
 ---
@@ -228,7 +266,6 @@ The following stages will be added as the project progresses through the FTI pat
 
 | Stage Name | Phase | Description |
 |---|---|---|
-| `feature_engineering` | Training | NLP vectorization of ticket notes, SMOTE, scaling |
 | `train_model` | Training | XGBoost/LightGBM with MLflow tracking |
 | `evaluate_model` | Training | Champion/challenger comparison gate |
 | `serve_model` | Inference | FastAPI deployment trigger |

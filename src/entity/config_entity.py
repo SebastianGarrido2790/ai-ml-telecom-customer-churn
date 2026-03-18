@@ -85,6 +85,37 @@ class DataEnrichmentConfig:
     batch_size: int
 
 
+@dataclass(frozen=True)
+class FeatureEngineeringConfig:
+    """Configuration for the feature engineering stage.
+
+    Attributes:
+        root_dir: Root directory for feature engineering artifacts.
+        input_data_path: Path to the input enriched dataset.
+        train_data_path: Path to the output training features.
+        test_data_path: Path to the output testing features.
+        preprocessor_path: Path to the serialized preprocessor pipeline.
+        embedding_model_name: Name of the sentence-transformer model.
+        pca_components: Number of components for PCA dimensionality reduction.
+        test_size: Proportion of the dataset to include in the test split.
+        random_state: Seed for reproducibility.
+        target_column: Name of the target variable.
+    """
+
+    root_dir: Path
+    input_data_path: Path
+    train_data_path: Path
+    test_data_path: Path
+    val_data_path: Path
+    preprocessor_path: Path
+    embedding_model_name: str
+    pca_components: int
+    test_size: float
+    val_size: float
+    random_state: int
+    target_column: str
+
+
 # ============================================================================
 # Pydantic Data Contracts (Row-Level Validation)
 # ============================================================================

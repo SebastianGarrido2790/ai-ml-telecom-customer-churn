@@ -19,5 +19,12 @@ enrichment:
   batch_size: 2 # Reduced for Gemini Free Tier RPM limits (15 RPM)
   limit: 0  # Process the entire dataset
 
+feature_engineering:
+  embedding_model_name: "all-MiniLM-L6-v2"
+  pca_components: 20
+  test_size: 0.15
+  val_size: 0.15
+  random_state: 42
+
 
 

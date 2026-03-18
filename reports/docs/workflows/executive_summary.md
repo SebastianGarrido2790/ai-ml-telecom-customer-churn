@@ -43,19 +43,20 @@ The architecture follows the **"Brain vs. Brawn"** model:
 - [x] Register all three stages in `dvc.yaml` with proper dependency tracking.
 - [x] Generate hard validation artifacts (`status.txt`, `validation_report.json`) tracked in `dvc.yaml` to serve as quality gates.
 
-### Phase 4: NLP Engineering & Feature Store (DVC)
-- [ ] Implement **Vector Embedding Generator**: Convert ticket notes into 384-dim vectors
+### Phase 4: NLP Engineering & Feature Store (DVC) (DONE ✅)
+- [x] Implement **Vector Embedding Generator**: Convert ticket notes into 384-dim vectors
       using `sentence-transformers`.
-- [ ] Execute **Dimensionality Reduction** (PCA/UMAP) or Feature Selection on NLP vectors.
-- [ ] Merge NLP features with structured usage features into a unified feature matrix.
-- [ ] Register the `feature_engineering` stage in `dvc.yaml`.
+- [x] Execute **Dimensionality Reduction** (PCA) on NLP vectors for efficient storage and training.
+- [x] Merge NLP features with structured usage features into a unified feature matrix.
+- [x] Register the `feature_engineering` stage in `dvc.yaml` with automated artifact tracking.
+- [x] Implement **Anti-Skew Alignment**: Ensured identical transformation and index alignment for Training, Validation, and Test sets.
+- [x] Unit Test Suite for Cleaners, Embedders, and Split Logic (`tests/test_feature_engineering.py`).
 
 ### Phase 5: Model Development & Experiment Tracking (MLflow)
-- [ ] Implement **Data Transformation Component**: Sklearn pipeline for scaling, encoding,
-      and handling class imbalance (SMOTE).
+- [ ]Train a baseline model using just the structured data and the sentiment tags (ignoring the full text embeddings for now). This will serve as a benchmark for comparison with the final model.
+- [ ] Implement **Data Transformation Component**: Sklearn pipeline for scaling, encoding, and handling class imbalance (SMOTE).
 - [ ] Conduct **Hyperparameter Optimization** using **Optuna** (XGBoost, LightGBM, Random Forest).
-- [ ] **MLflow Tracking**: Log all runs, Recall (Primary), F1 metrics, ROC-AUC, confusion
-      matrices, and feature importance artifacts.
+- [ ] **MLflow Tracking**: Log all runs, Recall (Primary), F1 metrics, ROC-AUC, confusion matrices, and feature importance artifacts.
 - [ ] Serialize the "Best Model" and log it to the **Model Registry**.
 
 ### Phase 6: Inference Pipeline (FastAPI)

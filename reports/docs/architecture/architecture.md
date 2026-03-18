@@ -65,6 +65,7 @@ predictive signals.
 - **Agentic Enrichment:** A pydantic-ai Agent synthesizes qualitative ticket notes from quantitative features.
 - **Versioning:** Handled by DVC, generating reproducible data artifacts.
 - **Output:** Curated, enriched, validated ML features + **Validation Artifacts** (`status.txt`, `validation_report.json`) at `artifacts/`.
+- **Feature Engineering (Phase 4 — DONE):** Implements a unified `ColumnTransformer` (Numeric, Categorical, NLP) used for fitting on training data and transforming all datasets (train/val/test) to prevent training-serving skew. Results in a serialized `preprocessor.pkl`.
 
 ### 3.2 Training Pipeline (Model Development) — PLANNED
 
@@ -96,7 +97,8 @@ flowchart LR
         S1[Stage 1: Validate Raw]:::active
         S2[Stage 2: Agentic Enrichment]:::active
         S3[Stage 3: Validate Enriched]:::active
-        S0 --> S1 --> S2 --> S3
+        S4[Stage 4: Feature Engineering]:::active
+        S0 --> S1 --> S2 --> S3 --> S4
     end
 
     FeatureStore[(Feature Store\n& DVC Repo)]:::registry
@@ -139,6 +141,9 @@ To avoid "spaghetti prompt" logic, the system utilizes modular design patterns f
 4.  **Structured Outputs:** Agents are restricted to Pydantic `BaseModels` to communicate seamlessly with tools, eliminating hallucinated tool parameters.
 
 > See [data_enrichment.md](data_enrichment.md) for a detailed architecture breakdown of Phase 2.
+5.  **NLP Engineering (Phase 4 — DONE):** Integrates `SentenceTransformers` and `PCA` into the `ColumnTransformer`. This converts qualitative ticket notes into optimized numeric signals, effectively merging probabilistic AI outputs into deterministic ML features.
+
+> See [feature_engineering.md](feature_engineering.md) for a detailed architecture breakdown of Phase 4.
 
 ---
 
@@ -165,7 +170,8 @@ The codebase strictly shadows the FTI decoupling and Agentic separation.
 ├── artifacts/              # Pipeline outputs (data, models, binary reports)
 │   ├── data_ingestion/     # Fetched and unzipped raw data
 │   ├── data_validation/    # Raw validation status & JSON reports
-│   └── data_enrichment/    # Enriched CSV + validation status & JSON reports
+│   ├── data_enrichment/    # Enriched CSV + validation status & JSON reports
+│   └── feature_engineering/ # Train/Val/Test CSVs + preprocessor.pkl
 ├── config/                 # System configuration (YAML)
 │   ├── config.yaml         # Artifact paths & directories
 │   ├── params.yaml         # Tunable hyperparameters (LLM model, limits)
@@ -188,8 +194,9 @@ The codebase strictly shadows the FTI decoupling and Agentic separation.
 │   │   ├── stage_00_data_ingestion.py
 │   │   ├── stage_01_data_validation.py
 │   │   ├── stage_02_data_enrichment.py
-│   │   └── stage_03_enriched_validation.py
-│   └── utils/              # Logger, common utils, custom exceptions
+│   │   ├── stage_03_enriched_validation.py
+│   │   └── stage_04_feature_engineering.py
+│   └── utils/              # Logger, feature_utils (Transformers), custom exceptions
 ├── tests/                  # Unit tests for tools and schemas
 ├── dvc.yaml                # DVC orchestration DAG
 └── pyproject.toml          # Project metadata, dependencies, ruff/pyright config

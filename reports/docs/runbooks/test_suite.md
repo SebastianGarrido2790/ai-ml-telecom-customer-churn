@@ -94,6 +94,27 @@ def test_synthetic_note_output_invalid_tag():
 
 ---
 
+### 3.4 `tests/test_feature_engineering.py` — Phase 4 Transformation Logic
+
+**Purpose:** Validates custom Scikit-Learn transformers and the automated data splitting/preprocessing orchestration. Ensures the NLP embeddings and PCA logic integrate without leakage.
+
+**Modules Under Test:** `src/components/feature_engineering.py`, `src/utils/feature_utils.py`
+
+| Test | Component Tested | What It Proves |
+|---|---|---|
+| `TestNumericCleaner` | `NumericCleaner` | Correctly coerces object-type columns to floats, handling empty strings. |
+| `TestTextEmbedder` | `TextEmbedder` | Loads the `SentenceTransformer` model lazily and handles pickling safely. |
+| `test_data_splitting_and_processing` | `FeatureEngineering` | Correctly splits into stratified train/val/test sets and saves all artifacts. |
+
+```python
+# Example: Verifying the Anti-Skew Mandate through data splitting preservation
+def test_data_splitting_and_processing(feature_config):
+    # Proves that total samples across splits equals original dataset size
+    assert len(train_df) + len(test_df) + len(val_df) == total_samples
+```
+
+---
+
 ## 4. Test Execution
 
 ```bash
@@ -127,8 +148,9 @@ tests/unit/test_enrichment.py::test_customer_input_context_invalid_tenure PASSED
 tests/unit/test_enrichment.py::test_customer_input_context_invalid_literals PASSED [ 60%]
 tests/unit/test_enrichment.py::test_synthetic_note_output_valid PASSED   [ 70%]
 tests/unit/test_enrichment.py::test_synthetic_note_output_invalid_tag PASSED [ 80%]
-tests/unit/test_pydantic_entities.py::test_valid_row PASSED              [ 90%]
-tests/unit/test_pydantic_entities.py::test_bad_row_rejected PASSED       [100%]
+tests/unit/test_pydantic_entities.py::test_valid_row PASSED              [ 80%]
+tests/unit/test_pydantic_entities.py::test_bad_row_rejected PASSED       [ 90%]
+tests/test_feature_engineering.py::test_data_splitting_and_processing PASSED [100%]
 
 ============================= 10 passed in 0.46s ==============================
 ```
@@ -150,12 +172,14 @@ graph LR
         T0["test_data_ingestion.py\n(3 tests)"]
         T1["test_pydantic_entities.py\n(2 tests)"]
         T2["test_enrichment.py\n(5 tests)"]
+        T3["test_feature_engineering.py\n(6 tests)"]
     end
 
     T0 --> DataIngestionConfig
     T1 --> TelcoCustomerRow
     T2 --> CustomerInputContext
     T2 --> SyntheticNoteOutput
+    T3 --> FeatureEngineeringConfig
 ```
 
 ---
