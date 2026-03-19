@@ -53,7 +53,7 @@ The architecture follows the **"Brain vs. Brawn"** model:
 - [x] Unit Test Suite for Cleaners, Embedders, and Split Logic (`tests/test_feature_engineering.py`).
 
 ### Phase 5: Model Development & Experiment Tracking (MLflow)
-- [ ]Train a baseline model using just the structured data and the sentiment tags (ignoring the full text embeddings for now). This will serve as a benchmark for comparison with the final model.
+- [ ] Train a baseline model using just the structured data and the sentiment tags (ignoring the full text embeddings for now). This will serve as a benchmark for comparison with the final model.
 - [ ] Implement **Data Transformation Component**: Sklearn pipeline for scaling, encoding, and handling class imbalance (SMOTE).
 - [ ] Conduct **Hyperparameter Optimization** using **Optuna** (XGBoost, LightGBM, Random Forest).
 - [ ] **MLflow Tracking**: Log all runs, Recall (Primary), F1 metrics, ROC-AUC, confusion matrices, and feature importance artifacts.
