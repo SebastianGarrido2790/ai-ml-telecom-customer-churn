@@ -24,4 +24,12 @@ feature_engineering:
   train_data_path: artifacts/feature_engineering/train_features.csv
   test_data_path: artifacts/feature_engineering/test_features.csv
   val_data_path: artifacts/feature_engineering/val_features.csv
-  preprocessor_path: artifacts/feature_engineering/preprocessor.pkl
+  structured_preprocessor_path: artifacts/feature_engineering/structured_preprocessor.pkl
+  nlp_preprocessor_path: artifacts/feature_engineering/nlp_preprocessor.pkl
+
+model_training:
+  root_dir: artifacts/model_training
+  structured_model_path: artifacts/model_training/structured_model.pkl
+  nlp_model_path: artifacts/model_training/nlp_model.pkl
+  meta_model_path: artifacts/model_training/meta_model.pkl
+  evaluation_report_path: artifacts/model_training/evaluation_report.json

@@ -156,11 +156,15 @@ class DataValidator:
         )
 
         # 2. Sentiment Tag Consistency
+        # value_set must match SyntheticNoteOutput.primary_sentiment_tag Literal exactly.
+        # "Dissatisfied" was absent from the original suite but is a valid schema tag
+        # produced by the leakage-free prompt (C1 fix).
         suite.add_expectation(
             ExpectColumnValuesToBeInSet(
                 column="primary_sentiment_tag",
                 value_set=[
                     "Frustrated",
+                    "Dissatisfied",
                     "Neutral",
                     "Satisfied",
                     "Billing Inquiry",

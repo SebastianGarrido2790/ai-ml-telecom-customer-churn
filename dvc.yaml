@@ -41,7 +41,6 @@ stages:
       - artifacts/data_enrichment/enriched_telco_churn.csv:
           persist: true  # This ensures DVC preserves existing data
 
-
   validate_enriched:
     cmd: uv run python -m src.pipeline.stage_03_enriched_validation
     deps:
@@ -70,4 +69,26 @@ stages:
       - artifacts/feature_engineering/train_features.csv
       - artifacts/feature_engineering/test_features.csv
       - artifacts/feature_engineering/val_features.csv
-      - artifacts/feature_engineering/preprocessor.pkl
+      - artifacts/feature_engineering/structured_preprocessor.pkl
+      - artifacts/feature_engineering/nlp_preprocessor.pkl
+
+  train_model:
+    cmd: uv run python -m src.pipeline.stage_05_model_training
+    deps:
+      - artifacts/feature_engineering/train_features.csv
+      - artifacts/feature_engineering/val_features.csv
+      - artifacts/feature_engineering/test_features.csv
+      - artifacts/feature_engineering/structured_preprocessor.pkl
+      - artifacts/feature_engineering/nlp_preprocessor.pkl
+      - src/pipeline/stage_05_model_training.py
+      - src/components/model_training/trainer.py
+      - src/components/model_training/evaluator.py
+      - src/config/configuration.py
+      - src/utils/logger.py
+      - config/config.yaml
+      - config/params.yaml
+    outs:
+      - artifacts/model_training/structured_model.pkl
+      - artifacts/model_training/nlp_model.pkl
+      - artifacts/model_training/meta_model.pkl
+      - artifacts/model_training/evaluation_report.json

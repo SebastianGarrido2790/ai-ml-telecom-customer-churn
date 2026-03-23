@@ -12,12 +12,12 @@ training:
 
 enrichment:
   model_provider: "hybrid" # Options: google, openai, hybrid
-  model_name: "gemini-2.0-flash" 
-  base_url: null 
+  model_name: "gemini-2.0-flash"
+  base_url: null
   secondary_model_name: "ollama:qwen2.5:7b"
   secondary_base_url: "http://localhost:11434/v1"
-  batch_size: 2 # Reduced for Gemini Free Tier RPM limits (15 RPM)
-  limit: 0  # Process the entire dataset
+  batch_size: 1 # Reduced for Gemini Free Tier RPM limits (15 RPM)
+  limit: 0  # Process the entire dataset (approx. 7.8 hours on Gemini Free)
 
 feature_engineering:
   embedding_model_name: "all-MiniLM-L6-v2"
@@ -26,5 +26,16 @@ feature_engineering:
   val_size: 0.15
   random_state: 42
 
-
-
+model_training:
+  random_state: 42
+  cv_folds: 5
+  structured_branch:
+    algorithm: "xgboost"
+    n_trials: 30
+  nlp_branch:
+    algorithm: "xgboost"
+    n_trials: 20
+  meta_learner:
+    algorithm: "logistic_regression"
+    C: 1.0
+    max_iter: 1000

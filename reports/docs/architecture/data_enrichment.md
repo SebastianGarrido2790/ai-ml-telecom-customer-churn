@@ -81,8 +81,7 @@ flowchart TD
 
 ### 4.1 Input Contract: `CustomerInputContext`
 
-Every row of the raw CSV is validated against this schema **before** being passed to the LLM,
-enforcing the "garbage in, garbage out" prevention rule.
+Every row of the raw CSV is validated against this schema **before** being passed to the LLM, enforcing the "garbage in, garbage out" prevention rule.
 
 | Field | Type | Constraint | Business Reason |
 |---|---|---|---|
@@ -158,8 +157,7 @@ enrich_data:
             persist: true  # This ensures DVC preserves existing data
 ```
 
-DVC tracks the `config/params.yaml` as a dependency, so any change to `model_name`, `limit`,
-or other enrichment parameters will invalidate the cache and force re-execution.
+DVC tracks the `config/params.yaml` as a dependency, so any change to `model_name`, `limit`, or other enrichment parameters will invalidate the cache and force re-execution.
 
 ---
 

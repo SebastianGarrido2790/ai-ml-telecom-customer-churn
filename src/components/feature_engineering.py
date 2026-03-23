@@ -3,7 +3,21 @@ Feature Engineering Component.
 
 This module implements the categorical encoding, numerical scaling, and NLP-based
 text embedding transformations for the Telco Churn dataset. It follows the FTI
-Feature layer pattern to provide a production-ready, serialized preprocessor.
+Feature layer pattern to provide two production-ready, independently serialized
+preprocessors that enforce the Anti-Skew Mandate (Rule 2.9).
+
+Preprocessor Split Design:
+    - structured_preprocessor.pkl: Numeric + Categorical pipelines only.
+      Used by Branch 1 (Structured Baseline) in Phase 5 and the Prediction
+      API in Phase 6.
+    - nlp_preprocessor.pkl: TextEmbedder + PCA pipeline only.
+      Used by Branch 2 (NLP Baseline) in Phase 5 and the Embedding
+      Microservice in Phase 6.
+
+    primary_sentiment_tag is intentionally excluded from both preprocessors.
+    Its near-deterministic correlation with the target variable (Decision A2)
+    makes it unsuitable as a training signal. It is retained in the raw
+    enriched CSV for diagnostic and interpretability use only.
 """
 
 import joblib
@@ -21,13 +35,44 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+# ---------------------------------------------------------------------------
+# Column definitions — single source of truth for both preprocessors.
+# Modifying these lists automatically propagates to training and inference.
+# ---------------------------------------------------------------------------
+NUMERIC_COLS: list[str] = ["tenure", "MonthlyCharges", "TotalCharges"]
+
+CATEGORICAL_COLS: list[str] = [
+    "gender",
+    "SeniorCitizen",
+    "Partner",
+    "Dependents",
+    "PhoneService",
+    "MultipleLines",
+    "InternetService",
+    "OnlineSecurity",
+    "OnlineBackup",
+    "DeviceProtection",
+    "TechSupport",
+    "StreamingTV",
+    "StreamingMovies",
+    "Contract",
+    "PaperlessBilling",
+    "PaymentMethod",
+]
+
+NLP_COLS: list[str] = ["ticket_note"]
+
+# Excluded from training per Decision A2 (near-deterministic target proxy).
+# Retained in raw CSV for diagnostic purposes.
+DIAGNOSTIC_COLS: list[str] = ["primary_sentiment_tag"]
+
 
 class FeatureEngineering:
-    """Component for applying the NLP Feature Engineering & ML Transformations.
+    """Component for applying split NLP and structured ML transformations.
 
-    Implements the 'Mechanic' layer of the FTI pattern. Applies text embeddings
-    and standard scaler/encoders to the data, completely fitting on Train
-    and applying identical logic to Val/Test to prevent Train-Serving Skew.
+    Implements the 'Mechanic' layer of the FTI pattern. Produces two
+    independently serialized preprocessors — structured and NLP — each
+    fitted exclusively on the training set to prevent training-serving skew.
     """
 
     def __init__(self, config: FeatureEngineeringConfig) -> None:
@@ -38,36 +83,15 @@ class FeatureEngineering:
         """
         self.config = config
 
-    def get_preprocessor(self) -> ColumnTransformer:
-        """Constructs the unified Scikit-Learn pipeline.
+    def get_structured_preprocessor(self) -> ColumnTransformer:
+        """Constructs the structured (numeric + categorical) preprocessor.
+
+        This preprocessor handles only tabular features. It is the artifact
+        loaded by Branch 1 (Phase 5) and the Prediction API (Phase 6).
 
         Returns:
-            ColumnTransformer: The combined preprocessor pipeline.
+            ColumnTransformer: Structured feature preprocessor pipeline.
         """
-        # Define column groupings
-        numeric_cols = ["tenure", "MonthlyCharges", "TotalCharges"]
-        categorical_cols = [
-            "gender",
-            "SeniorCitizen",
-            "Partner",
-            "Dependents",
-            "PhoneService",
-            "MultipleLines",
-            "InternetService",
-            "OnlineSecurity",
-            "OnlineBackup",
-            "DeviceProtection",
-            "TechSupport",
-            "StreamingTV",
-            "StreamingMovies",
-            "Contract",
-            "PaperlessBilling",
-            "PaymentMethod",
-            "primary_sentiment_tag",
-        ]
-        nlp_cols = ["ticket_note"]  # List forces 2D DataFrame for SimpleImputer
-
-        # 1. Numeric Pipeline
         numeric_pipeline = Pipeline(
             steps=[
                 ("cleaner", NumericCleaner()),
@@ -76,15 +100,34 @@ class FeatureEngineering:
             ]
         )
 
-        # 2. Categorical Pipeline
         categorical_pipeline = Pipeline(
             steps=[
                 ("imputer", SimpleImputer(strategy="constant", fill_value="Unknown")),
-                ("ohe", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
+                (
+                    "ohe",
+                    OneHotEncoder(handle_unknown="ignore", sparse_output=False),
+                ),
             ]
         )
 
-        # 3. NLP Pipeline (Ticket Notes)
+        return ColumnTransformer(
+            transformers=[
+                ("num", numeric_pipeline, NUMERIC_COLS),
+                ("cat", categorical_pipeline, CATEGORICAL_COLS),
+            ],
+            remainder="drop",
+        )
+
+    def get_nlp_preprocessor(self) -> ColumnTransformer:
+        """Constructs the NLP (TextEmbedder + PCA) preprocessor.
+
+        This preprocessor handles only the ticket_note text column. It is
+        the artifact loaded by Branch 2 (Phase 5) and the Embedding
+        Microservice (Phase 6).
+
+        Returns:
+            ColumnTransformer: NLP feature preprocessor pipeline.
+        """
         nlp_pipeline = Pipeline(
             steps=[
                 ("imputer", SimpleImputer(strategy="constant", fill_value="")),
@@ -99,52 +142,80 @@ class FeatureEngineering:
             ]
         )
 
-        # Assemble the full preprocessor
-        preprocessor = ColumnTransformer(
+        return ColumnTransformer(
             transformers=[
-                ("num", numeric_pipeline, numeric_cols),
-                ("cat", categorical_pipeline, categorical_cols),
-                ("nlp", nlp_pipeline, nlp_cols),
+                ("nlp", nlp_pipeline, NLP_COLS),
             ],
-            remainder="drop",  # Target and IDs will be handled separately
+            remainder="drop",
         )
 
-        return preprocessor
+    def _align_to_dataframe(
+        self,
+        transformed: pd.DataFrame | object,
+        reference_index: pd.Index,
+        preprocessor: ColumnTransformer,
+    ) -> pd.DataFrame:
+        """Forces index alignment on transformer output to prevent concat issues.
+
+        Args:
+            transformed: Output of fit_transform or transform.
+            reference_index: Original DataFrame index to restore.
+            preprocessor: The fitted ColumnTransformer (for feature name extraction).
+
+        Returns:
+            DataFrame with aligned index and named columns.
+        """
+        if isinstance(transformed, pd.DataFrame):
+            transformed.index = reference_index
+            return transformed
+
+        try:
+            cols = preprocessor.get_feature_names_out()
+        except AttributeError:
+            cols = None
+
+        return pd.DataFrame(transformed, index=reference_index, columns=cols)
 
     def initiate_feature_engineering(self) -> None:
         """Executes the complete feature engineering process.
 
-        1. Loads the enriched data.
-        2. Splits into Train, Validation, and Test sets.
-        3. Fits the preprocessor on Train ONLY.
-        4. Transforms all three sets.
-        5. Combines features back with IDs and target.
-        6. Saves resulting CSVs and the preprocessor artifact.
+        Workflow:
+            1. Load the enriched, validated dataset.
+            2. Perform stratified 3-way split (train / val / test).
+            3. Fit both preprocessors on the training set ONLY.
+            4. Transform all three splits with each preprocessor identically.
+            5. Merge transformed features with identifiers and target.
+            6. Serialize both preprocessors and save all feature CSVs.
+
+        Note:
+            primary_sentiment_tag is excluded from all preprocessors (Decision A2).
+            The column remains in the enriched CSV for diagnostic inspection.
         """
-        logger.info(f"Loading data from {self.config.input_data_path}")
+        logger.info(f"Loading enriched data from: {self.config.input_data_path}")
         df = pd.read_csv(self.config.input_data_path)
 
-        # Separate Identifiers and Target
         target = self.config.target_column
         identifiers = ["customerID"]
+        excluded = identifiers + [target] + DIAGNOSTIC_COLS
 
-        # Drop identifiers and target from X
-        X = df.drop(columns=identifiers + [target])
+        X = df.drop(columns=excluded)
         y = df[target]
 
         logger.info(
-            f"Performing 3-way split (Val: {self.config.val_size}, Test: {self.config.test_size})"
+            f"Performing 3-way stratified split "
+            f"(val={self.config.val_size}, test={self.config.test_size})"
         )
 
-        # Split 1: Extract Test Set
         X_temp, X_test, y_temp, y_test = train_test_split(
-            X, y, test_size=self.config.test_size, random_state=self.config.random_state, stratify=y
+            X,
+            y,
+            test_size=self.config.test_size,
+            random_state=self.config.random_state,
+            stratify=y,
         )
 
-        # Calculate validation proportion from the remaining 'temp' portion
         val_prop = self.config.val_size / (1.0 - self.config.test_size)
 
-        # Split 2: Extract Train and Val Sets
         X_train, X_val, y_train, y_val = train_test_split(
             X_temp,
             y_temp,
@@ -154,58 +225,94 @@ class FeatureEngineering:
         )
 
         logger.info(
-            f"Split completed. Train: {X_train.shape}, Val: {X_val.shape}, Test: {X_test.shape}"
+            f"Split sizes — Train: {X_train.shape}, Val: {X_val.shape}, Test: {X_test.shape}"
         )
 
-        # Construct and fit the pipeline
-        preprocessor = self.get_preprocessor()
+        # ----------------------------------------------------------------
+        # Structured preprocessor: fit on train, transform all splits
+        # ----------------------------------------------------------------
+        logger.info("Fitting structured preprocessor on training set.")
+        structured_preprocessor = self.get_structured_preprocessor()
+        structured_preprocessor.set_output(transform="pandas")
 
-        # For sklearn column transformers to output custom DataFrame headers we can use set_output
-        preprocessor.set_output(transform="pandas")
+        X_train_struct = self._align_to_dataframe(
+            structured_preprocessor.fit_transform(X_train[NUMERIC_COLS + CATEGORICAL_COLS]),
+            X_train.index,
+            structured_preprocessor,
+        )
+        X_val_struct = self._align_to_dataframe(
+            structured_preprocessor.transform(X_val[NUMERIC_COLS + CATEGORICAL_COLS]),
+            X_val.index,
+            structured_preprocessor,
+        )
+        X_test_struct = self._align_to_dataframe(
+            structured_preprocessor.transform(X_test[NUMERIC_COLS + CATEGORICAL_COLS]),
+            X_test.index,
+            structured_preprocessor,
+        )
 
-        logger.info("Fitting the preprocessor on the Train set ONLY.")
-        X_train_transformed = preprocessor.fit_transform(X_train)
+        # ----------------------------------------------------------------
+        # NLP preprocessor: fit on train, transform all splits
+        # ----------------------------------------------------------------
+        logger.info("Fitting NLP preprocessor on training set.")
+        nlp_preprocessor = self.get_nlp_preprocessor()
+        nlp_preprocessor.set_output(transform="pandas")
 
-        logger.info("Transforming Val and Test sets.")
-        X_val_transformed = preprocessor.transform(X_val)
-        X_test_transformed = preprocessor.transform(X_test)
+        X_train_nlp = self._align_to_dataframe(
+            nlp_preprocessor.fit_transform(X_train[NLP_COLS]),
+            X_train.index,
+            nlp_preprocessor,
+        )
+        X_val_nlp = self._align_to_dataframe(
+            nlp_preprocessor.transform(X_val[NLP_COLS]),
+            X_val.index,
+            nlp_preprocessor,
+        )
+        X_test_nlp = self._align_to_dataframe(
+            nlp_preprocessor.transform(X_test[NLP_COLS]),
+            X_test.index,
+            nlp_preprocessor,
+        )
 
-        # Force index alignment to prevent outer join issues in pd.concat
-        if isinstance(X_train_transformed, pd.DataFrame):
-            X_train_transformed.index = X_train.index
-            X_val_transformed.index = X_val.index
-            X_test_transformed.index = X_test.index
-        else:
-            try:
-                # If set_output('pandas') succeeded on inner steps but not the outer, we can try to get column names:
-                cols = preprocessor.get_feature_names_out()
-            except AttributeError:
-                cols = None
-            X_train_transformed = pd.DataFrame(
-                X_train_transformed, index=X_train.index, columns=cols
+        # ----------------------------------------------------------------
+        # Merge structured + NLP features and re-attach identifiers/target
+        # ----------------------------------------------------------------
+        logger.info("Merging structured and NLP feature sets.")
+
+        def _build_full(
+            struct: pd.DataFrame,
+            nlp: pd.DataFrame,
+            y_split: pd.Series,
+            idx: pd.Index,
+        ) -> pd.DataFrame:
+            return pd.concat(
+                [df.loc[idx, identifiers], struct, nlp, y_split],
+                axis=1,
             )
-            X_val_transformed = pd.DataFrame(X_val_transformed, index=X_val.index, columns=cols)
-            X_test_transformed = pd.DataFrame(
-                X_test_transformed, index=X_test.index, columns=cols
-            )
 
-        # Re-attach Identifiers and Target for saving
-        train_full = pd.concat(
-            [df.loc[X_train.index, identifiers], X_train_transformed, y_train], axis=1
-        )
-        val_full = pd.concat([df.loc[X_val.index, identifiers], X_val_transformed, y_val], axis=1)
-        test_full = pd.concat(
-            [df.loc[X_test.index, identifiers], X_test_transformed, y_test], axis=1
-        )
+        train_full = _build_full(X_train_struct, X_train_nlp, y_train, X_train.index)
+        val_full = _build_full(X_val_struct, X_val_nlp, y_val, X_val.index)
+        test_full = _build_full(X_test_struct, X_test_nlp, y_test, X_test.index)
 
-        # Save the datasets
-        logger.info("Saving transformed dataset artifacts.")
+        # ----------------------------------------------------------------
+        # Persist feature CSVs and both preprocessor artifacts
+        # ----------------------------------------------------------------
+        logger.info("Saving feature CSVs.")
         train_full.to_csv(self.config.train_data_path, index=False)
         val_full.to_csv(self.config.val_data_path, index=False)
         test_full.to_csv(self.config.test_data_path, index=False)
 
-        # Serialize the preprocessor
-        logger.info(f"Saving serialized preprocessor to {self.config.preprocessor_path}")
-        joblib.dump(preprocessor, self.config.preprocessor_path)
+        logger.info(
+            f"Saving structured preprocessor to: {self.config.structured_preprocessor_path}"
+        )
+        joblib.dump(structured_preprocessor, self.config.structured_preprocessor_path)
 
-        logger.info("Feature Engineering phase completed successfully.")
+        logger.info(f"Saving NLP preprocessor to: {self.config.nlp_preprocessor_path}")
+        joblib.dump(nlp_preprocessor, self.config.nlp_preprocessor_path)
+
+        logger.info(
+            f"Feature engineering complete. "
+            f"Train shape: {train_full.shape}, "
+            f"Val shape: {val_full.shape}, "
+            f"Test shape: {test_full.shape}"
+        )

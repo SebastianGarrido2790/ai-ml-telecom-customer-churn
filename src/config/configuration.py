@@ -19,6 +19,7 @@ from src.entity.config_entity import (
     DataIngestionConfig,
     DataValidationConfig,
     FeatureEngineeringConfig,
+    ModelTrainingConfig,
 )
 from src.utils.common import create_directories, read_yaml
 from src.utils.logger import get_logger
@@ -67,14 +68,12 @@ class ConfigurationManager:
 
         create_directories([config.root_dir])
 
-        data_ingestion_config = DataIngestionConfig(
+        return DataIngestionConfig(
             root_dir=Path(config.root_dir),
             source_URL=config.source_URL,
             local_data_file=Path(config.local_data_file),
             unzip_dir=Path(config.unzip_dir),
         )
-
-        return data_ingestion_config
 
     def get_data_validation_config(self) -> DataValidationConfig:
         """Returns the configuration for the data validation stage.
@@ -89,14 +88,12 @@ class ConfigurationManager:
 
         create_directories([config.root_dir])
 
-        data_validation_config = DataValidationConfig(
+        return DataValidationConfig(
             root_dir=Path(config.root_dir),
             STATUS_FILE=config.STATUS_FILE,
             unzip_data_dir=Path(config.unzip_data_dir),
             all_schema=schema,
         )
-
-        return data_validation_config
 
     def get_data_enrichment_config(self) -> DataEnrichmentConfig:
         """Returns the configuration for the data enrichment stage.
@@ -110,7 +107,6 @@ class ConfigurationManager:
 
         create_directories([config.root_dir])
 
-        # Pull from params.yaml with fallback
         enrich_params = getattr(self.params, "enrichment", None)
 
         model_provider = (
@@ -149,11 +145,11 @@ class ConfigurationManager:
             else None
         )
 
-        # Convert limit 0 to None (full dataset)
+        # Convert limit=0 sentinel to None (process full dataset)
         if limit == 0:
             limit = None
 
-        data_enrichment_config = DataEnrichmentConfig(
+        return DataEnrichmentConfig(
             root_dir=Path(config.root_dir),
             raw_data_path=Path(config.raw_data_path),
             enriched_data_file=Path(config.enriched_data_file),
@@ -168,12 +164,12 @@ class ConfigurationManager:
             batch_size=batch_size,
         )
 
-        return data_enrichment_config
-
     def get_feature_engineering_config(self) -> FeatureEngineeringConfig:
         """Returns the configuration for the feature engineering stage.
 
         Creates the feature engineering root directory if it does not exist.
+        The preprocessor is now split into two independent serialized artifacts:
+        structured_preprocessor.pkl and nlp_preprocessor.pkl.
 
         Returns:
             FeatureEngineeringConfig: Immutable config for feature engineering.
@@ -183,13 +179,14 @@ class ConfigurationManager:
 
         create_directories([config.root_dir])
 
-        feature_engineering_config = FeatureEngineeringConfig(
+        return FeatureEngineeringConfig(
             root_dir=Path(config.root_dir),
             input_data_path=Path(config.input_data_path),
             train_data_path=Path(config.train_data_path),
             test_data_path=Path(config.test_data_path),
             val_data_path=Path(config.val_data_path),
-            preprocessor_path=Path(config.preprocessor_path),
+            structured_preprocessor_path=Path(config.structured_preprocessor_path),
+            nlp_preprocessor_path=Path(config.nlp_preprocessor_path),
             embedding_model_name=params.embedding_model_name,
             pca_components=params.pca_components,
             test_size=params.test_size,
@@ -198,4 +195,38 @@ class ConfigurationManager:
             target_column=self.params.training.target_column,
         )
 
-        return feature_engineering_config
+    def get_model_training_config(self) -> ModelTrainingConfig:
+        """Returns the configuration for the Late Fusion model training stage.
+
+        Creates the model training root directory if it does not exist.
+
+        Returns:
+            ModelTrainingConfig: Immutable config for model training.
+        """
+        feat_config = self.config.feature_engineering
+        model_config = self.config.model_training
+        params = self.params.model_training
+
+        create_directories([model_config.root_dir])
+
+        return ModelTrainingConfig(
+            root_dir=Path(model_config.root_dir),
+            train_data_path=Path(feat_config.train_data_path),
+            val_data_path=Path(feat_config.val_data_path),
+            test_data_path=Path(feat_config.test_data_path),
+            structured_preprocessor_path=Path(feat_config.structured_preprocessor_path),
+            nlp_preprocessor_path=Path(feat_config.nlp_preprocessor_path),
+            structured_model_path=Path(model_config.structured_model_path),
+            nlp_model_path=Path(model_config.nlp_model_path),
+            meta_model_path=Path(model_config.meta_model_path),
+            evaluation_report_path=Path(model_config.evaluation_report_path),
+            target_column=self.params.training.target_column,
+            random_state=params.random_state,
+            cv_folds=params.cv_folds,
+            structured_n_trials=params.structured_branch.n_trials,
+            nlp_n_trials=params.nlp_branch.n_trials,
+            meta_C=params.meta_learner.C,
+            meta_max_iter=params.meta_learner.max_iter,
+            mlflow_uri=self.params.mlflow.uri,
+            experiment_name=self.params.mlflow.experiment_name,
+        )
