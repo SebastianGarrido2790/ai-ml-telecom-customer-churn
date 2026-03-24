@@ -97,20 +97,20 @@ stages:
     deps:
     - path: artifacts/data_enrichment/enriched_telco_churn.csv
       hash: md5
-      md5: f24a69d3913d320689aa8e242edf8fe6
-      size: 1721641
+      md5: bb18ce70c00f02bbd20034a2671efcaa
+      size: 2076995
     - path: config/config.yaml
       hash: md5
-      md5: a2debd3ee76c544adb3ff65c207b243b
-      size: 774
+      md5: 7d4bf7170d90ed35ad16de75c0852566
+      size: 1633
     - path: src/components/data_validation.py
       hash: md5
-      md5: 8cc8b922b8abed2f9df81f0e0894c706
-      size: 8451
+      md5: a818d17f2389df1dd37409bcdfcd6a43
+      size: 8719
     - path: src/config/configuration.py
       hash: md5
-      md5: b780e55ef7a5bba685c1d4cceada28af
-      size: 5965
+      md5: bd30745c51b6009b6801ec5bbe5bc24f
+      size: 8998
     - path: src/pipeline/stage_03_enriched_validation.py
       hash: md5
       md5: b35cc24f23170836e3d30699b15167f4
@@ -126,8 +126,8 @@ stages:
       size: 23
     - path: artifacts/data_enrichment/validation_report.json
       hash: md5
-      md5: 54cab9a77a1ac7df55496b615e6c6cae
-      size: 8098
+      md5: 75d01a83ae96a51c0a5885d334576dc3
+      size: 7336
   data_ingestion:
     cmd: uv run python -m src.pipeline.stage_00_data_ingestion
     deps:
@@ -157,16 +157,16 @@ stages:
     deps:
     - path: artifacts/data_enrichment/enriched_telco_churn.csv
       hash: md5
-      md5: f24a69d3913d320689aa8e242edf8fe6
-      size: 1721641
+      md5: bb18ce70c00f02bbd20034a2671efcaa
+      size: 2076995
     - path: config/config.yaml
       hash: md5
       md5: 7d4bf7170d90ed35ad16de75c0852566
       size: 1633
     - path: config/params.yaml
       hash: md5
-      md5: 22187a62b6e0718481f39e6562f5a1a5
-      size: 1008
+      md5: 169b64dabde353ebfa8cb5f0e4a093bb
+      size: 1043
     - path: src/components/feature_engineering.py
       hash: md5
       md5: 9a63350bc725fde32ec0e491906cf2e4
@@ -190,7 +190,7 @@ stages:
     outs:
     - path: artifacts/feature_engineering/nlp_preprocessor.pkl
       hash: md5
-      md5: ca7594105963ee5287d9143dbda3ece4
+      md5: 12b37f241b6ec0661f53a10bc15cc256
       size: 39200
     - path: artifacts/feature_engineering/structured_preprocessor.pkl
       hash: md5
@@ -198,22 +198,22 @@ stages:
       size: 8541
     - path: artifacts/feature_engineering/test_features.csv
       hash: md5
-      md5: 021c17916fc9071cf799ba875958935d
-      size: 514254
+      md5: 74bc4d38f3f84ccd0d73c55b23c1818b
+      size: 514142
     - path: artifacts/feature_engineering/train_features.csv
       hash: md5
-      md5: 19c123a94196bdfaaab6361fe8429afa
-      size: 2391565
+      md5: 300bcd7ff5056979dabc2ff63ce622b0
+      size: 2391447
     - path: artifacts/feature_engineering/val_features.csv
       hash: md5
-      md5: 20b9589af80aa180c583df245844faf1
-      size: 513997
+      md5: 8a1716159556ea972213bd6e990593b4
+      size: 513914
   train_model:
     cmd: uv run python -m src.pipeline.stage_05_model_training
     deps:
     - path: artifacts/feature_engineering/nlp_preprocessor.pkl
       hash: md5
-      md5: ca7594105963ee5287d9143dbda3ece4
+      md5: 12b37f241b6ec0661f53a10bc15cc256
       size: 39200
     - path: artifacts/feature_engineering/structured_preprocessor.pkl
       hash: md5
@@ -221,32 +221,32 @@ stages:
       size: 8541
     - path: artifacts/feature_engineering/test_features.csv
       hash: md5
-      md5: 021c17916fc9071cf799ba875958935d
-      size: 514254
+      md5: 74bc4d38f3f84ccd0d73c55b23c1818b
+      size: 514142
     - path: artifacts/feature_engineering/train_features.csv
       hash: md5
-      md5: 19c123a94196bdfaaab6361fe8429afa
-      size: 2391565
+      md5: 300bcd7ff5056979dabc2ff63ce622b0
+      size: 2391447
     - path: artifacts/feature_engineering/val_features.csv
       hash: md5
-      md5: 20b9589af80aa180c583df245844faf1
-      size: 513997
+      md5: 8a1716159556ea972213bd6e990593b4
+      size: 513914
     - path: config/config.yaml
       hash: md5
       md5: 7d4bf7170d90ed35ad16de75c0852566
       size: 1633
     - path: config/params.yaml
       hash: md5
-      md5: 22187a62b6e0718481f39e6562f5a1a5
-      size: 1008
+      md5: 169b64dabde353ebfa8cb5f0e4a093bb
+      size: 1043
     - path: src/components/model_training/evaluator.py
       hash: md5
       md5: 5dc5ca41742253e7f0cf059ee0f59af4
       size: 13566
     - path: src/components/model_training/trainer.py
       hash: md5
-      md5: 852da967f6cc16847cd50574e2c11f14
-      size: 14756
+      md5: 3b8228ab2c9b887c7bc59322871e5eed
+      size: 14826
     - path: src/config/configuration.py
       hash: md5
       md5: bd30745c51b6009b6801ec5bbe5bc24f
@@ -262,16 +262,16 @@ stages:
     outs:
     - path: artifacts/model_training/evaluation_report.json
       hash: md5
-      md5: 393912f66d57b20a9839e4d8f3a197fb
-      size: 936
+      md5: c70cce7537cc09deb14bb7c06a15d9a2
+      size: 973
     - path: artifacts/model_training/meta_model.pkl
       hash: md5
-      md5: 1548fcad20d7f0dc08472b5936448faf
+      md5: 27a4f2ad50115729bac42ad18b26ff70
       size: 879
     - path: artifacts/model_training/nlp_model.pkl
       hash: md5
-      md5: 609f335dd22081567b79f63bc68a075c
-      size: 308905
+      md5: 0d0d357fbefe71fde0d34580c8545cb8
+      size: 243341
     - path: artifacts/model_training/structured_model.pkl
       hash: md5
       md5: 9f4527311f28fcf445addc50efcd9aec

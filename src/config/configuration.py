@@ -18,8 +18,10 @@ from src.entity.config_entity import (
     DataEnrichmentConfig,
     DataIngestionConfig,
     DataValidationConfig,
+    EmbeddingServiceConfig,
     FeatureEngineeringConfig,
     ModelTrainingConfig,
+    PredictionAPIConfig,
 )
 from src.utils.common import create_directories, read_yaml
 from src.utils.logger import get_logger
@@ -229,4 +231,56 @@ class ConfigurationManager:
             meta_max_iter=params.meta_learner.max_iter,
             mlflow_uri=self.params.mlflow.uri,
             experiment_name=self.params.mlflow.experiment_name,
+        )
+
+    def get_embedding_service_config(self) -> EmbeddingServiceConfig:
+        """Returns the configuration for the Embedding Microservice.
+
+        Reads artifact paths from the feature_engineering section (the preprocessor
+        is a feature pipeline output) and service settings from the api section.
+
+        Returns:
+            EmbeddingServiceConfig: Immutable config for the embedding service.
+        """
+        api_cfg = self.config.api.embedding_service
+        feat_cfg = self.config.feature_engineering
+        fe_params = self.params.feature_engineering
+
+        return EmbeddingServiceConfig(
+            host=api_cfg.host,
+            port=int(api_cfg.port),
+            timeout_seconds=float(api_cfg.timeout_seconds),
+            nlp_preprocessor_path=Path(feat_cfg.nlp_preprocessor_path),
+            model_version=api_cfg.model_version,
+            pca_components=int(fe_params.pca_components),
+        )
+
+    def get_prediction_api_config(self) -> PredictionAPIConfig:
+        """Returns the configuration for the Prediction API microservice.
+
+        Constructs the embedding service URL from the embedding service config
+        section so the Prediction API can call it without hardcoding the address.
+
+        Returns:
+            PredictionAPIConfig: Immutable config for the prediction API.
+        """
+        api_cfg = self.config.api
+        model_cfg = self.config.model_training
+        fe_params = self.params.feature_engineering
+        feat_cfg = self.config.feature_engineering
+
+        embed_host = api_cfg.embedding_service.host
+        embed_port = int(api_cfg.embedding_service.port)
+        embedding_service_url = f"http://{embed_host}:{embed_port}"
+
+        return PredictionAPIConfig(
+            host=api_cfg.prediction_api.host,
+            port=int(api_cfg.prediction_api.port),
+            structured_preprocessor_path=Path(feat_cfg.structured_preprocessor_path),
+            structured_model_path=Path(model_cfg.structured_model_path),
+            nlp_model_path=Path(model_cfg.nlp_model_path),
+            meta_model_path=Path(model_cfg.meta_model_path),
+            embedding_service_url=embedding_service_url,
+            model_version=api_cfg.prediction_api.model_version,
+            pca_components=int(fe_params.pca_components),
         )

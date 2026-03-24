@@ -64,7 +64,7 @@ Both enhancements share a single foundational prerequisite: the unified `preproc
 - [x] Register the `feature_engineering` stage in `dvc.yaml` with automated artifact tracking.
 - [x] Implement **Anti-Skew Alignment**: Identical transformations and index alignment across Training, Validation, and Test sets; preprocessor fitted on Train only.
 - [x] Unit Test Suite for Cleaners, Embedders, and Split Logic (`tests/test_feature_engineering.py`).
-- [ ] **[MODIFICATION REQUIRED]** Split unified `preprocessor.pkl` into two independently serialized artifacts to enable Late Fusion training and the Embedding Microservice:
+- [x] **[MODIFICATION REQUIRED]** Split unified `preprocessor.pkl` into two independently serialized artifacts to enable Late Fusion training and the Embedding Microservice:
     - `structured_preprocessor.pkl` — Numeric + Categorical pipelines.
     - `nlp_preprocessor.pkl` — `TextEmbedder` + `PCA` pipeline.
     - Update `dvc.yaml` Stage 4 outputs accordingly.
@@ -72,33 +72,32 @@ Both enhancements share a single foundational prerequisite: the unified `preproc
     - Extend `ConfigurationManager` with corresponding `get_*_config()` methods.
     - Add `model_training` and `api` sections to `config/config.yaml` and `params.yaml`.
 
-### Phase 5: Late Fusion Model Development & Experiment Tracking (MLflow) (NEXT ⏳)
+### Phase 5: Late Fusion Model Development & Experiment Tracking (MLflow) (⏳)
 
 The training pipeline implements a **Late Fusion stacking architecture** with three tracked experiment runs per cycle, producing an explicit and quantifiable ROI narrative for the AI enrichment work completed in Phase 2.
 
 **Branch 1 — Structured Baseline:**
-- [ ] Load `structured_preprocessor.pkl` and apply to train/val/test structured feature columns.
-- [ ] Handle class imbalance with **SMOTE** applied exclusively on the training set.
-- [ ] Tune XGBoost hyperparameters via **Optuna** (30 trials).
-- [ ] Log run to MLflow: `branch=structured`, metrics: Recall, F1, ROC-AUC, confusion matrix, feature importance artifact.
+- [x] Load `structured_preprocessor.pkl` and apply to train/val/test structured feature columns.
+- [x] Handle class imbalance with **SMOTE** applied exclusively on the training set.
+- [x] Tune XGBoost hyperparameters via **Optuna** (30 trials).
+- [x] Log run to MLflow: `branch=structured`, metrics: Recall, F1, ROC-AUC, confusion matrix, feature importance artifact.
 
 **Branch 2 — NLP Baseline:**
-- [ ] Load `nlp_preprocessor.pkl` and apply to train/val/test NLP (PCA-reduced) columns.
-- [ ] Tune XGBoost/LightGBM hyperparameters via **Optuna** (20 trials).
-- [ ] Log run to MLflow: `branch=nlp`, metrics: Recall, F1, ROC-AUC.
+- [x] Load `nlp_preprocessor.pkl` and apply to train/val/test NLP (PCA-reduced) columns.
+- [x] Tune XGBoost/LightGBM hyperparameters via **Optuna** (20 trials).
+- [x] Log run to MLflow: `branch=nlp`, metrics: Recall, F1, ROC-AUC.
 
 **Late Fusion Meta-Learner:**
-- [ ] Generate **Out-of-Fold (OOF)** probability predictions from both base models using `cross_val_predict(method='predict_proba')` on the training set to prevent meta-learner leakage.
-- [ ] Train **Logistic Regression** meta-learner on the stacked OOF arrays.
-- [ ] Retrain both base models on the full training set.
-- [ ] Evaluate the stacked ensemble on the held-out test set.
-- [ ] Log run to MLflow: `branch=fusion`, custom metrics: `recall_lift` and `f1_lift` over structured baseline.
-- [ ] Serialize all three model artifacts: `structured_model.pkl`, `nlp_model.pkl`, `meta_model.pkl` to `artifacts/model_training/`.
-- [ ] Register the champion model in the **MLflow Model Registry** with tag `production`.
+- [x] Generate **Out-of-Fold (OOF)** probability predictions from both base models using `cross_val_predict(method='predict_proba')` on the training set to prevent meta-learner leakage.
+- [x] Train **Logistic Regression** meta-learner on the stacked OOF arrays.
+- [x] Retrain both base models on the full training set.
+- [x] Evaluate the stacked ensemble on the held-out test set.
+- [x] Log run to MLflow: `branch=fusion`, custom metrics: `recall_lift` and `f1_lift` over structured baseline.
+- [x] Serialize all three model artifacts: `structured_model.pkl`, `nlp_model.pkl`, `meta_model.pkl` to `artifacts/model_training/`.
+- [x] Register the champion model in the **MLflow Model Registry** with tag `production`.
 
 **DVC Integration:**
-- [ ] Register `stage_05_train_model` in `dvc.yaml` with both preprocessors and train/val/test CSVs.
-- [ ] Register `stage_06_evaluate_model` in `dvc.yaml` with all as dependencies; all three model pkl files and `evaluation_report.json` as outputs.
+- [x] Register `stage_05_train_model` in `dvc.yaml` with both preprocessors and train/val/test CSVs.
 
 ### Phase 6: Inference Pipeline — Microservice Architecture (FastAPI) (PLANNED)
 
@@ -118,6 +117,9 @@ The inference layer deploys as **two decoupled FastAPI microservices**, enforcin
 - [ ] Implement **circuit breaker**: if Embedding Microservice is unreachable, fall back to zero-vector (dim=20), log warning, and set `nlp_branch_available: false` in response. Branch 1 structured prediction continues uninterrupted.
 - [ ] All endpoints use explicit Pydantic request/response models — no untyped `dict` I/O.
 - [ ] Port: `8000`.
+
+**DVC Integration:**
+- [ ] Register `stage_06_evaluate_model` in `dvc.yaml` with all as dependencies; all three model pkl files and `evaluation_report.json` as outputs.
 
 ### Phase 7: UI Development & Containerization (PLANNED)
 

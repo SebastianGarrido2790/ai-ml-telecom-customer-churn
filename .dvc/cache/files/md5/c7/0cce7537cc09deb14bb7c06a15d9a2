@@ -1,0 +1,37 @@
+{
+  "structured_baseline": {
+    "run_id": "2ff675b9abe84807b2c3a3edf6e704fe",
+    "metrics": {
+      "recall": 0.7714285714285715,
+      "precision": 0.5552699228791774,
+      "f1": 0.6457399103139013,
+      "roc_auc": 0.8499816142673285
+    }
+  },
+  "nlp_baseline": {
+    "run_id": "90f4556c95854d95afa1a973bc7992a9",
+    "metrics": {
+      "recall": 0.7107142857142857,
+      "precision": 0.3776091081593928,
+      "f1": 0.49318463444857497,
+      "roc_auc": 0.680950082735797
+    }
+  },
+  "late_fusion_stacked": {
+    "run_id": "e33409d89db746378b0eb9a332aea5e7",
+    "metrics": {
+      "recall": 0.6535714285714286,
+      "precision": 0.5941558441558441,
+      "f1": 0.6224489795918368,
+      "roc_auc": 0.847568486854201
+    },
+    "recall_lift": -0.11785714285714288,
+    "f1_lift": -0.023290930722064562
+  },
+  "meta": {
+    "target_column": "Churn",
+    "cv_folds": 5,
+    "structured_n_trials": 30,
+    "nlp_n_trials": 20
+  }
+}

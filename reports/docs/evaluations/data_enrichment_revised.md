@@ -128,6 +128,7 @@ else:
 
 ---
 
+> [!CAUTION]
 **One thing to watch during `enrich_data`**
 
 The resume logic in `src/components/data_enrichment/rchestrator.py` loads the existing output file and skips rows that already have a `ticket_note`. Since the old file contains leaky notes, delete `artifacts/data_enrichment/enriched_telco_churn.csv` before running `dvc repro enrich_data`, or pass `--force` to DVC. Otherwise the orchestrator will detect all 7,043 rows as already processed and skip the entire LLM pass.
