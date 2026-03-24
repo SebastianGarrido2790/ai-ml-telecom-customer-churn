@@ -94,10 +94,13 @@ class FeatureEngineeringConfig:
         input_data_path: Path to the input enriched dataset.
         train_data_path: Path to the output training features.
         test_data_path: Path to the output testing features.
-        preprocessor_path: Path to the serialized preprocessor pipeline.
+        val_data_path: Path to the output validation features.
+        structured_preprocessor_path: Path to the serialized structured preprocessor.
+        nlp_preprocessor_path: Path to the serialized NLP preprocessor.
         embedding_model_name: Name of the sentence-transformer model.
         pca_components: Number of components for PCA dimensionality reduction.
         test_size: Proportion of the dataset to include in the test split.
+        val_size: Proportion of the dataset to include in the validation split.
         random_state: Seed for reproducibility.
         target_column: Name of the target variable.
     """
@@ -107,13 +110,61 @@ class FeatureEngineeringConfig:
     train_data_path: Path
     test_data_path: Path
     val_data_path: Path
-    preprocessor_path: Path
+    structured_preprocessor_path: Path
+    nlp_preprocessor_path: Path
     embedding_model_name: str
     pca_components: int
     test_size: float
     val_size: float
     random_state: int
     target_column: str
+
+
+@dataclass(frozen=True)
+class ModelTrainingConfig:
+    """Configuration for the model training stage (Late Fusion).
+
+    Attributes:
+        root_dir: Root directory for training artifacts.
+        train_data_path: Path to the input training features CSV.
+        val_data_path: Path to the input validation features CSV.
+        test_data_path: Path to the input test features CSV.
+        structured_preprocessor_path: Path to the structured preprocessor artifact.
+        nlp_preprocessor_path: Path to the NLP preprocessor artifact.
+        structured_model_path: Output path for the trained structured branch model.
+        nlp_model_path: Output path for the trained NLP branch model.
+        meta_model_path: Output path for the trained meta-learner model.
+        evaluation_report_path: Path to the model performance report.
+        target_column: Name of the dependent variable.
+        random_state: Seed for reproducibility.
+        cv_folds: Number of cross-validation folds.
+        structured_n_trials: Hyperparameter tuning trials for the structured branch.
+        nlp_n_trials: Hyperparameter tuning trials for the NLP branch.
+        meta_C: Inverse of regularization strength for the meta-learner.
+        meta_max_iter: Maximum iterations for the meta-learner trainer.
+        mlflow_uri: MLflow tracking server URI.
+        experiment_name: Name of the MLflow experiment.
+    """
+
+    root_dir: Path
+    train_data_path: Path
+    val_data_path: Path
+    test_data_path: Path
+    structured_preprocessor_path: Path
+    nlp_preprocessor_path: Path
+    structured_model_path: Path
+    nlp_model_path: Path
+    meta_model_path: Path
+    evaluation_report_path: Path
+    target_column: str
+    random_state: int
+    cv_folds: int
+    structured_n_trials: int
+    nlp_n_trials: int
+    meta_C: float
+    meta_max_iter: int
+    mlflow_uri: str
+    experiment_name: str
 
 
 # ============================================================================

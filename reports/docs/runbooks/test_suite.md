@@ -163,6 +163,52 @@ well-formed.
 
 ---
 
+### 3.6 `tests/unit/test_api_schemas.py` — Phase 6 API & Inference Contracts
+
+**Purpose:** Validates the deterministic guarantees of the inference pipeline, including
+Pydantic schema validation for microservices and the inter-service circuit breaker logic.
+
+**Modules Under Test:** `src/api/prediction_service/schemas.py`, `src/api/embedding_service/schemas.py`, `src/api/prediction_service/inference.py`
+
+#### Test Class 1: `TestEmbeddingSchemas` (5 tests)
+
+| Test | What It Proves |
+|---|---|
+| `test_embed_request_valid` | `EmbedRequest` accepts a list with at least one note. |
+| `test_embed_request_empty_list_fails` | `EmbedRequest` fails if `ticket_notes` is empty (`min_length=1`). |
+| `test_embed_response_valid` | `EmbedResponse` accepts valid embeddings and dimensions. |
+| `test_embed_response_invalid_dim` | `EmbedResponse` fails if `dim=0` (`gt=0` constraint). |
+
+#### Test Class 2: `TestCustomerFeatureRequest` (6 tests)
+
+| Test | What It Proves |
+|---|---|
+| `test_valid_payload_accepted` | A full Telco payload with 19 fields is accepted. |
+| `test_customer_id_is_optional` | `customerID` defaults to `None` if omitted. |
+| `test_negative_tenure_fails` | `tenure < 0` triggers `ValidationError`. |
+| `test_total_charges_none_accepted` | `TotalCharges=None` is accepted (tenure=0 cases). |
+
+#### Test Class 3: `TestCircuitBreaker` (4 tests)
+
+| Test | What It Proves |
+|---|---|
+| `test_timeout_triggers_zero_vector_fallback` | `httpx.TimeoutException` returns zero-vector and `available=False`. |
+| `test_connection_error_fallback` | `httpx.ConnectError` triggers the same graceful degradation. |
+| `test_successful_embedding_call` | Normal path returns actual embeddings and `available=True`. |
+
+#### Test Class 4: `TestInferenceServiceDataFrame` (3 tests)
+
+| Test | What It Proves |
+|---|---|
+| `test_dataframe_column_count` | Reconstructed DataFrame has exactly 19 columns in the correct order. |
+| `test_total_charges_none_to_empty_string` | `None` is coerced to `""` for `NumericCleaner` parity. |
+
+#### Other Classes (6 tests)
+Includes `TestChurnPredictionResponse` (3 tests) and `TestBatchSchemas` (3 tests) for full I/O contract coverage.
+
+
+---
+
 ## 4. Test Execution
 
 ```bash
@@ -172,23 +218,25 @@ uv run pytest tests/ -v
 # Run with coverage report
 uv run pytest tests/ -v --cov=src --cov-report=term-missing
 
-# Run a specific test file
+# Run specific test groups
 uv run pytest tests/unit/test_enrichment.py -v
 uv run pytest tests/unit/test_model_training.py -v
+uv run pytest tests/unit/test_api_schemas.py -v
 
 # Run a single test by name
-uv run pytest tests/unit/test_enrichment.py::test_customer_input_context_churn_field_absent -v
+uv run pytest tests/unit/test_api_schemas.py::TestCircuitBreaker::test_timeout_triggers_zero_vector_fallback -v
 ```
 
-**Current output (23 passing tests):**
+**Current output (53 passing tests):**
 ```
 tests/unit/test_data_ingestion.py          3 passed
 tests/unit/test_pydantic_entities.py       2 passed
-tests/unit/test_enrichment.py             11 passed   ← 6 new tests (C1 enhancement)
+tests/unit/test_enrichment.py             11 passed   (C1 enhancement)
 tests/test_feature_engineering.py          1 passed
-tests/unit/test_model_training.py         12 passed   ← Phase 5
-─────────────────────────────────────────────────────
-TOTAL                                     29 passed
+tests/unit/test_model_training.py         12 passed   (Phase 5)
+tests/unit/test_api_schemas.py            24 passed   (Phase 6 API)
+──────────────────────────────────────────────────────
+TOTAL                                     53 passed
 ```
 
 ---
@@ -198,19 +246,22 @@ TOTAL                                     29 passed
 ```mermaid
 graph LR
     subgraph "Pydantic Schemas (Tested)"
-        DataIngestionConfig["DataIngestionConfig\n(config_entity.py)"]
-        TelcoCustomerRow["TelcoCustomerRow\n(config_entity.py)"]
-        CustomerInputContext["CustomerInputContext\n(schemas.py)\n[C1: Churn removed]"]
-        SyntheticNoteOutput["SyntheticNoteOutput\n(schemas.py)"]
-        EvaluationReportSchema["EvaluationReportSchema\n(test_model_training.py)"]
+        DataIngestionConfig["DataIngestionConfig"]
+        TelcoCustomerRow["TelcoCustomerRow"]
+        CustomerInputContext["CustomerInputContext\n(C1: Churn removed)"]
+        SyntheticNoteOutput["SyntheticNoteOutput"]
+        EvaluationReportSchema["EvaluationReportSchema"]
+        CustomerFeatureRequest["CustomerFeatureRequest\n(API Input)"]
+        ChurnPredictionResponse["ChurnPredictionResponse\n(API Output)"]
     end
 
     subgraph "Tests"
-        T0["test_data_ingestion.py\n(3 tests)"]
-        T1["test_pydantic_entities.py\n(2 tests)"]
-        T2["test_enrichment.py\n(11 tests — C1 enhanced)"]
-        T3["test_feature_engineering.py\n(1 test)"]
-        T4["test_model_training.py\n(12 tests — Phase 5)"]
+        T0["test_data_ingestion.py\n(3)"]
+        T1["test_pydantic_entities.py\n(2)"]
+        T2["test_enrichment.py\n(11)"]
+        T3["test_feature_engineering.py\n(1)"]
+        T4["test_model_training.py\n(12)"]
+        T6["test_api_schemas.py\n(24)"]
     end
 
     T0 --> DataIngestionConfig
@@ -219,6 +270,9 @@ graph LR
     T2 --> SyntheticNoteOutput
     T3 --> FeatureEngineeringConfig
     T4 --> EvaluationReportSchema
+    T6 --> CustomerFeatureRequest
+    T6 --> ChurnPredictionResponse
+    T6 --> TestCircuitBreaker["Circuit Breaker Logic"]
 ```
 
 ---

@@ -4,9 +4,15 @@
 
 This document presents the comprehensive architecture for the **Telecom Customer Churn
 Prediction** platform. This project represents a shift from traditional MLOps
-(Model-Centric) to an **Agentic MLOps** paradigm. It orchestrates intelligent systems by combining deterministic traditional machine learning models (XGBoost + Logistic Regression stacker) with probabilistic AI Agents (Google Gemini 2.0 Flash + pydantic-ai) to analyze both quantitative telecom usage metrics and qualitative customer interactions (synthetic ticket notes and sentiment analysis).
+(Model-Centric) to an **Agentic MLOps** paradigm. It orchestrates intelligent systems
+by combining deterministic traditional machine learning models (XGBoost + Logistic
+Regression stacker) with probabilistic AI Agents (Google Gemini 2.0 Flash + pydantic-ai)
+to analyze both quantitative telecom usage metrics and qualitative customer interactions
+(synthetic ticket notes and sentiment analysis).
 
-The system adheres to the **FTI (Feature, Training, Inference)** pattern and the "Agentic Architecture" standard, ensuring deep decoupling between data logic, model training, and the intelligent agents serving predictions and business insights.
+The system adheres to the **FTI (Feature, Training, Inference)** pattern and the
+"Agentic Architecture" standard, ensuring deep decoupling between data logic, model
+training, and the intelligent agents serving predictions and business insights.
 
 ---
 
@@ -14,8 +20,12 @@ The system adheres to the **FTI (Feature, Training, Inference)** pattern and the
 
 The **Brain vs. Brawn** separation of concerns governs all system design decisions:
 
-- **The Brain (Agents):** pydantic-ai + Gemini 2.0 Flash. They reason, route, interpret business context, and synthesize predictions into actionable strategies. They operate on probabilities.
-- **The Brawn (Tools):** FastAPI microservices (planned), Great Expectations, Pydantic, and deterministic ML models. They are typed, deterministic, and purely objective.
+- **The Brain (Agents):** pydantic-ai + Gemini 2.0 Flash. They reason, route, interpret
+  business context, and synthesize predictions into actionable strategies. They operate
+  on probabilities.
+- **The Brawn (Tools):** Two FastAPI microservices (Embedding Service + Prediction API),
+  Great Expectations, Pydantic, and deterministic ML models. They are typed, deterministic,
+  and purely objective.
 
 ### 2.1 Brain vs. Brawn Diagram
 
@@ -34,7 +44,8 @@ graph TD
 
     subgraph Tools ["The Brawn: Deterministic Tools"]
         DataFetch[Data Fetching Tool\nSQL/NoSQL]:::brawn
-        MLPred[ML Prediction Tool\nLate Fusion API]:::brawn
+        MLPred[Prediction API\nFastAPI :8000]:::brawn
+        EmbedSvc[Embedding Microservice\nFastAPI :8001]:::brawn
         Validation[Data Contract Validation\nPydantic/GX]:::brawn
     end
 
@@ -43,7 +54,9 @@ graph TD
     SynthesisAgent -->|1. Request Structured Data| Validation
     Validation -->|2. Validates & Executes| DataFetch
     Validation -->|3. Feature Payload| MLPred
-    MLPred -->|4. Deterministic Score| SynthesisAgent
+    MLPred -->|4. POST /v1/embed| EmbedSvc
+    EmbedSvc -->|5. PCA Embeddings| MLPred
+    MLPred -->|6. Deterministic Score| SynthesisAgent
 ```
 
 ---
@@ -52,29 +65,61 @@ graph TD
 
 ### 3.1 Feature Pipeline — COMPLETE ✅
 
-Responsible for ingesting, validating, and transforming raw telecom data into high-quality predictive signals. Now produces **two independently serialized preprocessors** to support the Late Fusion training architecture and the planned Embedding Microservice.
+Responsible for ingesting, validating, and transforming raw telecom data into
+high-quality predictive signals. Produces **two independently serialized preprocessors**
+to support the Late Fusion training architecture and the Embedding Microservice.
 
 - **Data Contracts:** Great Expectations v1.0+ at two validation checkpoints.
-- **Agentic Enrichment:** pydantic-ai Agent generates leakage-free ticket notes from 17 observable CRM fields (C1 fix applied — `Churn` field permanently excluded).
-- **Split Preprocessors:** `structured_preprocessor.pkl` (numeric + categorical) and `nlp_preprocessor.pkl` (TextEmbedder + PCA) — each fitted on Train only.
+- **Agentic Enrichment:** pydantic-ai Agent generates leakage-free ticket notes from
+  17 observable CRM fields (C1 fix applied — `Churn` field permanently excluded).
+- **Split Preprocessors:** `structured_preprocessor.pkl` (numeric + categorical) and
+  `nlp_preprocessor.pkl` (TextEmbedder + PCA) — each fitted on Train only.
 - **Versioning:** DVC tracks all artifacts and configuration dependencies.
 
 ### 3.2 Training Pipeline — COMPLETE ✅
 
-Implements the **Late Fusion stacking architecture** with three MLflow-tracked experiment runs: structured baseline (Branch 1), NLP baseline (Branch 2), and the stacked meta-learner.
+Implements the **Late Fusion stacking architecture** with three MLflow-tracked experiment
+runs: structured baseline (Branch 1), NLP baseline (Branch 2), and the stacked meta-learner.
 
 - **Leakage-Free Stacking:** OOF cross-validation prevents meta-learner leakage.
 - **Independent SMOTE:** Applied per branch in each branch's own geometric space.
-- **Optuna Tuning:** 30 trials (Branch 1), 20 trials (Branch 2), Recall-optimized objective.
-- **Model Registry:** `telco-churn-late-fusion` registered in MLflow.
+- **Optuna Tuning:** 30 trials (Branch 1), 20 trials (Branch 2), Recall-optimized.
+- **Model Registry:** `telco-churn-late-fusion v2` registered in MLflow.
 
-### 3.3 Inference Pipeline — PLANNED (Phase 6)
+### 3.3 Inference Pipeline — COMPLETE ✅ (Phase 6)
 
-Two decoupled FastAPI microservices enforcing Rule 1.3 (Tools as Microservices):
+Deployed as **two decoupled FastAPI microservices**, enforcing Rule 1.3 (Tools as
+Microservices). Both services are operational and verified against real predictions.
 
-- **Embedding Microservice** (port 8001): Loads `nlp_preprocessor.pkl`; exposes `POST /v1/embed`.
-- **Prediction API** (port 8000): Loads all three model artifacts; calls the Embedding Microservice; returns churn score. Implements circuit breaker for embedding service failover.
-- **Gradio UI** (port 7860): Interactive risk calculator with SHAP interpretability.
+**Embedding Microservice (port 8001):**
+- Loads `nlp_preprocessor.pkl` at startup via `lifespan`.
+- Runs SentenceTransformer warmup on startup — eliminates cold-start latency on
+  the first real request and keeps the inter-service `httpx` timeout at 5s.
+- Exposes `POST /v1/embed` and `GET /v1/health`.
+
+**Prediction API (port 8000):**
+- Loads all four artifacts at startup: `structured_preprocessor.pkl`,
+  `structured_model.pkl`, `nlp_model.pkl`, `meta_model.pkl`.
+- `InferenceService` owns all computation: DataFrame reconstruction → structured
+  preprocessing → embedding call (with circuit breaker) → base model scoring →
+  meta-learner stacking.
+- Exposes `POST /v1/predict`, `POST /v1/predict/batch`, `GET /v1/health`.
+- **Circuit breaker:** If embedding service is unreachable, falls back to zero-vector
+  `(n, 20)`, sets `nlp_branch_available=False`, and continues structured prediction.
+
+**Phase 6 operational proof:**
+
+```
+GET /v1/health (8000) → {"status":"healthy","model_version":"late-fusion-v2"}
+GET /v1/health (8001) → {"status":"healthy","model_version":"all-MiniLM-L6-v2-pca20"}
+
+POST /v1/predict (high-risk profile: Fiber optic, month-to-month, tenure=1):
+→ churn_probability: 0.700559
+→ p_structured: 0.889536  |  p_nlp: 0.407729
+→ nlp_branch_available: true
+```
+
+**Gradio UI** (port 7860): Planned — Phase 7.
 
 ### 3.4 FTI Pipeline Diagram
 
@@ -107,10 +152,10 @@ flowchart LR
 
     ModelRegistry[(Model Registry\ntelco-churn-late-fusion v2)]:::registry
 
-    subgraph IP ["Inference Pipeline ⏳ Planned — Phase 6"]
+    subgraph IP ["Inference Pipeline ✅ Complete — Phase 6"]
         direction TB
-        EmbedSvc[Embedding Microservice\nFastAPI :8001]:::planned
-        PredAPI[Prediction API\nFastAPI :8000]:::planned
+        EmbedSvc[Embedding Microservice\nFastAPI :8001\nWarmup protocol]:::done
+        PredAPI[Prediction API\nFastAPI :8000\nCircuit breaker]:::done
         UX[Gradio Dashboard\n:7860]:::planned
         UX --> PredAPI --> EmbedSvc
     end
@@ -126,25 +171,43 @@ flowchart LR
 
 ## 4. Phase 2: Agentic Data Enrichment
 
-The system uses modular design patterns for all LLM communication:
+1. **Agentic Data Enrichment (Phase 2 — Complete):** pydantic-ai orchestrates Gemini
+   2.0 Flash in the Feature Pipeline. Synthesizes "Soft Signals" (Ticket Notes) from
+   "Hard Signals" (Usage Statistics) using 17 observable CRM fields.
 
-1. **Agentic Data Enrichment (Phase 2 — Complete):** pydantic-ai orchestrates Gemini 2.0 Flash in the Feature Pipeline. Synthesizes "Soft Signals" (Ticket Notes) from "Hard Signals" (Usage Statistics) using 17 observable CRM fields.
+2. **C1 Leakage Fix (Phase 5 — Applied):** The original enrichment schema included the
+   `Churn` target variable, causing the LLM to embed label information directly into
+   ticket notes. After detection during Phase 5 model evaluation (NLP branch Recall=1.000),
+   the schema was redesigned, the system prompt was rewritten with a CRM-agent persona,
+   and the deterministic fallback was rewritten using feature-signal logic only.
 
-2. **C1 Leakage Fix (Phase 5 — Applied):** The original enrichment schema included the `Churn` target variable, causing the LLM to embed label information directly into ticket notes. After detection during Phase 5 model evaluation (NLP branch Recall=1.000), the schema was redesigned, the system prompt was rewritten with a CRM-agent persona, and the deterministic fallback was rewritten using feature-signal logic only. The pipeline was fully re-executed. Post-fix sentiment churn rates are realistic and defensible.
+3. **Fallback & Resiliency:** 3-tier fallback chain (Gemini → Ollama → deterministic
+   feature-based rules). No target-variable reference at any tier.
 
-3. **Fallback & Resiliency:** 3-tier fallback chain (Gemini → Ollama → deterministic feature-based rules). No target-variable reference at any tier.
-
-4. **Structured Outputs:** All agent outputs are validated against `SyntheticNoteOutput` before being written to disk.
+4. **Structured Outputs:** All agent outputs are validated against `SyntheticNoteOutput`
+   before being written to disk.
 
 > See [data_enrichment.md](data_enrichment.md) for full architecture and leakage investigation.
 
-5. **NLP Engineering (Phase 4 — Complete):** `TextEmbedder` (all-MiniLM-L6-v2) + PCA (20 components) isolated in `nlp_preprocessor.pkl`. The structured features are independently handled by `structured_preprocessor.pkl`. `primary_sentiment_tag` is excluded from both preprocessors (Decision A2).
+5. **NLP Engineering (Phase 4 — Complete):** `TextEmbedder` (all-MiniLM-L6-v2) + PCA
+   (20 components) isolated in `nlp_preprocessor.pkl`. The structured features are
+   independently handled by `structured_preprocessor.pkl`. `primary_sentiment_tag` is
+   excluded from both preprocessors (Decision A2).
 
 > See [feature_engineering.md](feature_engineering.md) for architecture details.
 
-6. **Late Fusion Training (Phase 5 — Complete):** Two XGBoost base models trained on separate feature branches with OOF stacking into a Logistic Regression meta-learner.
+6. **Late Fusion Training (Phase 5 — Complete):** Two XGBoost base models trained on
+   separate feature branches with OOF stacking into a Logistic Regression meta-learner.
 
 > See [model_training.md](model_training.md) for full architecture and experimental results.
+
+7. **Inference Microservices (Phase 6 — Complete):** Two decoupled FastAPI services
+   serve the Late Fusion pipeline in production. The Embedding Microservice owns the
+   NLP branch; the Prediction API orchestrates the full inference flow with a circuit
+   breaker fallback.
+
+> See [inference_architecture.md](inference_architecture.md) for full architecture, circuit
+> breaker design, warmup protocol, and operational verification.
 
 ---
 
@@ -154,14 +217,15 @@ The system uses modular design patterns for all LLM communication:
 |---|---|
 | Language | Python 3.11+ (strict type hints via `pyright`) |
 | Dependency Management | `uv` |
-| Agent Orchestration | `pydantic-ai` (Phase 2), `langgraph` (Phase 6 planned) |
+| Agent Orchestration | `pydantic-ai` (Phase 2), `langgraph` (Phase 7 planned) |
 | LLM | Gemini 2.0 Flash (Google AI SDK) |
 | ML Models | `xgboost`, `scikit-learn` (Logistic Regression meta-learner) |
 | Imbalance Handling | `imbalanced-learn` (SMOTE, per-branch) |
 | Hyperparameter Tuning | `optuna` |
 | MLOps / Tracking | `mlflow`, `dvc` |
 | Data Validation | `great-expectations` v1.0+, `pydantic` v2.x |
-| Serving (Planned) | `fastapi`, `uvicorn` |
+| Serving | `fastapi`, `uvicorn` (2 microservices — operational) |
+| Inter-service HTTP | `httpx` (async, with circuit breaker) |
 | UI (Planned) | `gradio` |
 | Linting / Formatting | `ruff` |
 | Observability | `logfire` (Phase 2 tracing), OpenTelemetry (Phase 9 planned) |
@@ -182,13 +246,16 @@ The system uses modular design patterns for all LLM communication:
 │                                   meta_model.pkl, evaluation_report.json,
 │                                   confusion matrices, feature importance charts
 ├── config/
-│   ├── config.yaml               # Artifact paths (immutable structure)
+│   ├── config.yaml               # Artifact paths + api service config
 │   ├── params.yaml               # Tunable hyperparameters
 │   └── schema.yaml               # Data contracts (column names & types)
 ├── data/                         # Raw datasets managed by DVC
 ├── reports/docs/                 # Product and technical documentation
 ├── src/
-│   ├── api/                      # FastAPI microservices (Phase 6)
+│   ├── api/
+│   │   ├── embedding_service/    # main.py, router.py, schemas.py  (port 8001)
+│   │   └── prediction_service/   # main.py, router.py, schemas.py,
+│   │                               inference.py                    (port 8000)
 │   ├── components/
 │   │   ├── data_ingestion.py
 │   │   ├── data_validation.py
@@ -199,7 +266,7 @@ The system uses modular design patterns for all LLM communication:
 │   ├── entity/config_entity.py   # Frozen dataclass configs + Pydantic row contracts
 │   ├── pipeline/                 # Conductor stages (stage_00 through stage_05)
 │   └── utils/                    # logger, feature_utils, exceptions, common
-├── tests/unit/                   # 29 passing unit tests across 5 test files
+├── tests/unit/                   # 53 passing unit tests across 6 test files
 ├── dvc.yaml                      # 6-stage pipeline DAG
 └── pyproject.toml
 ```
@@ -208,10 +275,19 @@ The system uses modular design patterns for all LLM communication:
 
 ## 7. Quality Assurance & Observability
 
-- **Unit Testing:** 29 passing tests across 5 test files. Phase 5 adds 12 new tests covering OOF shape, SMOTE isolation, meta-learner input contract, and evaluation report schema. See [test_suite.md](../runbooks/test_suite.md).
-- **Data Validation:** GX v1.0+ suites at two checkpoints. C1 fix required adding `"Dissatisfied"` to the enriched sentiment tag expectation. See [data_validation_gx.md](data_validation_gx.md).
-- **Leakage Detection & Remediation:** Data leakage was detected empirically during Phase 5 model evaluation (NLP Recall=1.000), traced to the `Churn` field in `CustomerInputContext`, and remediated via the C1 fix. The fix is permanently enforced by a dedicated unit test (`test_customer_input_context_churn_field_absent`) and the DVC dependency graph.
+- **Unit Testing:** 53 passing tests across 6 test files. Phase 6 adds 24 new tests
+  covering embedding schemas, prediction schemas, circuit breaker correctness, and
+  DataFrame reconstruction. See [test_suite.md](../runbooks/test_suite.md).
+- **Data Validation:** GX v1.0+ suites at two checkpoints. C1 fix required adding
+  `"Dissatisfied"` to the enriched sentiment tag expectation.
+  See [data_validation_gx.md](data_validation_gx.md).
+- **Leakage Detection & Remediation:** Detected empirically during Phase 5 (NLP
+  Recall=1.000), traced to `Churn` in `CustomerInputContext`, remediated via C1 fix.
+  Permanently enforced by `test_customer_input_context_churn_field_absent`.
 - **DVC Pipeline:** 6-stage reproducible DAG. See [dvc_pipeline.md](dvc_pipeline.md).
 - **MLflow Tracking:** 3 experiment runs per training cycle with lift metrics.
-- **Observability (Planned — Phase 9):** OpenTelemetry spans for Chain of Thought, tool latency, and token usage.
-- **HITL (Planned — Phase 6):** Key risk decisions surfaced through the Gradio dashboard.
+- **Operational Verification:** Both microservices health-checked and real prediction
+  verified (`churn_probability: 0.7006`, `nlp_branch_available: true`).
+- **Observability (Planned — Phase 9):** OpenTelemetry spans for Chain of Thought,
+  tool latency, and token usage.
+- **HITL (Planned — Phase 7):** Key risk decisions surfaced through the Gradio dashboard.
