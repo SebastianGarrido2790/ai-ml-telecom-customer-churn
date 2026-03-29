@@ -19,7 +19,6 @@ from pydantic import ValidationError
 
 from src.components.data_enrichment.schemas import CustomerInputContext, SyntheticNoteOutput
 
-
 # ---------------------------------------------------------------------------
 # Shared fixture: minimal valid CustomerInputContext payload
 # ---------------------------------------------------------------------------
@@ -63,9 +62,7 @@ def test_customer_input_context_valid() -> None:
     assert context.InternetService == "Fiber optic"
     assert context.Contract == "Month-to-month"
     assert context.MonthlyCharges == pytest.approx(85.50)
-    assert not hasattr(context, "Churn"), (
-        "Churn must not be present on CustomerInputContext after C1 leakage fix."
-    )
+    assert not hasattr(context, "Churn"), "Churn must not be present on CustomerInputContext after C1 leakage fix."
 
 
 def test_customer_input_context_invalid_tenure() -> None:
@@ -162,9 +159,7 @@ def test_synthetic_note_output_all_valid_tags() -> None:
         "Technical Issue",
     ]
     for tag in allowed_tags:
-        output = SyntheticNoteOutput(
-            ticket_note="Sample interaction note.", primary_sentiment_tag=tag
-        )
+        output = SyntheticNoteOutput(ticket_note="Sample interaction note.", primary_sentiment_tag=tag)
         assert output.primary_sentiment_tag == tag
 
 

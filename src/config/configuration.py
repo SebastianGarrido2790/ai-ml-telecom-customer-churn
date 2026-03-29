@@ -11,6 +11,7 @@ Usage:
     ingestion_config = config_mgr.get_data_ingestion_config()
 """
 
+import os
 from pathlib import Path
 
 from src.constants import CONFIG_FILE_PATH, PARAMS_FILE_PATH, SCHEMA_FILE_PATH
@@ -122,9 +123,7 @@ class ConfigurationManager:
             else "gemini-2.0-flash"
         )
         base_url = (
-            enrich_params.base_url
-            if enrich_params and getattr(enrich_params, "base_url", None) is not None
-            else None
+            enrich_params.base_url if enrich_params and getattr(enrich_params, "base_url", None) is not None else None
         )
         secondary_model_name = (
             enrich_params.secondary_model_name
@@ -137,15 +136,9 @@ class ConfigurationManager:
             else None
         )
         batch_size = (
-            enrich_params.batch_size
-            if enrich_params and getattr(enrich_params, "batch_size", None) is not None
-            else 20
+            enrich_params.batch_size if enrich_params and getattr(enrich_params, "batch_size", None) is not None else 20
         )
-        limit = (
-            enrich_params.limit
-            if enrich_params and getattr(enrich_params, "limit", None) is not None
-            else None
-        )
+        limit = enrich_params.limit if enrich_params and getattr(enrich_params, "limit", None) is not None else None
 
         # Convert limit=0 sentinel to None (process full dataset)
         if limit == 0:
@@ -269,7 +262,12 @@ class ConfigurationManager:
         fe_params = self.params.feature_engineering
         feat_cfg = self.config.feature_engineering
 
-        embed_host = api_cfg.embedding_service.host
+        # EMBEDDING_SERVICE_HOST overrides config.yaml when running inside
+        # Docker Compose — container DNS name replaces 127.0.0.1.
+        embed_host = os.environ.get(
+            "EMBEDDING_SERVICE_HOST",
+            api_cfg.embedding_service.host,
+        )
         embed_port = int(api_cfg.embedding_service.port)
         embedding_service_url = f"http://{embed_host}:{embed_port}"
 

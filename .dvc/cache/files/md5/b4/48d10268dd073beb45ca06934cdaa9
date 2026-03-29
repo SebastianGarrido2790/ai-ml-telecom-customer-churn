@@ -1,0 +1,238 @@
+{
+    "success": true,
+    "results": [
+        {
+            "success": true,
+            "expectation_config": {
+                "type": "expect_table_columns_to_match_set",
+                "kwargs": {
+                    "batch_id": "ds_telco_raw-asset_telco_raw",
+                    "column_set": [
+                        "customerID",
+                        "gender",
+                        "SeniorCitizen",
+                        "Partner",
+                        "Dependents",
+                        "tenure",
+                        "PhoneService",
+                        "MultipleLines",
+                        "InternetService",
+                        "OnlineSecurity",
+                        "OnlineBackup",
+                        "DeviceProtection",
+                        "TechSupport",
+                        "StreamingTV",
+                        "StreamingMovies",
+                        "Contract",
+                        "PaperlessBilling",
+                        "PaymentMethod",
+                        "MonthlyCharges",
+                        "TotalCharges",
+                        "Churn"
+                    ],
+                    "exact_match": false
+                },
+                "meta": {},
+                "id": "9e9c3477-9609-49d8-8638-c2feb0c00729",
+                "severity": "critical"
+            },
+            "result": {
+                "observed_value": [
+                    "Churn",
+                    "Contract",
+                    "Dependents",
+                    "DeviceProtection",
+                    "InternetService",
+                    "MonthlyCharges",
+                    "MultipleLines",
+                    "OnlineBackup",
+                    "OnlineSecurity",
+                    "PaperlessBilling",
+                    "Partner",
+                    "PaymentMethod",
+                    "PhoneService",
+                    "SeniorCitizen",
+                    "StreamingMovies",
+                    "StreamingTV",
+                    "TechSupport",
+                    "TotalCharges",
+                    "customerID",
+                    "gender",
+                    "tenure"
+                ]
+            },
+            "meta": {},
+            "exception_info": {
+                "raised_exception": false,
+                "exception_traceback": null,
+                "exception_message": null
+            }
+        },
+        {
+            "success": true,
+            "expectation_config": {
+                "type": "expect_column_values_to_be_between",
+                "kwargs": {
+                    "batch_id": "ds_telco_raw-asset_telco_raw",
+                    "column": "tenure",
+                    "min_value": 0.0,
+                    "max_value": 120.0
+                },
+                "meta": {},
+                "id": "4f42e780-098a-445e-ba89-af7ef5c8d506",
+                "severity": "critical"
+            },
+            "result": {
+                "element_count": 7043,
+                "unexpected_count": 0,
+                "unexpected_percent": 0.0,
+                "partial_unexpected_list": [],
+                "missing_count": 0,
+                "missing_percent": 0.0,
+                "unexpected_percent_total": 0.0,
+                "unexpected_percent_nonmissing": 0.0
+            },
+            "meta": {},
+            "exception_info": {
+                "raised_exception": false,
+                "exception_traceback": null,
+                "exception_message": null
+            }
+        },
+        {
+            "success": true,
+            "expectation_config": {
+                "type": "expect_column_values_to_be_in_set",
+                "kwargs": {
+                    "batch_id": "ds_telco_raw-asset_telco_raw",
+                    "column": "InternetService",
+                    "value_set": [
+                        "DSL",
+                        "Fiber optic",
+                        "No"
+                    ]
+                },
+                "meta": {},
+                "id": "1e1927fa-9186-4629-b74a-234bf4c43f3f",
+                "severity": "critical"
+            },
+            "result": {
+                "element_count": 7043,
+                "unexpected_count": 0,
+                "unexpected_percent": 0.0,
+                "partial_unexpected_list": [],
+                "missing_count": 0,
+                "missing_percent": 0.0,
+                "unexpected_percent_total": 0.0,
+                "unexpected_percent_nonmissing": 0.0
+            },
+            "meta": {},
+            "exception_info": {
+                "raised_exception": false,
+                "exception_traceback": null,
+                "exception_message": null
+            }
+        },
+        {
+            "success": true,
+            "expectation_config": {
+                "type": "expect_column_values_to_be_in_set",
+                "kwargs": {
+                    "batch_id": "ds_telco_raw-asset_telco_raw",
+                    "column": "Contract",
+                    "value_set": [
+                        "Month-to-month",
+                        "One year",
+                        "Two year"
+                    ]
+                },
+                "meta": {},
+                "id": "b0d45fdb-f558-4298-b370-43137864aa5f",
+                "severity": "critical"
+            },
+            "result": {
+                "element_count": 7043,
+                "unexpected_count": 0,
+                "unexpected_percent": 0.0,
+                "partial_unexpected_list": [],
+                "missing_count": 0,
+                "missing_percent": 0.0,
+                "unexpected_percent_total": 0.0,
+                "unexpected_percent_nonmissing": 0.0
+            },
+            "meta": {},
+            "exception_info": {
+                "raised_exception": false,
+                "exception_traceback": null,
+                "exception_message": null
+            }
+        },
+        {
+            "success": true,
+            "expectation_config": {
+                "type": "expect_column_values_to_be_in_set",
+                "kwargs": {
+                    "batch_id": "ds_telco_raw-asset_telco_raw",
+                    "column": "Churn",
+                    "value_set": [
+                        "Yes",
+                        "No"
+                    ]
+                },
+                "meta": {},
+                "id": "9d8b057a-f0b4-443a-8c3d-f8a7cee4d467",
+                "severity": "critical"
+            },
+            "result": {
+                "element_count": 7043,
+                "unexpected_count": 0,
+                "unexpected_percent": 0.0,
+                "partial_unexpected_list": [],
+                "missing_count": 0,
+                "missing_percent": 0.0,
+                "unexpected_percent_total": 0.0,
+                "unexpected_percent_nonmissing": 0.0
+            },
+            "meta": {},
+            "exception_info": {
+                "raised_exception": false,
+                "exception_traceback": null,
+                "exception_message": null
+            }
+        }
+    ],
+    "suite_name": "raw_telco_churn_suite",
+    "suite_parameters": {},
+    "statistics": {
+        "evaluated_expectations": 5,
+        "successful_expectations": 5,
+        "unsuccessful_expectations": 0,
+        "success_percent": 100.0
+    },
+    "meta": {
+        "great_expectations_version": "1.14.0",
+        "expectation_suite_name": "raw_telco_churn_suite",
+        "run_id": {
+            "run_name": null,
+            "run_time": "2026-03-28T22:38:33.427146-03:00"
+        },
+        "batch_spec": {
+            "batch_data": "PandasDataFrame"
+        },
+        "batch_markers": {
+            "ge_load_time": "20260329T013833.400762Z",
+            "pandas_data_fingerprint": "6859fc300286123959ace342b68e91d4"
+        },
+        "active_batch_definition": {
+            "datasource_name": "ds_telco_raw",
+            "data_connector_name": "fluent",
+            "data_asset_name": "asset_telco_raw",
+            "batch_identifiers": {
+                "dataframe": "<DATAFRAME>"
+            }
+        },
+        "validation_time": "20260329T013833.427146Z",
+        "checkpoint_name": null
+    },
+    "id": null
+}

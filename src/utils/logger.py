@@ -67,7 +67,7 @@ def get_logger(name: str | None = None, headline: str | None = None) -> logging.
         logger.propagate = False
 
         # Add a newline separator before each run (for readability)
-        with open(LOG_FILE, "a", encoding="utf-8") as f:
+        with LOG_FILE.open("a", encoding="utf-8") as f:
             f.write("\n\n")
 
         # Add a visually distinct headline
@@ -76,7 +76,7 @@ def get_logger(name: str | None = None, headline: str | None = None) -> logging.
                 f"========================= START: {headline} "
                 f"({datetime.now():%Y-%m-%d %H:%M}) =========================\n"
             )
-            with open(LOG_FILE, "a", encoding="utf-8") as f:
+            with LOG_FILE.open("a", encoding="utf-8") as f:
                 f.write(headline_text)
 
     return logger
@@ -87,5 +87,5 @@ def log_spacer() -> None:
     Appends a raw newline to the log file to provide visual spacing
     without the log formatter prefix (timestamp/levelname).
     """
-    with open(LOG_FILE, "a", encoding="utf-8") as f:
+    with LOG_FILE.open("a", encoding="utf-8") as f:
         f.write("\n")

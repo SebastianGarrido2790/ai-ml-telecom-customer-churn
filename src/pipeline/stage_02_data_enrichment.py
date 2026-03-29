@@ -1,12 +1,12 @@
 """
 Entry point script for the Data Enrichment phase.
 Executes the orchestration pipeline on the raw Telco dataset.
-Instrumented with Logfire for OpenTelemetry observability (GEMINI.md Rule 4.2).
+Instrumented with Logfire for OpenTelemetry observability.
 """
 
 import asyncio
-import logfire
 
+import logfire
 from dotenv import load_dotenv
 
 from src.components.data_enrichment.orchestrator import EnrichmentOrchestrator
@@ -18,7 +18,7 @@ load_dotenv()
 
 
 # Initialize OpenTelemetry observability (Local Console Mode)
-logfire.configure(pydantic_plugin=True, send_to_logfire=False)
+logfire.configure(send_to_logfire=False)
 
 logger = get_logger(__name__, headline="Data Enrichment")
 

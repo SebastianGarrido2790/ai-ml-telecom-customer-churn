@@ -21,10 +21,8 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import numpy as np
-import pandas as pd
 import pytest
 from pydantic import ValidationError
-
 
 # ---------------------------------------------------------------------------
 # Shared fixture: minimal valid CustomerFeatureRequest payload
@@ -351,7 +349,6 @@ class TestCircuitBreaker:
     async def test_timeout_triggers_zero_vector_fallback(self) -> None:
         """A TimeoutException must return a zero-vector and nlp_available=False."""
         import httpx
-        from src.api.prediction_service.inference import InferenceService
 
         service = self._make_service()
 
@@ -367,7 +364,6 @@ class TestCircuitBreaker:
     async def test_connection_error_triggers_zero_vector_fallback(self) -> None:
         """A connection error must return a zero-vector and nlp_available=False."""
         import httpx
-        from src.api.prediction_service.inference import InferenceService
 
         service = self._make_service()
 
@@ -381,8 +377,6 @@ class TestCircuitBreaker:
     @pytest.mark.asyncio
     async def test_successful_embedding_call_returns_available_true(self) -> None:
         """A successful HTTP call must return the embeddings and nlp_available=True."""
-        import httpx
-        from src.api.prediction_service.inference import InferenceService
 
         service = self._make_service()
 
@@ -407,7 +401,6 @@ class TestCircuitBreaker:
     async def test_zero_vector_fallback_shape_matches_pca_components(self) -> None:
         """Zero-vector fallback shape must equal (n_customers, pca_components)."""
         import httpx
-        from src.api.prediction_service.inference import InferenceService
 
         service = self._make_service()
         notes = ["note 1", "note 2", "note 3"]
@@ -417,7 +410,6 @@ class TestCircuitBreaker:
             embeddings, available = await service._get_embeddings(notes)
 
         assert embeddings.shape == (3, 20), (
-            f"Expected (3, 20), got {embeddings.shape}. "
-            "Zero-vector fallback must match (n_customers, pca_components)."
+            f"Expected (3, 20), got {embeddings.shape}. Zero-vector fallback must match (n_customers, pca_components)."
         )
         assert available is False

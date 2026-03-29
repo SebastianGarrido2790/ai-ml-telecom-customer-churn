@@ -210,12 +210,8 @@ class EnrichedTelcoRow(TelcoCustomerRow):
     AI-generated ticket note and sentiment fields.
     """
 
-    ticket_note: str | None = Field(
-        None, description="AI-generated customer complaint or interaction note"
-    )
-    primary_sentiment_tag: str | None = Field(
-        None, description="AI-classified sentiment of the customer"
-    )
+    ticket_note: str | None = Field(None, description="AI-generated customer complaint or interaction note")
+    primary_sentiment_tag: str | None = Field(None, description="AI-classified sentiment of the customer")
 
 
 @dataclass(frozen=True)

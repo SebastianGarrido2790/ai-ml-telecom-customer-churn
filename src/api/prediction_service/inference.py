@@ -25,9 +25,9 @@ Circuit Breaker Contract:
 
 from __future__ import annotations
 
+import httpx
 import numpy as np
 import pandas as pd
-import httpx
 
 from src.api.prediction_service.schemas import (
     BatchPredictResponse,

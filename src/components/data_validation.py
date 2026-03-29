@@ -79,14 +79,10 @@ class DataValidator:
                 "Churn",
             ]
 
-        suite.add_expectation(
-            ExpectTableColumnsToMatchSet(column_set=required_cols, exact_match=False)
-        )
+        suite.add_expectation(ExpectTableColumnsToMatchSet(column_set=required_cols, exact_match=False))
 
         # 2. Tenure Range
-        suite.add_expectation(
-            ExpectColumnValuesToBeBetween(column="tenure", min_value=0, max_value=120)
-        )
+        suite.add_expectation(ExpectColumnValuesToBeBetween(column="tenure", min_value=0, max_value=120))
 
         # 3. Internet Service Values
         suite.add_expectation(
@@ -142,18 +138,12 @@ class DataValidator:
         # 0. Column Presence (Driven by schema.yaml if available)
         if schema:
             required_cols = list(schema.keys())
-            logger.info(
-                f"Enforcing presence of {len(required_cols)} columns (enriched) from schema.yaml"
-            )
-            suite.add_expectation(
-                ExpectTableColumnsToMatchSet(column_set=required_cols, exact_match=False)
-            )
+            logger.info(f"Enforcing presence of {len(required_cols)} columns (enriched) from schema.yaml")
+            suite.add_expectation(ExpectTableColumnsToMatchSet(column_set=required_cols, exact_match=False))
 
         # 1. Ticket Note Presence and Quality
         suite.add_expectation(ExpectColumnValuesToNotBeNull(column="ticket_note", mostly=0.95))
-        suite.add_expectation(
-            ExpectColumnValueLengthsToBeBetween(column="ticket_note", min_value=10, mostly=0.9)
-        )
+        suite.add_expectation(ExpectColumnValueLengthsToBeBetween(column="ticket_note", min_value=10, mostly=0.9))
 
         # 2. Sentiment Tag Consistency
         # value_set must match SyntheticNoteOutput.primary_sentiment_tag Literal exactly.
@@ -214,8 +204,7 @@ class DataValidator:
             # Extract failed expectations for the exception context
             failed_results = [r for r in results["results"] if not r["success"]]
             failed_logs = [
-                f"{r['expectation_config']['type']} on "
-                f"'{r['expectation_config']['kwargs'].get('column', 'table')}'"
+                f"{r['expectation_config']['type']} on '{r['expectation_config']['kwargs'].get('column', 'table')}'"
                 for r in failed_results[:5]
             ]
 

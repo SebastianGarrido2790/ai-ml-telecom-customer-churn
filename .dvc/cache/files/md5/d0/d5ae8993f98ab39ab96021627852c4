@@ -1,0 +1,205 @@
+{
+    "success": true,
+    "results": [
+        {
+            "success": true,
+            "expectation_config": {
+                "type": "expect_table_columns_to_match_set",
+                "kwargs": {
+                    "batch_id": "ds_telco_enriched-asset_telco_enriched",
+                    "column_set": [
+                        "customerID",
+                        "gender",
+                        "SeniorCitizen",
+                        "Partner",
+                        "Dependents",
+                        "tenure",
+                        "PhoneService",
+                        "MultipleLines",
+                        "InternetService",
+                        "OnlineSecurity",
+                        "OnlineBackup",
+                        "DeviceProtection",
+                        "TechSupport",
+                        "StreamingTV",
+                        "StreamingMovies",
+                        "Contract",
+                        "PaperlessBilling",
+                        "PaymentMethod",
+                        "MonthlyCharges",
+                        "TotalCharges",
+                        "Churn",
+                        "ticket_note",
+                        "primary_sentiment_tag"
+                    ],
+                    "exact_match": false
+                },
+                "meta": {},
+                "id": "392c3517-6aed-4dce-a8ca-76e14ce41d10",
+                "severity": "critical"
+            },
+            "result": {
+                "observed_value": [
+                    "Churn",
+                    "Contract",
+                    "Dependents",
+                    "DeviceProtection",
+                    "InternetService",
+                    "MonthlyCharges",
+                    "MultipleLines",
+                    "OnlineBackup",
+                    "OnlineSecurity",
+                    "PaperlessBilling",
+                    "Partner",
+                    "PaymentMethod",
+                    "PhoneService",
+                    "SeniorCitizen",
+                    "StreamingMovies",
+                    "StreamingTV",
+                    "TechSupport",
+                    "TotalCharges",
+                    "customerID",
+                    "gender",
+                    "primary_sentiment_tag",
+                    "tenure",
+                    "ticket_note"
+                ]
+            },
+            "meta": {},
+            "exception_info": {
+                "raised_exception": false,
+                "exception_traceback": null,
+                "exception_message": null
+            }
+        },
+        {
+            "success": true,
+            "expectation_config": {
+                "type": "expect_column_values_to_not_be_null",
+                "kwargs": {
+                    "batch_id": "ds_telco_enriched-asset_telco_enriched",
+                    "column": "ticket_note",
+                    "mostly": 0.95
+                },
+                "meta": {},
+                "id": "09383e57-1719-4805-8aaa-298bf03f3d85",
+                "severity": "critical"
+            },
+            "result": {
+                "element_count": 7043,
+                "unexpected_count": 0,
+                "unexpected_percent": 0.0,
+                "partial_unexpected_list": []
+            },
+            "meta": {},
+            "exception_info": {
+                "raised_exception": false,
+                "exception_traceback": null,
+                "exception_message": null
+            }
+        },
+        {
+            "success": true,
+            "expectation_config": {
+                "type": "expect_column_value_lengths_to_be_between",
+                "kwargs": {
+                    "batch_id": "ds_telco_enriched-asset_telco_enriched",
+                    "column": "ticket_note",
+                    "mostly": 0.9,
+                    "min_value": 10
+                },
+                "meta": {},
+                "id": "af1bf173-006d-4a02-8e3c-7c04cbba58c8",
+                "severity": "critical"
+            },
+            "result": {
+                "element_count": 7043,
+                "unexpected_count": 0,
+                "unexpected_percent": 0.0,
+                "partial_unexpected_list": [],
+                "missing_count": 0,
+                "missing_percent": 0.0,
+                "unexpected_percent_total": 0.0,
+                "unexpected_percent_nonmissing": 0.0
+            },
+            "meta": {},
+            "exception_info": {
+                "raised_exception": false,
+                "exception_traceback": null,
+                "exception_message": null
+            }
+        },
+        {
+            "success": true,
+            "expectation_config": {
+                "type": "expect_column_values_to_be_in_set",
+                "kwargs": {
+                    "batch_id": "ds_telco_enriched-asset_telco_enriched",
+                    "column": "primary_sentiment_tag",
+                    "mostly": 0.95,
+                    "value_set": [
+                        "Frustrated",
+                        "Dissatisfied",
+                        "Neutral",
+                        "Satisfied",
+                        "Billing Inquiry",
+                        "Technical Issue"
+                    ]
+                },
+                "meta": {},
+                "id": "4593b364-d46e-4702-aae1-35f0d7d05e6a",
+                "severity": "critical"
+            },
+            "result": {
+                "element_count": 7043,
+                "unexpected_count": 0,
+                "unexpected_percent": 0.0,
+                "partial_unexpected_list": [],
+                "missing_count": 0,
+                "missing_percent": 0.0,
+                "unexpected_percent_total": 0.0,
+                "unexpected_percent_nonmissing": 0.0
+            },
+            "meta": {},
+            "exception_info": {
+                "raised_exception": false,
+                "exception_traceback": null,
+                "exception_message": null
+            }
+        }
+    ],
+    "suite_name": "enriched_telco_churn_suite",
+    "suite_parameters": {},
+    "statistics": {
+        "evaluated_expectations": 4,
+        "successful_expectations": 4,
+        "unsuccessful_expectations": 0,
+        "success_percent": 100.0
+    },
+    "meta": {
+        "great_expectations_version": "1.14.0",
+        "expectation_suite_name": "enriched_telco_churn_suite",
+        "run_id": {
+            "run_name": null,
+            "run_time": "2026-03-28T12:33:11.040564-03:00"
+        },
+        "batch_spec": {
+            "batch_data": "PandasDataFrame"
+        },
+        "batch_markers": {
+            "ge_load_time": "20260328T153311.014687Z",
+            "pandas_data_fingerprint": "ca59a1e24ee9ceabb32f8164c22f588c"
+        },
+        "active_batch_definition": {
+            "datasource_name": "ds_telco_enriched",
+            "data_connector_name": "fluent",
+            "data_asset_name": "asset_telco_enriched",
+            "batch_identifiers": {
+                "dataframe": "<DATAFRAME>"
+            }
+        },
+        "validation_time": "20260328T153311.040564Z",
+        "checkpoint_name": null
+    },
+    "id": null
+}

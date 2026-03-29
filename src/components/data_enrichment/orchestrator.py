@@ -136,21 +136,17 @@ class EnrichmentOrchestrator:
 
         # Resume logic: restore previously completed rows from output file
         if self.output_path.exists():
-            logger.info(
-                f"Found existing enrichment file at {self.output_path}. Resuming progress..."
-            )
+            logger.info(f"Found existing enrichment file at {self.output_path}. Resuming progress...")
             existing_df = pd.read_csv(self.output_path)
-            existing_map = existing_df.set_index("customerID")[
-                ["ticket_note", "primary_sentiment_tag"]
-            ].to_dict("index")
+            existing_map = existing_df.set_index("customerID")[["ticket_note", "primary_sentiment_tag"]].to_dict(
+                "index"
+            )
 
             for idx, row in df.iterrows():
                 cid = str(row["customerID"])
                 if cid in existing_map:
                     df.at[idx, "ticket_note"] = existing_map[cid].get("ticket_note")
-                    df.at[idx, "primary_sentiment_tag"] = existing_map[cid].get(
-                        "primary_sentiment_tag"
-                    )
+                    df.at[idx, "primary_sentiment_tag"] = existing_map[cid].get("primary_sentiment_tag")
 
         mask = df["ticket_note"].isna() | df["primary_sentiment_tag"].isna()
         indices_to_process = df[mask].index.tolist()
@@ -159,38 +155,26 @@ class EnrichmentOrchestrator:
         processed_count = total_rows - len(indices_to_process)
         to_process_count = len(indices_to_process)
 
-        logger.info(
-            f"Total rows: {total_rows} | "
-            f"Already processed: {processed_count} | "
-            f"To process: {to_process_count}"
-        )
+        logger.info(f"Total rows: {total_rows} | Already processed: {processed_count} | To process: {to_process_count}")
 
         if not indices_to_process:
             logger.info("All rows already enriched. Skipping LLM processing.")
             return df
 
         semaphore = asyncio.Semaphore(batch_size)
-        tasks = [
-            asyncio.create_task(self._process_row(df.loc[idx], idx, semaphore))
-            for idx in indices_to_process
-        ]
+        tasks = [asyncio.create_task(self._process_row(df.loc[idx], idx, semaphore)) for idx in indices_to_process]
 
         save_interval = 10
-        completed = 0
         total_to_process = len(tasks)
-
-        for future in asyncio.as_completed(tasks):
+        for completed, future in enumerate(asyncio.as_completed(tasks), 1):
             real_idx, res = await future
-            completed += 1
 
             if res is not None:
                 df.at[real_idx, "ticket_note"] = res.ticket_note
                 df.at[real_idx, "primary_sentiment_tag"] = res.primary_sentiment_tag
 
             if completed % 5 == 0 or completed == total_to_process:
-                logger.info(
-                    f"Progress: {completed} / {total_to_process} (Total dataset: {total_rows})"
-                )
+                logger.info(f"Progress: {completed} / {total_to_process} (Total dataset: {total_rows})")
 
             if completed % save_interval == 0:
                 logger.info(f"Checkpoint at {completed}: saving to {self.output_path}")

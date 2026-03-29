@@ -38,7 +38,6 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
-    classification_report,
     f1_score,
     precision_score,
     recall_score,
@@ -74,10 +73,10 @@ def _compute_metrics(
         Dictionary of metric name → float value.
     """
     return {
-        "recall": recall_score(y_true, y_pred),
-        "precision": precision_score(y_true, y_pred),
-        "f1": f1_score(y_true, y_pred),
-        "roc_auc": roc_auc_score(y_true, y_prob),
+        "recall": float(recall_score(y_true, y_pred)),
+        "precision": float(precision_score(y_true, y_pred)),
+        "f1": float(f1_score(y_true, y_pred)),
+        "roc_auc": float(roc_auc_score(y_true, y_prob)),
     }
 
 
@@ -184,16 +183,13 @@ class LateFusionEvaluator:
         np.ndarray,
         np.ndarray,
         np.ndarray,
-        np.ndarray,
-        np.ndarray,
     ]:
         """Loads and extracts branch-specific arrays for val and test splits.
 
         Returns:
-            Tuple of eight arrays:
+            Tuple of six arrays:
                 X_val_struct, X_val_nlp, y_val,
-                X_test_struct, X_test_nlp, y_test,
-                (val_df, test_df) — full DataFrames for metadata access.
+                X_test_struct, X_test_nlp, y_test.
         """
         val_df = pd.read_csv(self.config.val_data_path)
         test_df = pd.read_csv(self.config.test_data_path)
@@ -205,11 +201,13 @@ class LateFusionEvaluator:
 
         X_val_struct = _extract(val_df, STRUCTURED_PREFIX)
         X_val_nlp = _extract(val_df, (NLP_PREFIX,))
-        y_val, _ = _encode_target(val_df[target])
+        y_val_series: pd.Series = val_df[target]
+        y_val, _ = _encode_target(y_val_series)
 
         X_test_struct = _extract(test_df, STRUCTURED_PREFIX)
         X_test_nlp = _extract(test_df, (NLP_PREFIX,))
-        y_test, _ = _encode_target(test_df[target])
+        y_test_series: pd.Series = test_df[target]
+        y_test, _ = _encode_target(y_test_series)
 
         return (
             X_val_struct,
@@ -262,7 +260,9 @@ class LateFusionEvaluator:
 
             mlflow.log_params({"branch": "structured", "model": "xgboost"})
             mlflow.log_metrics(metrics_struct)
-            mlflow.xgboost.log_model(structured_model, artifact_path="model")
+            # Use explicit submodule import if needed, but here we assume it's correctly imported as mlflow.xgboost
+            # Pyright might need help:
+            mlflow.xgboost.log_model(structured_model, artifact_path="model")  # type: ignore
 
             _log_confusion_matrix(y_test, y_pred_struct, "structured_baseline", self._artifact_dir)
             _log_feature_importance(structured_model, "structured_baseline", self._artifact_dir)
@@ -284,7 +284,7 @@ class LateFusionEvaluator:
 
             mlflow.log_params({"branch": "nlp", "model": "xgboost"})
             mlflow.log_metrics(metrics_nlp)
-            mlflow.xgboost.log_model(nlp_model, artifact_path="model")
+            mlflow.xgboost.log_model(nlp_model, artifact_path="model")  # type: ignore
 
             _log_confusion_matrix(y_test, y_pred_nlp, "nlp_baseline", self._artifact_dir)
             _log_feature_importance(nlp_model, "nlp_baseline", self._artifact_dir)
@@ -356,7 +356,8 @@ class LateFusionEvaluator:
             "nlp_n_trials": self.config.nlp_n_trials,
         }
 
-        with open(self.config.evaluation_report_path, "w") as f:
+        report_path = Path(self.config.evaluation_report_path)
+        with report_path.open("w") as f:
             json.dump(report, f, indent=2)
 
         logger.info(f"Evaluation report written to: {self.config.evaluation_report_path}")

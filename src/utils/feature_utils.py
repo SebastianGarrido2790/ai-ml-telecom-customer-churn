@@ -96,11 +96,7 @@ class TextEmbedder(BaseEstimator, TransformerMixin):
     def get_feature_names_out(self, input_features: Any = None) -> Any:
         """Returns feature names for the embeddings based on model dimension."""
         dim = self.model.get_sentence_embedding_dimension()
-        prefix = (
-            input_features[0]
-            if input_features is not None and len(input_features) > 0
-            else "emb"
-        )
+        prefix = input_features[0] if input_features is not None and len(input_features) > 0 else "emb"
         return np.array([f"{prefix}_{i}" for i in range(dim)], dtype=object)
 
     def __getstate__(self) -> dict[str, Any]:
@@ -128,13 +124,13 @@ class NumericCleaner(BaseEstimator, TransformerMixin):
         """Stateless transformer, returns self."""
         return self
 
-    def transform(self, X: pd.DataFrame | np.ndarray[Any, Any]) -> pd.DataFrame:
+    def transform(self, X: pd.DataFrame | np.ndarray[Any, Any]) -> pd.DataFrame | pd.Series:
         """Coerce all inputs to numeric, setting errors to NaN."""
-        if not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(X)
+        # Renamed to x_df to avoid ConstantRedefinition error for uppercase 'X'
+        x_df = pd.DataFrame(X) if not isinstance(X, pd.DataFrame) else X
 
         # Coerce each column to numeric
-        return X.apply(pd.to_numeric, errors="coerce")
+        return x_df.apply(pd.to_numeric, errors="coerce")
 
     def get_feature_names_out(self, input_features: Any = None) -> Any:
         """Preserve feature names."""

@@ -15,8 +15,8 @@ Run via Docker (Phase 7):
 
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 import joblib
 from fastapi import FastAPI
@@ -76,10 +76,7 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
     nlp_preprocessor.transform(pd.DataFrame({"ticket_note": ["warmup"]}))
     logger.info("NLP preprocessor warmed up — SentenceTransformer loaded into memory.")
 
-    logger.info(
-        f"Embedding Microservice ready. "
-        f"Model: {embed_cfg.model_version} | Dim: {embed_cfg.pca_components}"
-    )
+    logger.info(f"Embedding Microservice ready. Model: {embed_cfg.model_version} | Dim: {embed_cfg.pca_components}")
 
     yield
 

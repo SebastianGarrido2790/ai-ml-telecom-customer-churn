@@ -1,13 +1,57 @@
-.git
-.github
-__pycache__
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# DVC internals (not needed at runtime — artifacts are bind-mounted)
+.dvc/
+.dvcignore
+dvc.lock
+dvc.yaml
+
+# Python artifacts
+.venv/
+__pycache__/
 *.pyc
 *.pyo
 *.pyd
-.env
-.ipynb_checkpoints
-data/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+
+# Model artifacts (bind-mounted at runtime via docker-compose volumes)
 artifacts/
-logs/
+
+# MLflow runs (bind-mounted at runtime)
+mlruns/
+
+# Data (not needed inside service images)
+data/
+
+# Notebooks
 notebooks/
+*.ipynb
+
+# Reports and documentation
+reports/
+
+# Tests (not needed in production images)
 tests/
+
+# Local environment files
+.env
+*.env.local
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Docker build contexts (avoid recursive inclusion)
+docker/

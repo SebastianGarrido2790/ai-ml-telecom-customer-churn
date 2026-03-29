@@ -73,7 +73,8 @@ def _encode_target(y: pd.Series) -> tuple[np.ndarray, LabelEncoder]:
         Tuple of (encoded integer array, fitted LabelEncoder).
     """
     le = LabelEncoder()
-    return le.fit_transform(y).astype(int), le
+    encoded: np.ndarray = le.fit_transform(y)  # type: ignore
+    return encoded.astype(int), le
 
 
 def _apply_smote(
@@ -95,7 +96,9 @@ def _apply_smote(
         Tuple of (resampled feature matrix, resampled target array).
     """
     smote = SMOTE(random_state=random_state)
-    X_res, y_res = smote.fit_resample(X, y)
+    resampled = smote.fit_resample(X, y)
+    X_res: np.ndarray = resampled[0]  # type: ignore
+    y_res: np.ndarray = resampled[1]  # type: ignore
     logger.info(
         f"SMOTE applied: {X.shape[0]} → {X_res.shape[0]} samples "
         f"(added {X_res.shape[0] - X.shape[0]} synthetic minority samples)"
@@ -255,7 +258,8 @@ class LateFusionTrainer:
         """
         feature_cols = _get_branch_columns(df, prefixes)
         X = df[feature_cols].to_numpy()
-        y, _ = _encode_target(df[target_col])
+        y_series: pd.Series = df[target_col]
+        y, _ = _encode_target(y_series)
         return X, y
 
     def train(self) -> tuple[XGBClassifier, XGBClassifier, LogisticRegression]:
@@ -297,13 +301,14 @@ class LateFusionTrainer:
             use_label_encoder=False,
         )
         cv = StratifiedKFold(n_splits=self.config.cv_folds, shuffle=True, random_state=rs)
-        oof_struct = cross_val_predict(
+        cv_res_struct: np.ndarray = cross_val_predict(
             struct_oof_model,
             X_train_struct,
             y_train_struct,
             cv=cv,
             method="predict_proba",
-        )[:, 1]  # probability of Churn=Yes
+        )
+        oof_struct = cv_res_struct[:, 1]  # probability of Churn=Yes
 
         # Tune and retrain on full SMOTE-augmented train set
         structured_model = _tune_xgboost(
@@ -332,13 +337,14 @@ class LateFusionTrainer:
             eval_metric="logloss",
             use_label_encoder=False,
         )
-        oof_nlp = cross_val_predict(
+        cv_res_nlp: np.ndarray = cross_val_predict(
             nlp_oof_model,
             X_train_nlp,
             y_train_nlp,
             cv=cv,
             method="predict_proba",
-        )[:, 1]
+        )
+        oof_nlp = cv_res_nlp[:, 1]
 
         nlp_model = _tune_xgboost(
             X_train_nlp_sm,
@@ -354,7 +360,8 @@ class LateFusionTrainer:
         # Meta-Learner: Logistic Regression on stacked OOF arrays
         # ----------------------------------------------------------------
         logger.info("=== Meta-Learner: Late Fusion Stacking ===")
-        oof_stack = np.column_stack([oof_struct, oof_nlp])
+        # Ensure oof arrays are 1D and of correct type for column_stack
+        oof_stack = np.column_stack([oof_struct.astype(float), oof_nlp.astype(float)])
         logger.info(f"OOF stack shape: {oof_stack.shape} (samples × [P_struct, P_nlp])")
 
         meta_model = LogisticRegression(

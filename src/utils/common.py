@@ -33,7 +33,7 @@ def read_yaml(path_to_yaml: Path) -> ConfigBox:
         FileNotFoundError: If the file does not exist.
     """
     try:
-        with open(path_to_yaml, encoding="utf-8") as yaml_file:
+        with path_to_yaml.open(encoding="utf-8") as yaml_file:
             content = yaml.safe_load(yaml_file)
             if content is None:
                 raise ValueError(f"YAML file is empty: {path_to_yaml}")
@@ -63,7 +63,7 @@ def save_json(path: Path, data: dict[str, Any]) -> None:
         path (Path): Destination file path.
         data (dict[str, Any]): Data to serialize.
     """
-    with open(path, "w", encoding="utf-8") as f:
+    with path.open("w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
     logger.info(f"JSON file saved at: {path}")
 
@@ -77,7 +77,7 @@ def load_json(path: Path) -> ConfigBox:
     Returns:
         ConfigBox: Dot-accessible data object.
     """
-    with open(path, encoding="utf-8") as f:
+    with path.open(encoding="utf-8") as f:
         content = json.load(f)
     logger.info(f"JSON file loaded successfully: {path}")
     return ConfigBox(content)

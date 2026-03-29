@@ -1,4 +1,14 @@
-"""Phase 1 Verification: Pydantic data contract validation test."""
+"""
+Unit tests for Pydantic Config Entities and Data Contracts.
+
+This module enforces the "Strict Typing" and "Data Quality" pillars by
+validating the frozen dataclasses used for configuration hydration and row-level
+data integrity.
+
+Key validations:
+    - TelcoCustomerRow: Schema and domain constraint enforcement.
+    - Pydantic ValidationError: Handling of contract violations at runtime.
+"""
 
 import pytest
 from pydantic import ValidationError

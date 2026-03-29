@@ -33,9 +33,7 @@ class EnrichmentError(Exception):
     pass
 
 
-async def _call_google_llm(
-    user_prompt: str, model_name: str, base_url: str | None
-) -> SyntheticNoteOutput:
+async def _call_google_llm(user_prompt: str, model_name: str, base_url: str | None) -> SyntheticNoteOutput:
     """Invokes the Google Gemini model via pydantic-ai.
 
     Args:
@@ -58,9 +56,7 @@ async def _call_google_llm(
     return result.data
 
 
-async def _call_ollama_llm(
-    user_prompt: str, model_name: str, base_url: str | None
-) -> SyntheticNoteOutput:
+async def _call_ollama_llm(user_prompt: str, model_name: str, base_url: str | None) -> SyntheticNoteOutput:
     """Invokes a local Ollama server via raw HTTP.
 
     Uses direct JSON mode to bypass pydantic-ai's OpenAI adapter quirks
@@ -79,10 +75,7 @@ async def _call_ollama_llm(
 
     import httpx
 
-    allowed_tags = (
-        '["Frustrated", "Dissatisfied", "Neutral", "Satisfied", '
-        '"Billing Inquiry", "Technical Issue"]'
-    )
+    allowed_tags = '["Frustrated", "Dissatisfied", "Neutral", "Satisfied", "Billing Inquiry", "Technical Issue"]'
     system_instruction = (
         ENRICHMENT_SYSTEM_PROMPT
         + "\n\nYou MUST return ONLY valid JSON matching this schema: "
@@ -286,8 +279,7 @@ Write the CRM interaction note for this customer.
                 )
             except Exception as secondary_err:
                 logger.error(
-                    f"Secondary model (Ollama) also failed for "
-                    f"{customer_context.customerID}: {secondary_err!s}"
+                    f"Secondary model (Ollama) also failed for {customer_context.customerID}: {secondary_err!s}"
                 )
                 # Fall through to deterministic
 

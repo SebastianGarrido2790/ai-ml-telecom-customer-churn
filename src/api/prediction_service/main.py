@@ -19,8 +19,8 @@ Run via Docker (Phase 7):
 
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 import joblib
 from fastapi import FastAPI

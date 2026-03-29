@@ -25,11 +25,13 @@ def mock_sentence_transformer():
         mock_instance = MagicMock()
         # Mock the get_sentence_embedding_dimension
         mock_instance.get_sentence_embedding_dimension.return_value = 384
+
         # Mock encoding to return dummy vectors of shape (len(texts), 384)
         def mock_encode(texts, **kwargs):
             return np.random.rand(len(texts), 384)
+
         mock_instance.encode.side_effect = mock_encode
-        
+
         mock.return_value = mock_instance
         yield mock
 
@@ -39,26 +41,25 @@ class TestNumericCleaner:
 
     def test_fit_transform(self):
         """Test that NumericCleaner correctly coerces numeric data."""
-        df = pd.DataFrame({
-            "A": ["1", "2.5", " ", "", np.nan, "10"],
-            "B": [1.0, 2.5, np.nan, np.nan, np.nan, 10.0]
-        })
-        
+        df = pd.DataFrame(
+            {
+                "A": ["1", "2.5", " ", "", np.nan, "10"],
+                "B": [1.0, 2.5, np.nan, np.nan, np.nan, 10.0],
+            }
+        )
+
         cleaner = NumericCleaner()
         # Fit does nothing, but check it returns self
         assert cleaner.fit(df) is cleaner
-        
+
         # Transform should coerce 'A' correctly, handling empty strings as NaNs
         transformed_df = cleaner.transform(df[["A"]])
-        
+
         # Expected output includes NaNs for " ", "", and np.nan
         expected_A = [1.0, 2.5, np.nan, np.nan, np.nan, 10.0]
-        
+
         # Check equality (pd.testing.assert_series_equal for exact pandas match)
-        pd.testing.assert_series_equal(
-            transformed_df["A"], 
-            pd.Series(expected_A, name="A")
-        )
+        pd.testing.assert_series_equal(transformed_df["A"], pd.Series(expected_A, name="A"))
 
     def test_feature_names_out(self):
         """Test that get_feature_names_out returns the correct input feature names."""
@@ -78,7 +79,7 @@ class TestTextEmbedder:
         # Should not be initialized immediately
         assert embedder._model is None
         mock_sentence_transformer.assert_not_called()
-        
+
         # Accessing the property loads the model
         _ = embedder.model
         mock_sentence_transformer.assert_called_once_with("test-model")
@@ -88,10 +89,10 @@ class TestTextEmbedder:
         """Test that fit_transform generates expected output structure."""
         embedder = TextEmbedder("test-model")
         texts = pd.Series(["hello world", "foo bar", "test string"])
-        
+
         # Fit should return self
         assert embedder.fit(texts) is embedder
-        
+
         # Transform should produce a numpy array
         result = embedder.transform(texts)
         assert isinstance(result, np.ndarray)
@@ -101,7 +102,7 @@ class TestTextEmbedder:
         """Test get_feature_names_out returns expected column names."""
         embedder = TextEmbedder("test-model")
         feature_names = embedder.get_feature_names_out(input_features=["custom_col"])
-        
+
         assert len(feature_names) == 384
         assert feature_names[0] == "custom_col_0"
 
@@ -110,11 +111,11 @@ class TestTextEmbedder:
         embedder = TextEmbedder("test-model")
         # Force initialization
         _ = embedder.model
-        
+
         # Simulate pickling and unpickling
         pickled_embedder = pickle.dumps(embedder)
         unpickled_embedder = pickle.loads(pickled_embedder)
-        
+
         # Verify the model property was dropped during pickling
         assert unpickled_embedder._model is None
         assert unpickled_embedder.model_name == "test-model"
@@ -127,54 +128,56 @@ def feature_engineering_config(tmp_path):
     fe_dir.mkdir(parents=True, exist_ok=True)
     return FeatureEngineeringConfig(
         root_dir=fe_dir,
-        input_data_path=fe_dir / "dummy_path.csv", # Fixed to use tmp_path
+        input_data_path=fe_dir / "dummy_path.csv",  # Fixed to use tmp_path
         train_data_path=fe_dir / "train.csv",
         test_data_path=fe_dir / "test.csv",
         val_data_path=fe_dir / "val.csv",
-        preprocessor_path=fe_dir / "preprocessor.pkl",
+        structured_preprocessor_path=fe_dir / "structured_preprocessor.pkl",
+        nlp_preprocessor_path=fe_dir / "nlp_preprocessor.pkl",
         embedding_model_name="test-model",
         pca_components=2,  # Tiny PCA
         test_size=0.2,
         val_size=0.1,
         random_state=42,
-        target_column="Churn"
+        target_column="Churn",
     )
+
 
 class TestFeatureEngineeringComponent:
     """Suite for integrated testing of the FeatureEngineering component execution."""
 
-    def test_data_splitting_and_processing(
-        self, feature_engineering_config, mock_sentence_transformer
-    ):
+    def test_data_splitting_and_processing(self, feature_engineering_config, mock_sentence_transformer):
         """Test that initiate_feature_engineering accurately splits its synthetic data."""
-        
+
         # Mock data (need enough samples for a valid PCA over 2 components & split)
-        data = pd.DataFrame({
-            "customerID": [f"ID_{i}" for i in range(20)],
-            "Churn": ["Yes", "No", "Yes", "No", "No"] * 4,
-            "tenure": [12, 1, 0, 72, 50] * 4,
-            "MonthlyCharges": [50.5] * 20,
-            "TotalCharges": [str(i * 10.5) for i in range(20)],
-            "gender": ["Male", "Female"] * 10,
-            "SeniorCitizen": [0, 1] * 10,
-            "Partner": ["Yes", "No"] * 10,
-            "Dependents": ["Yes", "No"] * 10,
-            "PhoneService": ["Yes", "No"] * 10,
-            "MultipleLines": ["Yes", "No"] * 10,
-            "InternetService": ["DSL", "Fiber optic"] * 10,
-            "OnlineSecurity": ["Yes", "No"] * 10,
-            "OnlineBackup": ["Yes", "No"] * 10,
-            "DeviceProtection": ["Yes", "No"] * 10,
-            "TechSupport": ["Yes", "No"] * 10,
-            "StreamingTV": ["Yes", "No"] * 10,
-            "StreamingMovies": ["Yes", "No"] * 10,
-            "Contract": ["Month-to-month", "One year"] * 10,
-            "PaperlessBilling": ["Yes", "No"] * 10,
-            "PaymentMethod": ["Electronic check", "Mailed check"] * 10,
-            "ticket_note": ["dummy text"] * 20,
-            "primary_sentiment_tag": ["Positive", "Negative", "Neutral", "Positive"] * 5
-        })
-        
+        data = pd.DataFrame(
+            {
+                "customerID": [f"ID_{i}" for i in range(20)],
+                "Churn": ["Yes", "No", "Yes", "No", "No"] * 4,
+                "tenure": [12, 1, 0, 72, 50] * 4,
+                "MonthlyCharges": [50.5] * 20,
+                "TotalCharges": [str(i * 10.5) for i in range(20)],
+                "gender": ["Male", "Female"] * 10,
+                "SeniorCitizen": [0, 1] * 10,
+                "Partner": ["Yes", "No"] * 10,
+                "Dependents": ["Yes", "No"] * 10,
+                "PhoneService": ["Yes", "No"] * 10,
+                "MultipleLines": ["Yes", "No"] * 10,
+                "InternetService": ["DSL", "Fiber optic"] * 10,
+                "OnlineSecurity": ["Yes", "No"] * 10,
+                "OnlineBackup": ["Yes", "No"] * 10,
+                "DeviceProtection": ["Yes", "No"] * 10,
+                "TechSupport": ["Yes", "No"] * 10,
+                "StreamingTV": ["Yes", "No"] * 10,
+                "StreamingMovies": ["Yes", "No"] * 10,
+                "Contract": ["Month-to-month", "One year"] * 10,
+                "PaperlessBilling": ["Yes", "No"] * 10,
+                "PaymentMethod": ["Electronic check", "Mailed check"] * 10,
+                "ticket_note": ["dummy text"] * 20,
+                "primary_sentiment_tag": ["Positive", "Negative", "Neutral", "Positive"] * 5,
+            }
+        )
+
         # Write dummy data to the temporary input file
         data.to_csv(feature_engineering_config.input_data_path, index=False)
 
@@ -185,14 +188,16 @@ class TestFeatureEngineeringComponent:
         assert feature_engineering_config.train_data_path.exists()
         assert feature_engineering_config.test_data_path.exists()
         assert feature_engineering_config.val_data_path.exists()
-        assert feature_engineering_config.preprocessor_path.exists()
+        assert feature_engineering_config.structured_preprocessor_path.exists()
+        assert feature_engineering_config.nlp_preprocessor_path.exists()
 
         # Check file dimensions / splits
         train_df = pd.read_csv(feature_engineering_config.train_data_path)
         test_df = pd.read_csv(feature_engineering_config.test_data_path)
         val_df = pd.read_csv(feature_engineering_config.val_data_path)
-        
-        # 20 samples: 20*0.2 test = 4, 16 remaining; 16*0.1 val = 1.6 (~2), 14 train approx, depending on stratification
+
+        # 20 samples: 20*0.2 test = 4, 16 remaining;
+        # 16*0.1 val = 1.6 (~2), 14 train approx, depending on stratification
         assert len(train_df) + len(test_df) + len(val_df) == 20
         # verify identifiers passed through
         assert "customerID" in train_df.columns

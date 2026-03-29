@@ -1,5 +1,13 @@
 """
 Unit tests for the Data Ingestion component.
+
+This module ensures that raw data is correctly retrieved from both local
+filesystem paths and remote HTTP/HTTPS URLs, handled via shutil and urllib.
+It also validates idempotent behavior (skipping existing files).
+
+Key components:
+    - download_file: URI-aware retrieval logic.
+    - unzip_file: Compression management (if applicable).
 """
 
 from pathlib import Path
@@ -43,9 +51,7 @@ def test_download_file_local_path(
     ingestion = DataIngestion(config=data_ingestion_config)
     ingestion.download_file()
 
-    mock_copy2.assert_called_once_with(
-        data_ingestion_config.source_URL, data_ingestion_config.local_data_file
-    )
+    mock_copy2.assert_called_once_with(data_ingestion_config.source_URL, data_ingestion_config.local_data_file)
     mock_urlretrieve.assert_not_called()
 
 

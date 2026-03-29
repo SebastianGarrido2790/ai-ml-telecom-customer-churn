@@ -4,8 +4,8 @@ Provides structured error context for both developers and AI agents.
 """
 
 from dataclasses import dataclass
-from typing import Any
 from types import ModuleType
+from typing import Any
 
 
 def error_message_detail(error: Exception | str, error_detail: ModuleType) -> str:
@@ -30,9 +30,7 @@ def error_message_detail(error: Exception | str, error_detail: ModuleType) -> st
         line_number = 0
 
     error_message = (
-        f"Error occurred in python script: [{file_name}] "
-        f"line number: [{line_number}] "
-        f"error message: [{str(error)}]"
+        f"Error occurred in python script: [{file_name}] line number: [{line_number}] error message: [{str(error)}]"
     )
 
     return error_message
@@ -41,10 +39,12 @@ def error_message_detail(error: Exception | str, error_detail: ModuleType) -> st
 class CustomException(Exception):
     """
     Custom Exception class to provide detailed traceback information within the message.
-    This is critical for MLOps pipelines to quickly debug failures in automated workflows and prevent silent failures.
+    This is critical for MLOps pipelines to quickly debug failures in automated
+    workflows and prevent silent failures.
 
     Implementation details:
-    - Captures Context: Automatically extracts the file name and line number where the error occurred.
+    - Captures Context: Automatically extracts the file name and line number
+      where the error occurred.
     - Formatting: Wraps the error into a standardized string format for logs.
     - Strict Typing: Uses ModuleType instead of untyped sys imports to satisfy modern linters.
     """

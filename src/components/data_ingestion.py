@@ -83,7 +83,4 @@ class DataIngestion:
                 zip_ref.extractall(unzip_path)
             logger.info("Extraction complete.")
         else:
-            logger.info(
-                f"Downloaded file {self.config.local_data_file} is not a .zip file. "
-                "Skipping extraction."
-            )
+            logger.info(f"Downloaded file {self.config.local_data_file} is not a .zip file. Skipping extraction.")

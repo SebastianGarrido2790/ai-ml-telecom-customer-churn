@@ -201,10 +201,7 @@ class FeatureEngineering:
         X = df.drop(columns=excluded)
         y = df[target]
 
-        logger.info(
-            f"Performing 3-way stratified split "
-            f"(val={self.config.val_size}, test={self.config.test_size})"
-        )
+        logger.info(f"Performing 3-way stratified split (val={self.config.val_size}, test={self.config.test_size})")
 
         X_temp, X_test, y_temp, y_test = train_test_split(
             X,
@@ -224,9 +221,7 @@ class FeatureEngineering:
             stratify=y_temp,
         )
 
-        logger.info(
-            f"Split sizes — Train: {X_train.shape}, Val: {X_val.shape}, Test: {X_test.shape}"
-        )
+        logger.info(f"Split sizes — Train: {X_train.shape}, Val: {X_val.shape}, Test: {X_test.shape}")
 
         # ----------------------------------------------------------------
         # Structured preprocessor: fit on train, transform all splits
@@ -302,9 +297,7 @@ class FeatureEngineering:
         val_full.to_csv(self.config.val_data_path, index=False)
         test_full.to_csv(self.config.test_data_path, index=False)
 
-        logger.info(
-            f"Saving structured preprocessor to: {self.config.structured_preprocessor_path}"
-        )
+        logger.info(f"Saving structured preprocessor to: {self.config.structured_preprocessor_path}")
         joblib.dump(structured_preprocessor, self.config.structured_preprocessor_path)
 
         logger.info(f"Saving NLP preprocessor to: {self.config.nlp_preprocessor_path}")

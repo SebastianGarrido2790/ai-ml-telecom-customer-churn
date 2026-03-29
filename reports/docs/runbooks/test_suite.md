@@ -205,7 +205,29 @@ Pydantic schema validation for microservices and the inter-service circuit break
 
 #### Other Classes (6 tests)
 Includes `TestChurnPredictionResponse` (3 tests) and `TestBatchSchemas` (3 tests) for full I/O contract coverage.
+### 3.7 `tests/unit/test_config.py` — Configuration Management
+**Purpose:** Validates the hydration of YAML configuration files into strongly-typed Pydantic entities.
 
+| Test | Component Tested | What It Proves |
+|---|---|---|
+| `test_read_yaml_success` | `read_yaml` | Correctly parses valid YAML files from disk. |
+| `test_configuration_manager_init` | `ConfigurationManager` | Hydrates all 5 core pipeline entities from `config.yaml`. |
+
+### 3.8 `tests/unit/test_pipelines.py` — Pipeline Stage Orchestration
+**Purpose:** Validates the stage-wise execution of the ML pipeline (Ingestion -> Validation -> Preprocessing -> Training).
+
+| Test | Component Tested | What It Proves |
+|---|---|---|
+| `test_stage_01_ingestion` | `DataIngestion` | Stage 01 initiates and completes without error. |
+| `test_stage_04_training` | `ModelTraining` | Stage 04 consumed processed features and registers model. |
+
+### 3.9 `tests/unit/test_api.py` — FastAPI Endpoint Logic
+**Purpose:** Validates top-level FastAPI routes and dependency injection.
+
+| Test | Component Tested | What It Proves |
+|---|---|---|
+| `test_health_check` | `/health` | API is alive and reachable. |
+| `test_prediction_endpoint_success` | `/predict` | End-to-end inference flow with mocked models succeeds. |
 
 ---
 
@@ -227,16 +249,22 @@ uv run pytest tests/unit/test_api_schemas.py -v
 uv run pytest tests/unit/test_api_schemas.py::TestCircuitBreaker::test_timeout_triggers_zero_vector_fallback -v
 ```
 
-**Current output (53 passing tests):**
+**Current output (114 passing tests):**
 ```
 tests/unit/test_data_ingestion.py          3 passed
 tests/unit/test_pydantic_entities.py       2 passed
-tests/unit/test_enrichment.py             11 passed   (C1 enhancement)
+tests/unit/test_enrichment.py             11 passed
 tests/test_feature_engineering.py          1 passed
-tests/unit/test_model_training.py         12 passed   (Phase 5)
-tests/unit/test_api_schemas.py            24 passed   (Phase 6 API)
+tests/unit/test_model_training.py         12 passed
+tests/unit/test_api_schemas.py            24 passed
+tests/unit/test_config.py                 10 passed
+tests/unit/test_pipelines.py               8 passed
+tests/unit/test_utils.py                  15 passed
+tests/unit/test_components.py             10 passed
+tests/unit/test_model.py                  12 passed
+tests/unit/test_api.py                     6 passed
 ──────────────────────────────────────────────────────
-TOTAL                                     53 passed
+TOTAL                                    114 passed
 ```
 
 ---
@@ -277,16 +305,10 @@ graph LR
 
 ---
 
-## 6. What Is Not Yet Covered
-
 | Gap | Reason | Future Plan |
 |---|---|---|
-| `DataValidator` (GX) | GX requires ephemeral context setup — integration test needed. | `pytest-mock` + GX ephemeral context |
-| `ConfigurationManager` | YAML loading is path-dependent — needs a `tmpdir` fixture. | Add `tmpdir` fixture |
-| `EnrichmentOrchestrator` | Calls live LLM API — must be mocked. | Mock `generate_ticket_note` with `pytest-asyncio` |
-| `generate_ticket_note()` | Makes live API call. | Mock `pydantic-ai` `Agent.run()` |
-| `LateFusionEvaluator` | Requires MLflow server — integration test needed. | Mock MLflow client |
 | Agent output quality | Probabilistic — not for pytest. | LLM-as-a-Judge eval pipeline |
+| Integration E2E | Requires full DVC/Pipeline state. | HW/SW-in-the-loop tests |
 
 ---
 
@@ -301,7 +323,7 @@ on every push and pull request. The pipeline will fail if:
 4. `pyright` reports type errors.
 
 ```yaml
-# .github/workflows/ci.yml (Planned)
+# .github/workflows/ci.yml
 - name: Run Tests
   run: uv run pytest tests/ --cov=src --cov-fail-under=65
 ```

@@ -48,13 +48,9 @@ class CustomerInputContext(BaseModel):
     """
 
     customerID: str = Field(..., description="Unique customer identifier")
-    tenure: int = Field(
-        ..., ge=0, description="Number of months the customer has stayed with the company"
-    )
+    tenure: int = Field(..., ge=0, description="Number of months the customer has stayed with the company")
     gender: str = Field(..., description="Customer gender")
-    SeniorCitizen: int = Field(
-        ..., ge=0, le=1, description="Whether the customer is a senior citizen (1) or not (0)"
-    )
+    SeniorCitizen: int = Field(..., ge=0, le=1, description="Whether the customer is a senior citizen (1) or not (0)")
     Partner: str = Field(..., description="Whether the customer has a partner")
     Dependents: str = Field(..., description="Whether the customer has dependents")
     InternetService: Literal["DSL", "Fiber optic", "No"] = Field(
@@ -83,9 +79,7 @@ class CustomerInputContext(BaseModel):
     )
     PaperlessBilling: str = Field(..., description="Whether the customer uses paperless billing")
     PaymentMethod: str = Field(..., description="Customer's payment method")
-    MonthlyCharges: float = Field(
-        ..., ge=0, description="The amount charged to the customer monthly"
-    )
+    MonthlyCharges: float = Field(..., ge=0, description="The amount charged to the customer monthly")
 
 
 class SyntheticNoteOutput(BaseModel):

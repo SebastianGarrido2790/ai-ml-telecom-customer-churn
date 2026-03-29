@@ -1,0 +1,43 @@
+cmd: uv run python -m src.pipeline.stage_01_data_validation
+deps:
+- path: artifacts/data_ingestion/WA_Fn-UseC_-Telco-Customer-Churn.csv
+  hash: md5
+  md5: 0f9de68e012bd3aed5fa7cdc9fc421af
+  size: 977501
+- path: config/config.yaml
+  hash: md5
+  md5: 6684340df207527fe227715647a3f656
+  size: 1866
+- path: config/schema.yaml
+  hash: md5
+  md5: 1f2cd8f0f11979b03eb929101b165847
+  size: 1171
+- path: src/components/data_validation.py
+  hash: md5
+  md5: a818d17f2389df1dd37409bcdfcd6a43
+  size: 8719
+- path: src/config/configuration.py
+  hash: md5
+  md5: 4e2fdebd61d1c5c32b9203dbfe2e7d51
+  size: 11637
+- path: src/pipeline/stage_01_data_validation.py
+  hash: md5
+  md5: 63ba1df830635257e756bca209bb2f9a
+  size: 2502
+- path: src/utils/exceptions.py
+  hash: md5
+  md5: f5023ef36a144b35cfee616fd304f245
+  size: 4953
+- path: src/utils/logger.py
+  hash: md5
+  md5: a3468f405db0c76ac7be17d42e705289
+  size: 3005
+outs:
+- path: artifacts/data_validation/status.txt
+  hash: md5
+  md5: 514150676227c344010ebb1b04a807bf
+  size: 23
+- path: artifacts/data_validation/validation_report.json
+  hash: md5
+  md5: 40df45605287ef52216d4378f402737a
+  size: 8409

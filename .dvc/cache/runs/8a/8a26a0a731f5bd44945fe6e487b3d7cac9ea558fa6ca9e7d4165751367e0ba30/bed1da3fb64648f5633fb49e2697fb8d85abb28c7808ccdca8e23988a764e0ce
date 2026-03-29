@@ -1,0 +1,35 @@
+cmd: uv run python -m src.pipeline.stage_03_enriched_validation
+deps:
+- path: artifacts/data_enrichment/enriched_telco_churn.csv
+  hash: md5
+  md5: bb18ce70c00f02bbd20034a2671efcaa
+  size: 2076995
+- path: config/config.yaml
+  hash: md5
+  md5: 6684340df207527fe227715647a3f656
+  size: 1866
+- path: src/components/data_validation.py
+  hash: md5
+  md5: a818d17f2389df1dd37409bcdfcd6a43
+  size: 8719
+- path: src/config/configuration.py
+  hash: md5
+  md5: 4e2fdebd61d1c5c32b9203dbfe2e7d51
+  size: 11637
+- path: src/pipeline/stage_03_enriched_validation.py
+  hash: md5
+  md5: b35cc24f23170836e3d30699b15167f4
+  size: 2627
+- path: src/utils/logger.py
+  hash: md5
+  md5: a3468f405db0c76ac7be17d42e705289
+  size: 3005
+outs:
+- path: artifacts/data_enrichment/status.txt
+  hash: md5
+  md5: 514150676227c344010ebb1b04a807bf
+  size: 23
+- path: artifacts/data_enrichment/validation_report.json
+  hash: md5
+  md5: d0d5ae8993f98ab39ab96021627852c4
+  size: 7336

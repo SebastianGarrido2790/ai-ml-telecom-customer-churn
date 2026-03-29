@@ -1,0 +1,179 @@
+# =============================================================================
+# Telecom Customer Churn MLOps — Docker Compose
+# Orchestrates four services on an isolated bridge network.
+#
+# Services:
+#   embedding-service  :8001  NLP preprocessor + SentenceTransformer
+#   prediction-api     :8000  Late Fusion inference + circuit breaker
+#   mlflow-server      :5000  Experiment tracking UI
+#   gradio-ui          :7860  Interactive dashboard (Phase 7B — placeholder)
+#
+# Startup order enforced via depends_on + condition: service_healthy:
+#   mlflow-server → (no deps)
+#   embedding-service → (no deps, but warmup takes ~13s)
+#   prediction-api → waits for embedding-service: service_healthy
+#   gradio-ui → waits for prediction-api: service_healthy (Phase 7B)
+#
+# Usage:
+#   docker compose up --build          # build + start all services
+#   docker compose up -d               # start in detached mode
+#   docker compose logs -f             # stream all logs
+#   docker compose down                # stop and remove containers
+#   docker compose down -v             # also remove named volumes
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Embedding Microservice
+  # Loads nlp_preprocessor.pkl and warms the SentenceTransformer at startup.
+  # The /v1/health endpoint returns 200 only after warmup completes, so the
+  # prediction-api's depends_on condition correctly gates traffic.
+  # ---------------------------------------------------------------------------
+  embedding-service:
+    build:
+      context: .
+      dockerfile: docker/embedding_service/Dockerfile
+    image: telecom-churn/embedding-service:latest
+    container_name: embedding-service
+    ports:
+      - "8001:8001"
+    volumes:
+      # Bind-mount the feature engineering artifacts (nlp_preprocessor.pkl).
+      # Read-only: containers must never write back to the artifact store.
+      - ./artifacts/feature_engineering:/app/artifacts/feature_engineering:ro
+    env_file:
+      - .env
+    networks:
+      - churn-net
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import httpx; httpx.get('http://localhost:8001/v1/health').raise_for_status()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      # start_period accommodates the SentenceTransformer warmup (~13s).
+      # Health checks are not counted as failures during this window.
+      start_period: 60s
+
+  # ---------------------------------------------------------------------------
+  # Prediction API
+  # Loads four model artifacts and creates InferenceService at startup.
+  # Calls embedding-service for NLP branch embeddings (circuit breaker active).
+  # EMBEDDING_SERVICE_HOST overrides the config.yaml default (127.0.0.1)
+  # to the Docker Compose service DNS name (embedding-service).
+  # ---------------------------------------------------------------------------
+  prediction-api:
+    build:
+      context: .
+      dockerfile: docker/prediction_api/Dockerfile
+    image: telecom-churn/prediction-api:latest
+    container_name: prediction-api
+    ports:
+      - "8000:8000"
+    volumes:
+      # Bind-mount both preprocessors and all three model artifacts.
+      - ./artifacts/feature_engineering:/app/artifacts/feature_engineering:ro
+      - ./artifacts/model_training:/app/artifacts/model_training:ro
+    environment:
+      # Override the embedding service host from config.yaml's 127.0.0.1
+      # to the Docker Compose container DNS name.
+      EMBEDDING_SERVICE_HOST: embedding-service
+    env_file:
+      - .env
+    depends_on:
+      embedding-service:
+        condition: service_healthy
+    networks:
+      - churn-net
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import httpx; httpx.get('http://localhost:8000/v1/health').raise_for_status()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # MLflow Tracking Server
+  # Serves the experiment tracking UI and REST API.
+  # ./mlruns is bind-mounted to preserve all existing run history and the
+  # registered telco-churn-late-fusion model without copying into the image.
+  # ---------------------------------------------------------------------------
+  mlflow-server:
+    build:
+      context: .
+      dockerfile: docker/mlflow_server/Dockerfile
+    image: telecom-churn/mlflow-server:latest
+    container_name: mlflow-server
+    ports:
+      - "5000:5000"
+    volumes:
+      # Bind-mount the full mlruns directory (Decision G1 — file store).
+      # All existing experiments, runs, and registered models are preserved.
+      - ./mlruns:/app/mlruns
+    networks:
+      - churn-net
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import httpx; httpx.get('http://localhost:5000/health').raise_for_status()",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # ---------------------------------------------------------------------------
+  # Gradio UI — Phase 7B Placeholder
+  # Uncomment when the Gradio dashboard is implemented.
+  # ---------------------------------------------------------------------------
+  # gradio-ui:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/gradio_ui/Dockerfile
+  #   image: telecom-churn/gradio-ui:latest
+  #   container_name: gradio-ui
+  #   ports:
+  #     - "7860:7860"
+  #   environment:
+  #     PREDICTION_API_URL: http://prediction-api:8000
+  #   depends_on:
+  #     prediction-api:
+  #       condition: service_healthy
+  #   networks:
+  #     - churn-net
+  #   restart: unless-stopped
+
+# ---------------------------------------------------------------------------
+# Networks
+# Isolated bridge network — containers communicate by service name.
+# No service is reachable from outside the network unless a port is published.
+# ---------------------------------------------------------------------------
+networks:
+  churn-net:
+    driver: bridge
+
+# ---------------------------------------------------------------------------
+# Volumes
+# Named volumes are declared here for documentation completeness.
+# All storage is currently via bind mounts (host paths) — named volumes
+# are reserved for Phase 8 where EFS/S3 replaces local bind mounts.
+# ---------------------------------------------------------------------------
+# volumes:
+#   mlruns_data:     # reserved for Phase 8 EFS migration

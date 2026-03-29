@@ -21,13 +21,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pandas as pd
 import pytest
 from pydantic import BaseModel
-
 
 # ============================================================================
 # Pydantic Schema: Evaluation Report Contract
@@ -152,9 +150,7 @@ class TestOOFArrayShape:
         cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
         oof = cross_val_predict(model, X, y, cv=cv, method="predict_proba")[:, 1]
 
-        assert oof.shape == (len(sample_train_df),), (
-            f"Expected OOF shape ({len(sample_train_df)},), got {oof.shape}"
-        )
+        assert oof.shape == (len(sample_train_df),), f"Expected OOF shape ({len(sample_train_df)},), got {oof.shape}"
 
     def test_oof_values_are_valid_probabilities(self, sample_train_df: pd.DataFrame) -> None:
         """OOF values must be in [0, 1] — required for meta-learner input."""
@@ -180,9 +176,7 @@ class TestOOFArrayShape:
         cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
         oof = cross_val_predict(model, X, y, cv=cv, method="predict_proba")[:, 1]
 
-        assert np.all(oof >= 0.0) and np.all(oof <= 1.0), (
-            "OOF probabilities contain values outside [0, 1]."
-        )
+        assert np.all(oof >= 0.0) and np.all(oof <= 1.0), "OOF probabilities contain values outside [0, 1]."
 
 
 # ============================================================================
@@ -229,7 +223,7 @@ class TestSMOTEIsolation:
         unique, counts = np.unique(y_res, return_counts=True)
 
         assert len(unique) == 2, "SMOTE output must contain exactly 2 classes."
-        assert counts[0] == counts[1], f"SMOTE did not balance classes: {dict(zip(unique, counts))}"
+        assert counts[0] == counts[1], f"SMOTE did not balance classes: {dict(zip(unique, counts, strict=False))}"
 
     def test_val_set_unchanged_by_smote(
         self,
@@ -299,12 +293,8 @@ class TestMetaLearnerInputContract:
         stacked = np.column_stack([oof_struct, oof_nlp])
 
         assert stacked.ndim == 2, "Stacked array must be 2-dimensional."
-        assert stacked.shape[1] == 2, (
-            f"Meta-learner input must have 2 columns, got {stacked.shape[1]}."
-        )
-        assert stacked.shape[0] == len(sample_train_df), (
-            "Stacked array row count must match training set size."
-        )
+        assert stacked.shape[1] == 2, f"Meta-learner input must have 2 columns, got {stacked.shape[1]}."
+        assert stacked.shape[0] == len(sample_train_df), "Stacked array row count must match training set size."
 
     def test_meta_learner_fits_on_stacked_oof(self, sample_train_df: pd.DataFrame) -> None:
         """Logistic Regression must fit without error on the [P_struct, P_nlp] input."""
@@ -330,14 +320,10 @@ class TestMetaLearnerInputContract:
         )
 
         struct_cols = _get_branch_columns(sample_train_df, STRUCTURED_PREFIX)
-        oof_s = cross_val_predict(
-            m, sample_train_df[struct_cols].to_numpy(), y, cv=cv, method="predict_proba"
-        )[:, 1]
+        oof_s = cross_val_predict(m, sample_train_df[struct_cols].to_numpy(), y, cv=cv, method="predict_proba")[:, 1]
 
         nlp_cols = _get_branch_columns(sample_train_df, (NLP_PREFIX,))
-        oof_n = cross_val_predict(
-            m, sample_train_df[nlp_cols].to_numpy(), y, cv=cv, method="predict_proba"
-        )[:, 1]
+        oof_n = cross_val_predict(m, sample_train_df[nlp_cols].to_numpy(), y, cv=cv, method="predict_proba")[:, 1]
 
         stacked = np.column_stack([oof_s, oof_n])
         meta = LogisticRegression(C=1.0, max_iter=200, random_state=42)
@@ -407,10 +393,10 @@ class TestEvaluationReportSchema:
         report = self._make_sample_report()
         report_path = tmp_path / "evaluation_report.json"
 
-        with open(report_path, "w") as f:
+        with report_path.open("w") as f:
             json.dump(report, f, indent=2)
 
-        with open(report_path) as f:
+        with report_path.open() as f:
             loaded = json.load(f)
 
         parsed = EvaluationReportSchema(**loaded)

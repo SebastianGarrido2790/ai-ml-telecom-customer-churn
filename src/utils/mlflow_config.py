@@ -56,17 +56,16 @@ def get_mlflow_uri(params_path: Path = PARAMS_FILE_PATH) -> str:
         return staging_uri
 
     # --- Priority 3: YAML fallback (local mode) ---
-    if params_file := Path(params_path):
-        if params_file.exists():
-            try:
-                with open(params_file) as f:
-                    params = yaml.safe_load(f)
-                    if params and "mlflow" in params and "uri" in params["mlflow"]:
-                        uri = params["mlflow"]["uri"]
-                        logger.info(f"[ENV={ENV}] Using MLflow URI from {params_path}: {uri}")
-                        return uri
-            except Exception as e:
-                logger.warning(f"Error reading {params_path}: {e}")
+    if (params_file := Path(params_path)) and params_file.exists():
+        try:
+            with params_file.open() as f:
+                params = yaml.safe_load(f)
+                if params and "mlflow" in params and "uri" in params["mlflow"]:
+                    uri = params["mlflow"]["uri"]
+                    logger.info(f"[ENV={ENV}] Using MLflow URI from {params_path}: {uri}")
+                    return uri
+        except Exception as e:
+            logger.warning(f"Error reading {params_path}: {e}")
 
     # Fallback for local
     local_uri = "file:./mlruns"
