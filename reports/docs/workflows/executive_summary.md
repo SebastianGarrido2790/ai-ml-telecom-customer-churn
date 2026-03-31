@@ -1,6 +1,6 @@
 # Executive Summary & Technical Roadmap: Telecom Customer Churn MLOps
 
-| **Version** | v1.2 |
+| **Version** | v1.3 |
 
 ## 1. Project Overview
 
@@ -175,19 +175,27 @@ DataFrame reconstruction, batch contracts.
 embedding service binds IPv4 only. Config uses `host: "127.0.0.1"` explicitly.
 Docker Compose (Phase 7) uses container DNS names — environment-specific.
 
-### Phase 7: UI Development & Containerization (PLANNED)
+### Phase 7: UI Development & Containerization (DONE ✅)
 
-- [ ] Develop **Gradio Dashboard** (`src/app/`): Interactive churn risk calculator with
+- [x] Develop **Gradio Dashboard** (`src/app/`): Interactive churn risk calculator with
       SHAP feature importance visualizations and `nlp_branch_available` status indicator.
       No monolithic `app.py` — split into pages, styles, and data loaders.
-- [ ] Write production-ready **multi-stage Dockerfiles** for both microservices.
-- [ ] Implement `docker-compose.yaml` orchestrating four services:
+- [x] Write production-ready **multi-stage Dockerfiles** for all services.
+- [x] Implement `docker-compose.yaml` orchestrating five services:
       `embedding-service` (8001), `prediction-api` (8000), `mlflow-server` (5000),
-      `gradio-ui` (7860). No deprecated `version:` key.
-- [ ] Configure `depends_on: condition: service_healthy` so the prediction API waits
+      `gradio-ui` (7860), and `postgres` (MLflow backend).
+- [x] Configure `depends_on: condition: service_healthy` so the prediction API waits
       for the embedding service warmup to complete before receiving traffic.
       `start_period: 30s` on the embedding service health check accommodates the
       SentenceTransformer load time.
+
+**Production Results (v1.0):**
+The system is fully containerized and orchestrated. The Gradio UI provides a premium,
+module-based user experience with real-time SHAP explanations and branch-level probability
+breakdowns.
+- **Health Status Banner**: Dynamic API connectivity monitoring.
+- **Dual-Branch Visualization**: Split probability bars for Structured vs. NLP branches.
+- **Observability**: Integrated deep links to the MLflow dashboard for full lineage.
 
 ### Phase 8: CI/CD & Cloud Deployment (AWS) (PLANNED)
 
@@ -224,10 +232,12 @@ Docker Compose (Phase 7) uses container DNS names — environment-specific.
 | Phase 4: NLP & Feature Engineering | [feature_engineering.md](../architecture/feature_engineering.md) |
 | Phase 5: Late Fusion Model Architecture | [model_training.md](../architecture/model_training.md) |
 | Phase 6: Microservice Inference Architecture | [inference_architecture.md](../architecture/inference_architecture.md) |
+| Phase 7: Gradio Dashboard Architecture | [gradio_ui.md](../architecture/gradio_ui.md) |
 | **Decision: Data Quality Checker** | [data_quality_checker.md](../decisions/data_quality_checker.md) |
 | **Decision: Late Fusion vs. Unified Model** | [model_architecture_decision.md](../decisions/model_architecture_decision.md) |
 | **Decision: Embedding Microservice Extraction** | [embedding_service_decision.md](../decisions/embedding_service_decision.md) |
 | **Decision: InferenceService Separation (D2)** | [inference_service_decision.md](../decisions/inference_service_decision.md) |
+| **Decision: Gradio Container Implementation** | [gradio.md](../decisions/gradio.md) |
 | DVC Pipeline DAG | [dvc_pipeline.md](../architecture/dvc_pipeline.md) |
 | Test Suite Coverage | [test_suite.md](../runbooks/test_suite.md) |
 

@@ -140,25 +140,30 @@ services:
       start_period: 20s
 
   # ---------------------------------------------------------------------------
-  # Gradio UI — Phase 7B Placeholder
-  # Uncomment when the Gradio dashboard is implemented.
+  # Gradio UI — Phase 7B
+  # Serves the Interactive Dashboard
   # ---------------------------------------------------------------------------
-  # gradio-ui:
-  #   build:
-  #     context: .
-  #     dockerfile: docker/gradio_ui/Dockerfile
-  #   image: telecom-churn/gradio-ui:latest
-  #   container_name: gradio-ui
-  #   ports:
-  #     - "7860:7860"
-  #   environment:
-  #     PREDICTION_API_URL: http://prediction-api:8000
-  #   depends_on:
-  #     prediction-api:
-  #       condition: service_healthy
-  #   networks:
-  #     - churn-net
-  #   restart: unless-stopped
+  gradio-ui:
+    build:
+      context: .
+      dockerfile: docker/gradio_ui/Dockerfile
+    image: telecom-churn/gradio-ui:latest
+    container_name: gradio-ui
+    ports:
+      - "7860:7860"
+    volumes:
+      # Mount required resources for SHAP explanations and MLflow tracking.
+      - ./artifacts/model_training:/app/artifacts/model_training:ro
+      - ./artifacts/feature_engineering:/app/artifacts/feature_engineering:ro
+      - ./mlruns:/app/mlruns:ro
+    environment:
+      PREDICTION_API_URL: http://prediction-api:8000
+    depends_on:
+      prediction-api:
+        condition: service_healthy
+    networks:
+      - churn-net
+    restart: unless-stopped
 
 # ---------------------------------------------------------------------------
 # Networks

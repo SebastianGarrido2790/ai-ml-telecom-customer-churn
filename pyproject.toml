@@ -31,6 +31,10 @@ dependencies = [
     # --- API / Serving ---
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
+    # --- Explainability ---
+    "shap>=0.46",
+    "numba>=0.57.0",
+    "matplotlib>=3.9",
     # --- UI ---
     "gradio>=5.0",
     # --- Utilities ---
@@ -90,4 +94,3 @@ testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "--cov=src --cov-report=term-missing"
 asyncio_mode = "auto"
-
