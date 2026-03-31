@@ -119,7 +119,7 @@ POST /v1/predict (high-risk profile: Fiber optic, month-to-month, tenure=1):
 → nlp_branch_available: true
 ```
 
-**Gradio UI** (port 7860): Planned — Phase 7.
+**Gradio UI** (port 7860): COMPLETE ✅ (Phase 7). Interactive dashboard with SHAP and MLflow integration.
 
 ### 3.4 FTI Pipeline Diagram
 
@@ -152,11 +152,11 @@ flowchart LR
 
     ModelRegistry[(Model Registry\ntelco-churn-late-fusion v2)]:::registry
 
-    subgraph IP ["Inference Pipeline ✅ Complete — Phase 6"]
+    subgraph IP ["Inference Pipeline ✅ Complete — Phase 6 & 7"]
         direction TB
         EmbedSvc[Embedding Microservice\nFastAPI :8001\nWarmup protocol]:::done
         PredAPI[Prediction API\nFastAPI :8000\nCircuit breaker]:::done
-        UX[Gradio Dashboard\n:7860]:::planned
+        UX[Gradio Dashboard\n:7860]:::done
         UX --> PredAPI --> EmbedSvc
     end
 
@@ -209,6 +209,13 @@ flowchart LR
 > See [inference_architecture.md](inference_architecture.md) for full architecture, circuit
 > breaker design, warmup protocol, and operational verification.
 
+8. **UI Development & Containerization (Phase 7 — Complete):** A dynamic Gradio Dashboard 
+   providing an interactive churn risk calculator, SHAP feature importance visualizations, 
+   and deep integration with MLflow. The entire 5-container infrastructure is orchestrated 
+   via Docker Compose.
+
+> See [gradio_ui.md](gradio_ui.md) for dashboard architecture and containerization details.
+
 ---
 
 ## 5. Technology Stack
@@ -226,7 +233,7 @@ flowchart LR
 | Data Validation | `great-expectations` v1.0+, `pydantic` v2.x |
 | Serving | `fastapi`, `uvicorn` (2 microservices — operational) |
 | Inter-service HTTP | `httpx` (async, with circuit breaker) |
-| UI (Planned) | `gradio` |
+| UI | `gradio` (Phase 7 — Complete) |
 | Linting / Formatting | `ruff` |
 | Observability | `logfire` (Phase 2 tracing), OpenTelemetry (Phase 9 planned) |
 
@@ -250,6 +257,11 @@ flowchart LR
 │   ├── params.yaml               # Tunable hyperparameters
 │   └── schema.yaml               # Data contracts (column names & types)
 ├── data/                         # Raw datasets managed by DVC
+├── docker/                       # Dockerfiles
+│   ├── embedding-service/        # Dockerfile for the embedding microservice
+│   ├── gradio-ui/                # Dockerfile for the Gradio dashboard
+│   ├── mlflow-server/            # Dockerfile for the MLflow server
+│   └── prediction-api/           # Dockerfile for the prediction microservice
 ├── reports/docs/                 # Product and technical documentation
 ├── src/
 │   ├── api/
@@ -265,8 +277,15 @@ flowchart LR
 │   ├── config/configuration.py   # ConfigurationManager — single YAML entry point
 │   ├── entity/config_entity.py   # Frozen dataclass configs + Pydantic row contracts
 │   ├── pipeline/                 # Conductor stages (stage_00 through stage_05)
+│   ├── ui/                       # Gradio dashboard (Phase 7)
+│   │   ├── app.py                # Main Gradio application
+│   │   ├── components/           # Reusable UI components
+│   │   ├── data_loaders/         # Data loading and preprocessing
+│   │   └── pages/                # Dashboard pages
 │   └── utils/                    # logger, feature_utils, exceptions, common
 ├── tests/unit/                   # 53 passing unit tests across 6 test files
+├── .dockerignore                 # Docker ignore file
+├── docker-compose.yml            # Orchestrates the 5-container infrastructure
 ├── dvc.yaml                      # 6-stage pipeline DAG
 └── pyproject.toml
 ```
@@ -290,4 +309,4 @@ flowchart LR
   verified (`churn_probability: 0.7006`, `nlp_branch_available: true`).
 - **Observability (Planned — Phase 9):** OpenTelemetry spans for Chain of Thought,
   tool latency, and token usage.
-- **HITL (Planned — Phase 7):** Key risk decisions surfaced through the Gradio dashboard.
+- **HITL (Phase 7 — Complete):** Key risk decisions surfaced through the Gradio dashboard, offering branch-level probability breakdowns and SHAP visual explanations.
