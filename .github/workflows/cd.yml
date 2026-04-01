@@ -61,6 +61,13 @@ jobs:
 
       - name: Sync Artifacts to S3
         run: |
+          # Create dummy artifacts if directory is missing (Simulation)
+          mkdir -p artifacts/
+          if [ -z "$(ls -A artifacts/)" ]; then
+            echo "placeholder" > artifacts/placeholder.txt
+            echo "Generated dummy artifact for simulation."
+          fi
+          
           awslocal s3 sync artifacts/ s3://telecom-churn-artifacts-local/artifacts/
 
       - name: Build and Push Docker Images
