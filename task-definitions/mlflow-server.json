@@ -1,0 +1,50 @@
+{
+  "family": "telecom-churn-mlflow-server",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn":      "arn:aws:iam::ACCOUNT_ID:role/ecsTaskRole",
+  "_comment": "MLflow ECS deployment deferred to Phase 9 (Decision K2). Task definition provided for reference. Requires EFS mount target configuration for mlruns persistence.",
+  "containerDefinitions": [
+    {
+      "name": "mlflow-server",
+      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/telecom-churn/mlflow-server:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 5000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "PYTHONUNBUFFERED",
+          "value": "1"
+        }
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD",
+          "python",
+          "-c",
+          "import httpx; httpx.get('http://localhost:5000/health').raise_for_status()"
+        ],
+        "interval": 15,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 20
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group":         "/ecs/telecom-churn/mlflow-server",
+          "awslogs-region":        "REPLACE_WITH_REGION",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group":  "true"
+        }
+      }
+    }
+  ]
+}

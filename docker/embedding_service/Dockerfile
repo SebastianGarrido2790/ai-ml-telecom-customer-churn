@@ -103,11 +103,17 @@ HEALTHCHECK --interval=10s --timeout=5s --retries=3 --start-period=60s \
 # package is imported and mkdir(exist_ok=True) is called.
 RUN mkdir -p logs reports/figures reports/docs data/raw data/external artifacts
 
+# Install awscli for Phase 8 S3 artifacts fetch at startup
+RUN apt-get update && apt-get install -y awscli && rm -rf /var/lib/apt/lists/*
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Ensure /app and all its children are owned by the non-root user (Rule 6.1)
 RUN chown -R appuser:appgroup /app
 
 USER appuser
 
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["uvicorn", "src.api.embedding_service.main:app", \
      "--host", "0.0.0.0", "--port", "8001", \
      "--workers", "1", "--log-level", "info"]

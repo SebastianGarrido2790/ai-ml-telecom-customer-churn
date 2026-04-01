@@ -1,0 +1,131 @@
+# =============================================================================
+# CD — Continuous Deployment (LocalStack Simulation)
+# Triggers only on push to main (post-merge from a reviewed PR).
+# Builds, tags, and deploys images to a mock LocalStack environment.
+#
+# Deployment scope (Decision K2):
+#   embedding-service  → LocalStack ECR + ECS
+#   prediction-api     → LocalStack ECR + ECS
+#   gradio-ui          → LocalStack ECR + ECS
+#
+# Authentication: Mock AWS Credentials (test/test) for LocalStack.
+# Artifact delivery: S3 fetch from LocalStack bucket at startup (Decision L1).
+# Deployment strategy: Simulated ECS Fargate deployment (Decision M1).
+# =============================================================================
+
+name: CD (LocalStack Simulation)
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+concurrency:
+  group: cd-main
+  cancel-in-progress: false
+
+jobs:
+  localstack-deploy:
+    name: Setup and Deploy to LocalStack
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ENDPOINT_URL: http://localhost:4566
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Start LocalStack
+        uses: LocalStack/setup-localstack@v0.2.3
+        with:
+          image-tag: 3.1.0
+          install-awslocal: "true"
+
+      - name: Initialize LocalStack Resources
+        run: |
+          # Create S3 Bucket and ECR Repositories
+          awslocal s3 mb s3://telecom-churn-artifacts-local
+          awslocal ecr create-repository --repository-name telecom-churn/prediction-api
+          awslocal ecr create-repository --repository-name telecom-churn/embedding-service
+          awslocal ecr create-repository --repository-name telecom-churn/gradio-ui
+
+          # Create ECS Cluster
+          awslocal ecs create-cluster --cluster-name default
+
+      - name: Sync Artifacts to S3
+        run: |
+          awslocal s3 sync artifacts/ s3://telecom-churn-artifacts-local/artifacts/
+
+      - name: Build and Push Docker Images
+        run: |
+          # Build images
+          docker build -t telecom-churn/prediction-api:latest -f docker/prediction_api/Dockerfile .
+          docker build -t telecom-churn/embedding-service:latest -f docker/embedding_service/Dockerfile .
+          docker build -t telecom-churn/gradio-ui:latest -f docker/gradio_ui/Dockerfile .
+
+          # Tag for LocalStack ECR
+          docker tag telecom-churn/prediction-api:latest localhost:4566/telecom-churn/prediction-api:latest
+          docker tag telecom-churn/embedding-service:latest localhost:4566/telecom-churn/embedding-service:latest
+          docker tag telecom-churn/gradio-ui:latest localhost:4566/telecom-churn/gradio-ui:latest
+
+          # Push to LocalStack ECR
+          docker push localhost:4566/telecom-churn/prediction-api:latest
+          docker push localhost:4566/telecom-churn/embedding-service:latest
+          docker push localhost:4566/telecom-churn/gradio-ui:latest
+
+      - name: Prepare Task Definitions for LocalStack
+        run: |
+          # Replace placeholder ARNs and Registry names with LocalStack equivalents
+          for file in task-definitions/*.json; do
+            sed -i 's/ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/localhost:4566/g' $file
+            sed -i 's/REPLACE_WITH_BUCKET_NAME/telecom-churn-artifacts-local/g' $file
+            sed -i 's/arn:aws:iam::ACCOUNT_ID:role\/ecsTaskExecutionRole/arn:aws:iam::000000000000:role\/ecsTaskExecutionRole/g' $file
+            sed -i 's/arn:aws:iam::ACCOUNT_ID:role\/ecsTaskRole/arn:aws:iam::000000000000:role\/ecsTaskRole/g' $file
+          done
+
+      - name: Register ECS Task Definitions
+        run: |
+          awslocal ecs register-task-definition --cli-input-json file://task-definitions/embedding-service.json
+          awslocal ecs register-task-definition --cli-input-json file://task-definitions/prediction-api.json
+          awslocal ecs register-task-definition --cli-input-json file://task-definitions/gradio-ui.json
+
+      - name: Deploy to LocalStack ECS
+        run: |
+          # Create dummy network resources for Fargate
+          awslocal ec2 create-vpc --cidr-block 10.0.0.0/16
+          VPC_ID=$(awslocal ec2 describe-vpcs --query 'Vpcs[0].VpcId' --output text)
+          SUBNET_ID=$(awslocal ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.1.0/24 --query 'Subnet.SubnetId' --output text)
+
+          # 1. Embedding Service
+          awslocal ecs create-service \
+            --cluster default \
+            --service-name embedding-service \
+            --task-definition telecom-churn-embedding-service \
+            --desired-count 1 \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_ID],assignPublicIp=ENABLED}"
+
+          # 2. Prediction API
+          awslocal ecs create-service \
+            --cluster default \
+            --service-name prediction-api \
+            --task-definition telecom-churn-prediction-api \
+            --desired-count 1 \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_ID],assignPublicIp=ENABLED}"
+
+          # 3. Gradio UI
+          awslocal ecs create-service \
+            --cluster default \
+            --service-name gradio-ui \
+            --task-definition telecom-churn-gradio-ui \
+            --desired-count 1 \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_ID],assignPublicIp=ENABLED}"
+
+      - name: Verify ECS Services Status
+        run: |
+          awslocal ecs list-services --cluster default

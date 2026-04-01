@@ -43,6 +43,12 @@ services:
       - ./artifacts/feature_engineering:/app/artifacts/feature_engineering:ro
     env_file:
       - .env
+    environment:
+      - AWS_ENDPOINT_URL=${AWS_ENDPOINT_URL:-http://localstack:4566}
+      - ARTIFACTS_S3_BUCKET=${ARTIFACTS_S3_BUCKET}
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
     networks:
       - churn-net
     restart: unless-stopped
@@ -84,6 +90,11 @@ services:
       # Override the embedding service host from config.yaml's 127.0.0.1
       # to the Docker Compose container DNS name.
       EMBEDDING_SERVICE_HOST: embedding-service
+      AWS_ENDPOINT_URL: ${AWS_ENDPOINT_URL:-http://localstack:4566}
+      ARTIFACTS_S3_BUCKET: ${ARTIFACTS_S3_BUCKET}
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
     env_file:
       - .env
     depends_on:
@@ -140,8 +151,9 @@ services:
       start_period: 20s
 
   # ---------------------------------------------------------------------------
-  # Gradio UI — Phase 7B
-  # Serves the Interactive Dashboard
+  # Gradio UI — Phase 7B (Active)
+  # In CI/CD (Phase 8), the 'image:' tag is overridden to the ECR URI by the
+  # CD workflow using aws-actions/amazon-ecs-render-task-definition.
   # ---------------------------------------------------------------------------
   gradio-ui:
     build:
@@ -152,18 +164,67 @@ services:
     ports:
       - "7860:7860"
     volumes:
-      # Mount required resources for SHAP explanations and MLflow tracking.
       - ./artifacts/model_training:/app/artifacts/model_training:ro
       - ./artifacts/feature_engineering:/app/artifacts/feature_engineering:ro
       - ./mlruns:/app/mlruns:ro
     environment:
       PREDICTION_API_URL: http://prediction-api:8000
+      AWS_ENDPOINT_URL: ${AWS_ENDPOINT_URL:-http://localstack:4566}
+      ARTIFACTS_S3_BUCKET: ${ARTIFACTS_S3_BUCKET}
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+    env_file:
+      - .env
     depends_on:
       prediction-api:
         condition: service_healthy
     networks:
       - churn-net
     restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import httpx; httpx.get('http://localhost:7860/').raise_for_status()",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # LocalStack Emulator
+  # Emulates AWS S3, ECR, and ECS for local CI/CD testing (Phase 8).
+  # ---------------------------------------------------------------------------
+  localstack:
+    image: localstack/localstack:3.1.0
+    container_name: localstack
+    ports:
+      - "4566:4566"            # LocalStack Edge Proxy
+    environment:
+      - DEBUG=0
+      - LOCALSTACK_ACKNOWLEDGE_ACCOUNT_REQUIREMENT=1
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - .:/workspace:ro
+    networks:
+      - churn-net
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:4566/_localstack/health"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
 # ---------------------------------------------------------------------------
 # Networks
@@ -180,5 +241,6 @@ networks:
 # All storage is currently via bind mounts (host paths) — named volumes
 # are reserved for Phase 8 where EFS/S3 replaces local bind mounts.
 # ---------------------------------------------------------------------------
-# volumes:
-#   mlruns_data:     # reserved for Phase 8 EFS migration
+volumes:
+  # mlflow_data:     # reserved for Phase 9 EFS migration
+  localstack_data:

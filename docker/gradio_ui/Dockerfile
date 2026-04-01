@@ -74,6 +74,11 @@ HEALTHCHECK --interval=15s --timeout=5s --retries=3 --start-period=30s \
 # so that the appuser has write access at startup.
 RUN mkdir -p logs reports/figures reports/docs data/raw data/external artifacts mlruns
 
+# Install awscli for Phase 8 S3 artifacts fetch at startup
+RUN apt-get update && apt-get install -y awscli && rm -rf /var/lib/apt/lists/*
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Ensure /app and all its children are owned by the non-root user (Rule 6.1)
 RUN chown -R appuser:appgroup /app
 
@@ -82,4 +87,5 @@ USER appuser
 ENV GRADIO_SERVER_PORT=7860
 ENV GRADIO_SERVER_NAME=0.0.0.0
 
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python", "-m", "src.ui.app"]

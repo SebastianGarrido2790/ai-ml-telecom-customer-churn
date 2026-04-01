@@ -74,6 +74,14 @@ if %ERRORLEVEL% NEQ 0 (
     echo      Embedding Service is ONLINE on port 8001.
 )
 
+:: Check Gradio UI (7860)
+powershell -Command "try { $c = New-Object System.Net.Sockets.TcpClient('localhost', 7860); if ($c.Connected) { exit 0 } else { exit 1 } } catch { exit 1 }"
+if %ERRORLEVEL% NEQ 0 (
+    echo      Gradio UI is OFFLINE on port 7860.
+) else (
+    echo      Gradio UI is ONLINE on port 7860.
+)
+
 echo      Done.
 echo.
 

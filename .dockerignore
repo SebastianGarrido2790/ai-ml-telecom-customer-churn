@@ -54,4 +54,4 @@ Thumbs.db
 .idea/
 
 # Docker build contexts (avoid recursive inclusion)
-docker/
+# docker/ (Removed to allow COPYing entrypoint.sh)

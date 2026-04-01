@@ -1,0 +1,58 @@
+{
+  "family": "telecom-churn-prediction-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn":      "arn:aws:iam::ACCOUNT_ID:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "prediction-api",
+      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/telecom-churn/prediction-api:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "PYTHONUNBUFFERED",
+          "value": "1"
+        },
+        {
+          "name": "ARTIFACTS_S3_BUCKET",
+          "value": "REPLACE_WITH_BUCKET_NAME"
+        },
+        {
+          "name": "EMBEDDING_SERVICE_HOST",
+          "value": "REPLACE_WITH_EMBEDDING_SERVICE_INTERNAL_DNS"
+        }
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD",
+          "python",
+          "-c",
+          "import httpx; httpx.get('http://localhost:8000/v1/health').raise_for_status()"
+        ],
+        "interval": 10,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 30
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group":         "/ecs/telecom-churn/prediction-api",
+          "awslogs-region":        "REPLACE_WITH_REGION",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group":  "true"
+        }
+      },
+      "readonlyRootFilesystem": false
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+# =============================================================================
+# CI — Continuous Integration
+# Runs on every push and every pull request targeting main.
+# Blocks merge if any quality pillar fails.
+#
+# Pillars (mirror validate_system.sh):
+#   1. Static Code Quality  — ruff check + ruff format + pyright
+#   2. Logic & Coverage     — pytest ≥ 65% coverage
+#
+# DVC pipeline synchronisation (Pillar 3) and service health (Pillar 4)
+# are environment-dependent and run in the CD workflow against the deployed
+# environment, not in CI where no services are running.
+# =============================================================================
+
+name: CI
+
+on:
+    push:
+        branches:
+            - "**"
+    pull_request:
+        branches:
+            - main
+
+# Cancel in-progress runs on the same branch/PR to save runner minutes.
+concurrency:
+    group: ci-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    quality:
+        name: "Quality Gate"
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+
+        steps:
+            # -----------------------------------------------------------------------
+            # 1. Checkout
+            # -----------------------------------------------------------------------
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            # -----------------------------------------------------------------------
+            # 2. Python + uv setup
+            # Cache the uv tool itself and the project venv to minimise install time.
+            # -----------------------------------------------------------------------
+            - name: Set up Python 3.11
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+
+            - name: Install uv
+              uses: astral-sh/setup-uv@v5
+              with:
+                  version: "0.6.14"
+                  enable-cache: true
+                  cache-dependency-glob: "pyproject.toml"
+
+            - name: Install project dependencies
+              run: uv sync --all-extras --frozen
+
+            # -----------------------------------------------------------------------
+            # Pillar 1: Static Code Quality
+            # -----------------------------------------------------------------------
+            - name: "Pillar 1a — ruff check"
+              run: uv run ruff check src/ tests/
+
+            - name: "Pillar 1b — ruff format check"
+              run: uv run ruff format --check src/ tests/
+
+            - name: "Pillar 1c — pyright type check"
+              run: uv run pyright
+              # pyright is allowed to report warnings without blocking CI;
+              # errors (exit code 1) will still fail the job.
+              continue-on-error: false
+
+            # -----------------------------------------------------------------------
+            # Pillar 2: Logic & Coverage
+            # -----------------------------------------------------------------------
+            - name: "Pillar 2 — pytest with coverage gate"
+              run: |
+                  uv run pytest tests/ \
+                    --cov=src \
+                    --cov-report=term-missing \
+                    --cov-report=xml:coverage.xml \
+                    --cov-fail-under=65 \
+                    --tb=short \
+                    -q
+
+            - name: Upload coverage report
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: coverage-report
+                  path: coverage.xml
+                  retention-days: 7

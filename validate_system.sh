@@ -135,8 +135,16 @@ else
     print_warn "Prediction API (8000): not responding — start with 'make up' or 'make up-build'"
 fi
 
-if $EMBED_OK && $PRED_OK; then
-    print_ok "Both services healthy"
+GRADIO_OK=false
+if curl -sf --max-time 5 http://localhost:7860/ > /dev/null 2>&1; then
+    print_ok "Gradio UI (7860): Responding with 200 OK"
+    GRADIO_OK=true
+else
+    print_warn "Gradio UI (7860): not responding — start with 'make up' or 'make up-build'"
+fi
+
+if $EMBED_OK && $PRED_OK && $GRADIO_OK; then
+    print_ok "All services healthy"
 fi
 
 # ---------------------------------------------------------------------------

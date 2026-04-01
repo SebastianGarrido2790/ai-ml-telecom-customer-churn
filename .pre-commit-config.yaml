@@ -1,0 +1,134 @@
+# =============================================================================
+# Pre-commit Hook Configuration
+# Enforces ruff, pyright, and general file hygiene locally before any commit
+# reaches CI. Mirrors Pillar 1 of validate_system.sh exactly.
+#
+# Installation (one-time, per developer machine):
+#   uv run pre-commit install
+#
+# Manual run against all files:
+#   uv run pre-commit run --all-files
+#
+# Update hook revisions:
+#   uv run pre-commit autoupdate
+# =============================================================================
+
+default_language_version:
+  python: python3.11
+
+# Run hooks on all staged files by default.
+# 'pre-commit run --all-files' overrides this for CI-style full scans.
+default_stages: [pre-commit]
+
+repos:
+
+  # ---------------------------------------------------------------------------
+  # General File Hygiene
+  # Catches common issues that slow down code review: trailing whitespace,
+  # missing newlines, large accidental file additions, and merge conflicts.
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        name: "Trim trailing whitespace"
+        exclude: "^(notebooks/|reports/)"
+
+      - id: end-of-file-fixer
+        name: "Ensure files end with newline"
+        exclude: "^(notebooks/|reports/)"
+
+      - id: check-yaml
+        name: "Validate YAML syntax"
+        args: ["--unsafe"]        # allow custom YAML tags (e.g., !reference)
+
+      - id: check-json
+        name: "Validate JSON syntax"
+        exclude: "^(task-definitions/)"  # task defs contain _comment keys (non-standard)
+
+      - id: check-toml
+        name: "Validate TOML syntax"
+
+      - id: check-merge-conflict
+        name: "Detect unresolved merge conflicts"
+
+      - id: check-added-large-files
+        name: "Block large file additions"
+        args: ["--maxkb=5000"]    # 5 MB limit — prevents accidental model/data commits
+
+      - id: check-case-conflict
+        name: "Detect case-insensitive filename conflicts"
+
+      - id: detect-private-key
+        name: "Block private key commits"
+
+      - id: mixed-line-ending
+        name: "Normalise line endings"
+        args: ["--fix=lf"]
+
+      - id: debug-statements
+        name: "Block debug statements (pdb, breakpoint)"
+
+  # ---------------------------------------------------------------------------
+  # Ruff — Linting + Import Sorting + Formatting
+  # Single tool replacing flake8, isort, and black.
+  # Config lives in pyproject.toml [tool.ruff].
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.2
+    hooks:
+      - id: ruff
+        name: "ruff lint + auto-fix"
+        args: ["--fix", "--exit-non-zero-on-fix"]
+        # Exit non-zero when fixes are applied so the developer sees what changed.
+        # The commit is blocked; re-staging the auto-fixed files and re-committing
+        # is the intended workflow.
+        types_or: [python, pyi]
+        exclude: "^notebooks/"
+
+      - id: ruff-format
+        name: "ruff format"
+        types_or: [python, pyi]
+        exclude: "^notebooks/"
+
+  # ---------------------------------------------------------------------------
+  # Pyright — Static Type Checking
+  # Runs only on staged Python files for speed.
+  # Config lives in pyproject.toml [tool.pyright].
+  # ---------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: pyright
+        name: "pyright type check"
+        entry: uv run pyright
+        language: system
+        types: [python]
+        pass_filenames: false    # pyright analyses the whole project, not per-file
+        exclude: "^(notebooks/|tests/)"
+
+  # ---------------------------------------------------------------------------
+  # DVC — Prevent committing DVC-tracked artifacts directly
+  # Artifacts in artifacts/ are managed by DVC and must not be committed to Git.
+  # ---------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: no-artifacts-in-git
+        name: "Block direct artifact commits (use DVC)"
+        entry: bash -c 'echo "ERROR: Do not commit artifacts/ directly — use dvc add + git add *.dvc" && exit 1'
+        language: system
+        files: "^artifacts/.*\\.(pkl|csv|json|png)$"
+        stages: [pre-commit]
+
+  # ---------------------------------------------------------------------------
+  # Environment File Safety
+  # Prevents .env files (containing real secrets) from being committed.
+  # .env.example is explicitly excluded — it is intentionally in version control.
+  # ---------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: no-env-files
+        name: "Block .env file commits"
+        entry: bash -c 'echo "ERROR: .env files contain secrets and must not be committed." && exit 1'
+        language: system
+        files: "^\\.env$"
+        stages: [pre-commit]

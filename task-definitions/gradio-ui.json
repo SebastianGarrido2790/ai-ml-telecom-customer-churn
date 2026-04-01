@@ -1,0 +1,70 @@
+{
+  "family": "telecom-churn-gradio-ui",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn":      "arn:aws:iam::ACCOUNT_ID:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "gradio-ui",
+      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/telecom-churn/gradio-ui:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 7860,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "PYTHONUNBUFFERED",
+          "value": "1"
+        },
+        {
+          "name": "PREDICTION_API_URL",
+          "value": "REPLACE_WITH_PREDICTION_API_INTERNAL_URL"
+        },
+        {
+          "name": "ARTIFACTS_S3_BUCKET",
+          "value": "REPLACE_WITH_BUCKET_NAME"
+        },
+        {
+          "name": "FEATURE_ENG_DIR",
+          "value": "/app/artifacts/feature_engineering"
+        },
+        {
+          "name": "MODEL_DIR",
+          "value": "/app/artifacts/model_training"
+        },
+        {
+          "name": "EVAL_REPORT_PATH",
+          "value": "/app/artifacts/model_training/evaluation_report.json"
+        }
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD",
+          "python",
+          "-c",
+          "import httpx; httpx.get('http://localhost:7860/').raise_for_status()"
+        ],
+        "interval": 15,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 30
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group":         "/ecs/telecom-churn/gradio-ui",
+          "awslogs-region":        "REPLACE_WITH_REGION",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group":  "true"
+        }
+      },
+      "readonlyRootFilesystem": false
+    }
+  ]
+}
