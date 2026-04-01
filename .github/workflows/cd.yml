@@ -54,11 +54,10 @@ jobs:
           # Create S3 Bucket (Community support)
           awslocal s3 mb s3://telecom-churn-artifacts-local
 
-          # Skip ECR creation (Pro feature)
+          # Skip ECR and ECS Cluster creation (Pro features in LocalStack)
           echo "Simulating ECR success for localhost:5000"
-
-          # Create ECS Cluster (Community support)
-          awslocal ecs create-cluster --cluster-name default
+          echo "Simulating ECS Cluster creation for 'default'..."
+          echo "awslocal ecs create-cluster --cluster-name default"
 
       - name: Sync Artifacts to S3
         run: |
