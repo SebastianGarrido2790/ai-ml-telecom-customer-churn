@@ -60,7 +60,11 @@ async def test_generate_ticket_note_google_success(mock_customer_context, mock_e
     """Test successful primary LLM call (Google)."""
     expected_output = SyntheticNoteOutput(ticket_note="Success from Google", primary_sentiment_tag="Neutral")
 
-    with patch("src.components.data_enrichment.generator.Agent") as mock_agent_class:
+    with (
+        patch("src.components.data_enrichment.generator.GoogleProvider"),
+        patch("src.components.data_enrichment.generator.GoogleModel"),
+        patch("src.components.data_enrichment.generator.Agent") as mock_agent_class,
+    ):
         mock_agent = mock_agent_class.return_value
         mock_agent.run = AsyncMock()
         mock_agent.run.return_value.data = expected_output
@@ -75,7 +79,11 @@ async def test_generate_ticket_note_google_success(mock_customer_context, mock_e
 @pytest.mark.asyncio
 async def test_generate_ticket_note_google_fail_fallback_to_deterministic(mock_customer_context, mock_enrich_config):
     """Test that Google failure triggers deterministic fallback (non-hybrid)."""
-    with patch("src.components.data_enrichment.generator.Agent") as mock_agent_class:
+    with (
+        patch("src.components.data_enrichment.generator.GoogleProvider"),
+        patch("src.components.data_enrichment.generator.GoogleModel"),
+        patch("src.components.data_enrichment.generator.Agent") as mock_agent_class,
+    ):
         mock_agent = mock_agent_class.return_value
         mock_agent.run = AsyncMock(side_effect=Exception("API Error"))
 
@@ -95,13 +103,19 @@ async def test_generate_ticket_note_hybrid_google_fail_ollama_success(mock_custo
 
     expected_ollama_output = {"response": '{"ticket_note": "Success from Ollama", "primary_sentiment_tag": "Neutral"}'}
 
-    with patch("src.components.data_enrichment.generator.Agent") as mock_agent_class:
+    with (
+        patch("src.components.data_enrichment.generator.GoogleProvider"),
+        patch("src.components.data_enrichment.generator.GoogleModel"),
+        patch("src.components.data_enrichment.generator.Agent") as mock_agent_class,
+    ):
         mock_agent = mock_agent_class.return_value
         mock_agent.run = AsyncMock(side_effect=Exception("Google Down"))
 
         with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
             mock_post.return_value.status_code = 200
             mock_post.return_value.json = MagicMock(return_value=expected_ollama_output)
+            # Ensure raise_for_status is not an AsyncMock to avoid 'never awaited' warning
+            mock_post.return_value.raise_for_status = MagicMock()
 
             result = await generate_ticket_note(mock_customer_context, mock_enrich_config)
 

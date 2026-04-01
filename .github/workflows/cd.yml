@@ -45,15 +45,19 @@ jobs:
           image-tag: 3.1.0
           install-awslocal: "true"
 
+      - name: Start Local Docker Registry
+        run: |
+          docker run -d -p 5000:5000 --name registry registry:2
+
       - name: Initialize LocalStack Resources
         run: |
-          # Create S3 Bucket and ECR Repositories
+          # Create S3 Bucket (Community support)
           awslocal s3 mb s3://telecom-churn-artifacts-local
-          awslocal ecr create-repository --repository-name telecom-churn/prediction-api
-          awslocal ecr create-repository --repository-name telecom-churn/embedding-service
-          awslocal ecr create-repository --repository-name telecom-churn/gradio-ui
 
-          # Create ECS Cluster
+          # Skip ECR creation (Pro feature)
+          echo "Simulating ECR success for localhost:5000"
+
+          # Create ECS Cluster (Community support)
           awslocal ecs create-cluster --cluster-name default
 
       - name: Sync Artifacts to S3
@@ -67,21 +71,21 @@ jobs:
           docker build -t telecom-churn/embedding-service:latest -f docker/embedding_service/Dockerfile .
           docker build -t telecom-churn/gradio-ui:latest -f docker/gradio_ui/Dockerfile .
 
-          # Tag for LocalStack ECR
-          docker tag telecom-churn/prediction-api:latest localhost:4566/telecom-churn/prediction-api:latest
-          docker tag telecom-churn/embedding-service:latest localhost:4566/telecom-churn/embedding-service:latest
-          docker tag telecom-churn/gradio-ui:latest localhost:4566/telecom-churn/gradio-ui:latest
+          # Tag for Local Registry (simulating ECR)
+          docker tag telecom-churn/prediction-api:latest localhost:5000/telecom-churn/prediction-api:latest
+          docker tag telecom-churn/embedding-service:latest localhost:5000/telecom-churn/embedding-service:latest
+          docker tag telecom-churn/gradio-ui:latest localhost:5000/telecom-churn/gradio-ui:latest
 
-          # Push to LocalStack ECR
-          docker push localhost:4566/telecom-churn/prediction-api:latest
-          docker push localhost:4566/telecom-churn/embedding-service:latest
-          docker push localhost:4566/telecom-churn/gradio-ui:latest
+          # Push to Local Registry
+          docker push localhost:5000/telecom-churn/prediction-api:latest
+          docker push localhost:5000/telecom-churn/embedding-service:latest
+          docker push localhost:5000/telecom-churn/gradio-ui:latest
 
       - name: Prepare Task Definitions for LocalStack
         run: |
-          # Replace placeholder ARNs and Registry names with LocalStack equivalents
+          # Replace placeholder ARNs and Registry names with Local Registry (5000)
           for file in task-definitions/*.json; do
-            sed -i 's/ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/localhost:4566/g' $file
+            sed -i 's/ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/localhost:5000/g' $file
             sed -i 's/REPLACE_WITH_BUCKET_NAME/telecom-churn-artifacts-local/g' $file
             sed -i 's/arn:aws:iam::ACCOUNT_ID:role\/ecsTaskExecutionRole/arn:aws:iam::000000000000:role\/ecsTaskExecutionRole/g' $file
             sed -i 's/arn:aws:iam::ACCOUNT_ID:role\/ecsTaskRole/arn:aws:iam::000000000000:role\/ecsTaskRole/g' $file

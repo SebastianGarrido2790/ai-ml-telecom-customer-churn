@@ -1,3 +1,0 @@
-c:\Users\sebas\Desktop\ai-ml-telecom-customer-churn\src\components\model_training\evaluator.py
-  c:\Users\sebas\Desktop\ai-ml-telecom-customer-churn\src\components\model_training\evaluator.py:331:20 - error: "sklearn" is not exported from module "mlflow" (reportPrivateImportUsage)
-1 error, 0 warnings, 0 informations
