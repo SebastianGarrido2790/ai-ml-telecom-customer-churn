@@ -152,7 +152,7 @@ class InferenceService:
                     "PaymentMethod": c.PaymentMethod,
                 }
             )
-        return pd.DataFrame(records, columns=STRUCTURED_RAW_COLS)
+        return pd.DataFrame(records, columns=pd.Index(STRUCTURED_RAW_COLS))
 
     async def _get_embeddings(self, ticket_notes: list[str]) -> tuple[np.ndarray, bool]:
         """Fetches PCA-reduced embeddings from the Embedding Microservice.
@@ -222,19 +222,33 @@ class InferenceService:
         """
         # --- Step 1 & 2: Structured preprocessing ---
         struct_df = self._build_structured_df(customers)
-        struct_features: np.ndarray = self.structured_preprocessor.transform(  # type: ignore[attr-defined]
+        from pandas import DataFrame, Series
+
+        struct_features: np.ndarray | DataFrame | Series = self.structured_preprocessor.transform(  # type: ignore[attr-defined]
             struct_df
         )
-        if hasattr(struct_features, "to_numpy"):
-            struct_features = struct_features.to_numpy()
+
+        # Ensure numpy array for model consumption
+        from typing import Any, cast
+
+        if hasattr(struct_features, "toarray"):
+            struct_features_np: np.ndarray = cast(Any, struct_features).toarray()
+        elif hasattr(struct_features, "to_numpy"):
+            struct_features_np: np.ndarray = cast(Any, struct_features).to_numpy()
+        elif hasattr(struct_features, "values"):
+            struct_features_np: np.ndarray = cast(Any, struct_features).values
+        else:
+            struct_features_np = np.asarray(struct_features)
 
         # --- Step 3: NLP embeddings (with circuit breaker) ---
         ticket_notes = [c.ticket_note for c in customers]
+        nlp_features: np.ndarray
+        nlp_available: bool
         nlp_features, nlp_available = await self._get_embeddings(ticket_notes)
 
         # --- Steps 4 & 5: Base model probabilities ---
         p_struct_arr: np.ndarray = self.structured_model.predict_proba(  # type: ignore[attr-defined]
-            struct_features
+            struct_features_np
         )[:, 1]
         p_nlp_arr: np.ndarray = self.nlp_model.predict_proba(  # type: ignore[attr-defined]
             nlp_features

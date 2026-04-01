@@ -10,7 +10,7 @@ integrates local SHAP explanations for transparency.
 from typing import Any
 
 import gradio as gr
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 
 from src.ui.components.shap_chart import get_shap_plot
 from src.ui.data_loaders.api_client import predict_single
@@ -110,7 +110,7 @@ def create_single_predict_tab() -> None:
             mon: float,
             tot: str,
             t_note: str,
-        ) -> tuple[float | None, str, float | None, float | None, str, plt.Figure | None]:
+        ) -> tuple[float | None, str, float | None, float | None, str, Figure | None]:
             """Local handler for the prediction button click event.
 
             Orchestrates input validation, the API call to the prediction

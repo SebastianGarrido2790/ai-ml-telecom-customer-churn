@@ -14,6 +14,8 @@ Leakage Prevention (C1 Fix):
       internet type, tech support availability, contract type, and charges.
 """
 
+from typing import Any, cast
+
 from pydantic_ai import Agent
 from pydantic_ai.exceptions import UnexpectedModelBehavior
 from pydantic_ai.models.google import GoogleModel
@@ -53,7 +55,7 @@ async def _call_google_llm(user_prompt: str, model_name: str, base_url: str | No
         retries=3,
     )
     result = await agent.run(user_prompt)
-    return result.data
+    return cast(Any, result).data
 
 
 async def _call_ollama_llm(user_prompt: str, model_name: str, base_url: str | None) -> SyntheticNoteOutput:

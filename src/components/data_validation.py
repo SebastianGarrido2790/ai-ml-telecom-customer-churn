@@ -32,9 +32,9 @@ class DataValidator:
                               If None, uses ephemeral context (standard for microservices).
         """
         if data_context_path:
-            self.context = gx.get_context(context_root_dir=str(data_context_path))
+            self.context: Any = gx.get_context(context_root_dir=str(data_context_path))
         else:
-            self.context = gx.get_context()
+            self.context: Any = gx.get_context()
 
     def build_raw_telco_suite(
         self, suite_name: str = "raw_telco_churn_suite", schema: dict[str, Any] | None = None
@@ -52,17 +52,17 @@ class DataValidator:
         Returns:
             ExpectationSuite: The populated suite.
         """
-        from great_expectations.expectations import (
+        from great_expectations.expectations.core.expect_column_values_to_be_between import (
             ExpectColumnValuesToBeBetween,
-            ExpectColumnValuesToBeInSet,
-            ExpectTableColumnsToMatchSet,
         )
+        from great_expectations.expectations.core.expect_column_values_to_be_in_set import ExpectColumnValuesToBeInSet
+        from great_expectations.expectations.core.expect_table_columns_to_match_set import ExpectTableColumnsToMatchSet
 
         try:
             suite = self.context.suites.get(name=suite_name)
             return suite
         except Exception:
-            suite = gx.ExpectationSuite(name=suite_name)
+            suite = ExpectationSuite(name=suite_name)
 
         # 1. Column Presence (Driven by schema.yaml if available)
         if schema:
@@ -122,18 +122,20 @@ class DataValidator:
         Returns:
             ExpectationSuite: The populated suite.
         """
-        from great_expectations.expectations import (
+        from great_expectations.expectations.core.expect_column_value_lengths_to_be_between import (
             ExpectColumnValueLengthsToBeBetween,
-            ExpectColumnValuesToBeInSet,
-            ExpectColumnValuesToNotBeNull,
-            ExpectTableColumnsToMatchSet,
         )
+        from great_expectations.expectations.core.expect_column_values_to_be_in_set import ExpectColumnValuesToBeInSet
+        from great_expectations.expectations.core.expect_column_values_to_not_be_null import (
+            ExpectColumnValuesToNotBeNull,
+        )
+        from great_expectations.expectations.core.expect_table_columns_to_match_set import ExpectTableColumnsToMatchSet
 
         try:
             suite = self.context.suites.get(name=suite_name)
             return suite
         except Exception:
-            suite = gx.ExpectationSuite(name=suite_name)
+            suite = ExpectationSuite(name=suite_name)
 
         # 0. Column Presence (Driven by schema.yaml if available)
         if schema:
@@ -194,17 +196,19 @@ class DataValidator:
         datasource = self.context.get_datasource(datasource_name)
         data_asset_name = f"asset_{dataset_id}"
         # In GX 1.0, for pandas, we can use read_dataframe to get a batch directly
-        batch = datasource.read_dataframe(dataframe=df, asset_name=data_asset_name)
+        batch = datasource.read_dataframe(dataframe=df, asset_name=data_asset_name)  # type: ignore
 
         validator = self.context.get_validator(batch=batch, expectation_suite_name=suite_name)
 
         results = validator.validate()
 
-        if not results["success"]:
+        results_dict = results.to_json_dict()  # type: ignore
+        if not results_dict.get("success"):
             # Extract failed expectations for the exception context
-            failed_results = [r for r in results["results"] if not r["success"]]
+            results_list: list[Any] = results_dict.get("results", [])
+            failed_results = [r for r in results_list if not r.get("success")]
             failed_logs = [
-                f"{r['expectation_config']['type']} on '{r['expectation_config']['kwargs'].get('column', 'table')}'"
+                f"{r.get('expectation_config', {}).get('type')} on '{r.get('expectation_config', {}).get('kwargs', {}).get('column', 'table')}'"
                 for r in failed_results[:5]
             ]
 
@@ -222,4 +226,4 @@ class DataValidator:
             )
 
         logger.info(f"Validation successful for {dataset_id} using suite {suite_name}")
-        return results.to_json_dict()
+        return results.to_json_dict()  # type: ignore

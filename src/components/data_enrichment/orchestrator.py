@@ -14,6 +14,7 @@ Leakage Prevention (C1 Fix):
 
 import asyncio
 from pathlib import Path
+from typing import Any, cast
 
 import pandas as pd
 from pydantic import ValidationError
@@ -79,22 +80,22 @@ class EnrichmentOrchestrator:
             try:
                 context = CustomerInputContext(
                     customerID=str(row.get("customerID", "unknown")),
-                    tenure=int(row.get("tenure", 0)),
+                    tenure=int(cast(Any, row.get("tenure", 0))),
                     gender=str(row.get("gender", "Female")),
-                    SeniorCitizen=int(row.get("SeniorCitizen", 0)),
+                    SeniorCitizen=int(cast(Any, row.get("SeniorCitizen", 0))),
                     Partner=str(row.get("Partner", "No")),
                     Dependents=str(row.get("Dependents", "No")),
-                    InternetService=str(row.get("InternetService", "No")),
-                    OnlineSecurity=str(row.get("OnlineSecurity", "No")),
-                    OnlineBackup=str(row.get("OnlineBackup", "No")),
-                    DeviceProtection=str(row.get("DeviceProtection", "No")),
-                    TechSupport=str(row.get("TechSupport", "No")),
-                    StreamingTV=str(row.get("StreamingTV", "No")),
-                    StreamingMovies=str(row.get("StreamingMovies", "No")),
-                    Contract=str(row.get("Contract", "Month-to-month")),
+                    InternetService=cast(Any, str(row.get("InternetService", "No"))),
+                    OnlineSecurity=cast(Any, str(row.get("OnlineSecurity", "No"))),
+                    OnlineBackup=cast(Any, str(row.get("OnlineBackup", "No"))),
+                    DeviceProtection=cast(Any, str(row.get("DeviceProtection", "No"))),
+                    TechSupport=cast(Any, str(row.get("TechSupport", "No"))),
+                    StreamingTV=cast(Any, str(row.get("StreamingTV", "No"))),
+                    StreamingMovies=cast(Any, str(row.get("StreamingMovies", "No"))),
+                    Contract=cast(Any, str(row.get("Contract", "Month-to-month"))),
                     PaperlessBilling=str(row.get("PaperlessBilling", "No")),
                     PaymentMethod=str(row.get("PaymentMethod", "Mailed check")),
-                    MonthlyCharges=float(row.get("MonthlyCharges", 0.0)),
+                    MonthlyCharges=float(cast(Any, row.get("MonthlyCharges", 0.0))),
                 )
                 res = await generate_ticket_note(context, config=self.config)
                 return real_idx, res
@@ -138,8 +139,11 @@ class EnrichmentOrchestrator:
         if self.output_path.exists():
             logger.info(f"Found existing enrichment file at {self.output_path}. Resuming progress...")
             existing_df = pd.read_csv(self.output_path)
-            existing_map = existing_df.set_index("customerID")[["ticket_note", "primary_sentiment_tag"]].to_dict(
-                "index"
+            existing_map = cast(
+                dict[Any, dict[str, Any]],
+                cast(Any, existing_df.set_index("customerID")[["ticket_note", "primary_sentiment_tag"]]).to_dict(
+                    orient="index"
+                ),
             )
 
             for idx, row in df.iterrows():

@@ -15,6 +15,7 @@ import joblib
 import matplotlib.pyplot as plt
 import pandas as pd
 import shap
+from matplotlib.figure import Figure
 
 from src.utils.logger import get_logger
 
@@ -52,7 +53,7 @@ def _load_artifacts() -> None:
             _structured_model = None
 
 
-def get_shap_plot(customer_data: dict[str, Any]) -> plt.Figure | None:
+def get_shap_plot(customer_data: dict[str, Any]) -> Figure | None:
     """Generates a SHAP waterfall chart for a single customer prediction.
 
     Reconstructs the raw feature DataFrame, applies the structured
@@ -101,7 +102,7 @@ def get_shap_plot(customer_data: dict[str, Any]) -> plt.Figure | None:
     if "TotalCharges" in customer_data and customer_data["TotalCharges"] is None:
         row["TotalCharges"] = ""
 
-    df = pd.DataFrame([row], columns=structured_raw_cols)
+    df = pd.DataFrame([row], columns=pd.Index(structured_raw_cols))
 
     # Preprocess
     # structured_preprocessor from feature_engineering yields a pandas dataframe

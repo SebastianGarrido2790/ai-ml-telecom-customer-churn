@@ -71,17 +71,26 @@ async def embed(payload: EmbedRequest, request: Request) -> EmbedResponse:
 
     try:
         import pandas as pd
+        from pandas import DataFrame, Series
 
         # ColumnTransformer expects a DataFrame with the 'ticket_note' column
         notes_df = pd.DataFrame({"ticket_note": payload.ticket_notes})
-        transformed: np.ndarray = preprocessor.transform(notes_df)
+        transformed: np.ndarray | DataFrame | Series = preprocessor.transform(notes_df)
 
         # Ensure numpy array for serialization
-        if hasattr(transformed, "to_numpy"):
-            transformed = transformed.to_numpy()
+        from typing import Any, cast
 
-        embeddings: list[list[float]] = transformed.tolist()
-        dim = transformed.shape[1]
+        if hasattr(transformed, "toarray"):
+            transformed_np: np.ndarray = cast(Any, transformed).toarray()
+        elif hasattr(transformed, "to_numpy"):
+            transformed_np: np.ndarray = cast(Any, transformed).to_numpy()
+        elif hasattr(transformed, "values"):
+            transformed_np: np.ndarray = cast(Any, transformed).values
+        else:
+            transformed_np = np.asarray(transformed)
+
+        embeddings: list[list[float]] = transformed_np.tolist()
+        dim = transformed_np.shape[1]
 
     except Exception as exc:
         logger.error(f"Embedding transform failed: {exc!s}")

@@ -26,15 +26,14 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import joblib
 import matplotlib.pyplot as plt
 import mlflow
-import mlflow.sklearn
-import mlflow.xgboost
 import numpy as np
 import pandas as pd
+from mlflow import sklearn, xgboost
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
@@ -201,12 +200,12 @@ class LateFusionEvaluator:
 
         X_val_struct = _extract(val_df, STRUCTURED_PREFIX)
         X_val_nlp = _extract(val_df, (NLP_PREFIX,))
-        y_val_series: pd.Series = val_df[target]
+        y_val_series: pd.Series = cast(pd.Series, val_df[target])
         y_val, _ = _encode_target(y_val_series)
 
         X_test_struct = _extract(test_df, STRUCTURED_PREFIX)
         X_test_nlp = _extract(test_df, (NLP_PREFIX,))
-        y_test_series: pd.Series = test_df[target]
+        y_test_series: pd.Series = cast(pd.Series, test_df[target])
         y_test, _ = _encode_target(y_test_series)
 
         return (
@@ -262,7 +261,7 @@ class LateFusionEvaluator:
             mlflow.log_metrics(metrics_struct)
             # Use explicit submodule import if needed, but here we assume it's correctly imported as mlflow.xgboost
             # Pyright might need help:
-            mlflow.xgboost.log_model(structured_model, artifact_path="model")  # type: ignore
+            xgboost.log_model(structured_model, artifact_path="model")  # type: ignore
 
             _log_confusion_matrix(y_test, y_pred_struct, "structured_baseline", self._artifact_dir)
             _log_feature_importance(structured_model, "structured_baseline", self._artifact_dir)
@@ -284,7 +283,7 @@ class LateFusionEvaluator:
 
             mlflow.log_params({"branch": "nlp", "model": "xgboost"})
             mlflow.log_metrics(metrics_nlp)
-            mlflow.xgboost.log_model(nlp_model, artifact_path="model")  # type: ignore
+            xgboost.log_model(nlp_model, artifact_path="model")  # type: ignore
 
             _log_confusion_matrix(y_test, y_pred_nlp, "nlp_baseline", self._artifact_dir)
             _log_feature_importance(nlp_model, "nlp_baseline", self._artifact_dir)
@@ -328,7 +327,7 @@ class LateFusionEvaluator:
                     "f1_lift": f1_lift,
                 }
             )
-            mlflow.sklearn.log_model(
+            sklearn.log_model(
                 meta_model,
                 artifact_path="model",
                 registered_model_name="telco-churn-late-fusion",

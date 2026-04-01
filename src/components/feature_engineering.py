@@ -203,22 +203,40 @@ class FeatureEngineering:
 
         logger.info(f"Performing 3-way stratified split (val={self.config.val_size}, test={self.config.test_size})")
 
-        X_temp, X_test, y_temp, y_test = train_test_split(
-            X,
-            y,
-            test_size=self.config.test_size,
-            random_state=self.config.random_state,
-            stratify=y,
+        from typing import Any, cast
+
+        X_temp: pd.DataFrame
+        X_test: pd.DataFrame
+        y_temp: pd.Series
+        y_test: pd.Series
+
+        (X_temp, X_test, y_temp, y_test) = cast(
+            Any,
+            train_test_split(
+                X,
+                y,
+                test_size=self.config.test_size,
+                random_state=self.config.random_state,
+                stratify=y,
+            ),
         )
 
         val_prop = self.config.val_size / (1.0 - self.config.test_size)
 
-        X_train, X_val, y_train, y_val = train_test_split(
-            X_temp,
-            y_temp,
-            test_size=val_prop,
-            random_state=self.config.random_state,
-            stratify=y_temp,
+        X_train: pd.DataFrame
+        X_val: pd.DataFrame
+        y_train: pd.Series
+        y_val: pd.Series
+
+        (X_train, X_val, y_train, y_val) = cast(
+            Any,
+            train_test_split(
+                X_temp,
+                y_temp,
+                test_size=val_prop,
+                random_state=self.config.random_state,
+                stratify=y_temp,
+            ),
         )
 
         logger.info(f"Split sizes — Train: {X_train.shape}, Val: {X_val.shape}, Test: {X_test.shape}")

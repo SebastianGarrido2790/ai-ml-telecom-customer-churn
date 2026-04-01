@@ -16,9 +16,9 @@
 default_language_version:
   python: python3.11
 
-# Run hooks on all staged files by default.
 # 'pre-commit run --all-files' overrides this for CI-style full scans.
 default_stages: [pre-commit]
+exclude: "^(\\.dvc/|notebooks/|reports/|artifacts/|mlruns/|logs/|\\.tmp-dynamic-uses/)"
 
 repos:
 
@@ -114,7 +114,8 @@ repos:
     hooks:
       - id: no-artifacts-in-git
         name: "Block direct artifact commits (use DVC)"
-        entry: bash -c 'echo "ERROR: Do not commit artifacts/ directly — use dvc add + git add *.dvc" && exit 1'
+        entry: |
+          bash -c 'echo "ERROR: Do not commit artifacts/ directly — use dvc add + git add *.dvc" && exit 1'
         language: system
         files: "^artifacts/.*\\.(pkl|csv|json|png)$"
         stages: [pre-commit]
@@ -128,7 +129,8 @@ repos:
     hooks:
       - id: no-env-files
         name: "Block .env file commits"
-        entry: bash -c 'echo "ERROR: .env files contain secrets and must not be committed." && exit 1'
+        entry: |
+          bash -c 'echo "ERROR: .env files contain secrets and must not be committed." && exit 1'
         language: system
         files: "^\\.env$"
         stages: [pre-commit]

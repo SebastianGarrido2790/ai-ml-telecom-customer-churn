@@ -1,0 +1,926 @@
+{
+    "version": "1.1.408",
+    "time": "1775073503994",
+    "generalDiagnostics": [
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\api\\embedding_service\\router.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"toarray\" for class \"ndarray[_AnyShape, dtype[Any]]\"\n  Attribute \"toarray\" is unknown",
+            "range": {
+                "start": {
+                    "line": 81,
+                    "character": 53
+                },
+                "end": {
+                    "line": 81,
+                    "character": 60
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\api\\embedding_service\\router.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"to_numpy\" for class \"ndarray[_AnyShape, dtype[Any]]\"\n  Attribute \"to_numpy\" is unknown",
+            "range": {
+                "start": {
+                    "line": 83,
+                    "character": 53
+                },
+                "end": {
+                    "line": 83,
+                    "character": 61
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\api\\embedding_service\\router.py",
+            "severity": "error",
+            "message": "Type \"ArrayLike | Unknown\" is not assignable to declared type \"ndarray[_AnyShape, dtype[Any]]\"\n  Type \"ArrayLike | Unknown\" is not assignable to type \"ndarray[_AnyShape, dtype[Any]]\"\n    \"ExtensionArray\" is not assignable to \"ndarray[_AnyShape, dtype[Any]]\"",
+            "range": {
+                "start": {
+                    "line": 85,
+                    "character": 41
+                },
+                "end": {
+                    "line": 85,
+                    "character": 59
+                }
+            },
+            "rule": "reportAssignmentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\api\\embedding_service\\router.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"values\" for class \"ndarray[_AnyShape, dtype[Any]]\"\n  Attribute \"values\" is unknown",
+            "range": {
+                "start": {
+                    "line": 85,
+                    "character": 53
+                },
+                "end": {
+                    "line": 85,
+                    "character": 59
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\api\\prediction_service\\inference.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"toarray\" for class \"ndarray[_AnyShape, dtype[Any]]\"\n  Attribute \"toarray\" is unknown",
+            "range": {
+                "start": {
+                    "line": 232,
+                    "character": 61
+                },
+                "end": {
+                    "line": 232,
+                    "character": 68
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\api\\prediction_service\\inference.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"to_numpy\" for class \"ndarray[_AnyShape, dtype[Any]]\"\n  Attribute \"to_numpy\" is unknown",
+            "range": {
+                "start": {
+                    "line": 234,
+                    "character": 61
+                },
+                "end": {
+                    "line": 234,
+                    "character": 69
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\api\\prediction_service\\inference.py",
+            "severity": "error",
+            "message": "Type \"ArrayLike | Unknown\" is not assignable to declared type \"ndarray[_AnyShape, dtype[Any]]\"\n  Type \"ArrayLike | Unknown\" is not assignable to type \"ndarray[_AnyShape, dtype[Any]]\"\n    \"ExtensionArray\" is not assignable to \"ndarray[_AnyShape, dtype[Any]]\"",
+            "range": {
+                "start": {
+                    "line": 236,
+                    "character": 45
+                },
+                "end": {
+                    "line": 236,
+                    "character": 67
+                }
+            },
+            "rule": "reportAssignmentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\api\\prediction_service\\inference.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"values\" for class \"ndarray[_AnyShape, dtype[Any]]\"\n  Attribute \"values\" is unknown",
+            "range": {
+                "start": {
+                    "line": 236,
+                    "character": 61
+                },
+                "end": {
+                    "line": 236,
+                    "character": 67
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\data_enrichment\\generator.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"data\" for class \"AgentRunResult[SyntheticNoteOutput]\"\n  Attribute \"data\" is unknown",
+            "range": {
+                "start": {
+                    "line": 55,
+                    "character": 18
+                },
+                "end": {
+                    "line": 55,
+                    "character": 22
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\data_enrichment\\orchestrator.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | None\" cannot be assigned to parameter \"x\" of type \"ConvertibleToInt\" in function \"__new__\"\n  Type \"Unknown | None\" is not assignable to type \"ConvertibleToInt\"\n    Type \"None\" is not assignable to type \"ConvertibleToInt\"\n      \"None\" is not assignable to \"str\"\n      \"None\" is incompatible with protocol \"Buffer\"\n        \"__buffer__\" is not present\n      \"None\" is incompatible with protocol \"SupportsInt\"\n        \"__int__\" is not present\n      \"None\" is incompatible with protocol \"SupportsIndex\"\n  ...",
+            "range": {
+                "start": {
+                    "line": 81,
+                    "character": 31
+                },
+                "end": {
+                    "line": 81,
+                    "character": 51
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\data_enrichment\\orchestrator.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | None\" cannot be assigned to parameter \"x\" of type \"ConvertibleToInt\" in function \"__new__\"\n  Type \"Unknown | None\" is not assignable to type \"ConvertibleToInt\"\n    Type \"None\" is not assignable to type \"ConvertibleToInt\"\n      \"None\" is not assignable to \"str\"\n      \"None\" is incompatible with protocol \"Buffer\"\n        \"__buffer__\" is not present\n      \"None\" is incompatible with protocol \"SupportsInt\"\n        \"__int__\" is not present\n      \"None\" is incompatible with protocol \"SupportsIndex\"",
+            "range": {
+                "start": {
+                    "line": 81,
+                    "character": 31
+                },
+                "end": {
+                    "line": 81,
+                    "character": 51
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\data_enrichment\\orchestrator.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | None\" cannot be assigned to parameter \"x\" of type \"ConvertibleToInt\" in function \"__new__\"\n  Type \"Unknown | None\" is not assignable to type \"ConvertibleToInt\"\n    Type \"None\" is not assignable to type \"ConvertibleToInt\"\n      \"None\" is not assignable to \"str\"\n      \"None\" is incompatible with protocol \"Buffer\"\n        \"__buffer__\" is not present\n      \"None\" is incompatible with protocol \"SupportsInt\"\n        \"__int__\" is not present\n      \"None\" is incompatible with protocol \"SupportsIndex\"\n  ...",
+            "range": {
+                "start": {
+                    "line": 83,
+                    "character": 38
+                },
+                "end": {
+                    "line": 83,
+                    "character": 65
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\data_enrichment\\orchestrator.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | None\" cannot be assigned to parameter \"x\" of type \"ConvertibleToInt\" in function \"__new__\"\n  Type \"Unknown | None\" is not assignable to type \"ConvertibleToInt\"\n    Type \"None\" is not assignable to type \"ConvertibleToInt\"\n      \"None\" is not assignable to \"str\"\n      \"None\" is incompatible with protocol \"Buffer\"\n        \"__buffer__\" is not present\n      \"None\" is incompatible with protocol \"SupportsInt\"\n        \"__int__\" is not present\n      \"None\" is incompatible with protocol \"SupportsIndex\"",
+            "range": {
+                "start": {
+                    "line": 83,
+                    "character": 38
+                },
+                "end": {
+                    "line": 83,
+                    "character": 65
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\data_enrichment\\orchestrator.py",
+            "severity": "error",
+            "message": "Argument of type \"str\" cannot be assigned to parameter \"InternetService\" of type \"Literal['DSL', 'Fiber optic', 'No']\" in function \"__init__\"\n  Type \"str\" is not assignable to type \"Literal['DSL', 'Fiber optic', 'No']\"\n    \"str\" is not assignable to type \"Literal['DSL']\"\n    \"str\" is not assignable to type \"Literal['Fiber optic']\"\n    \"str\" is not assignable to type \"Literal['No']\"",
+            "range": {
+                "start": {
+                    "line": 86,
+                    "character": 36
+                },
+                "end": {
+                    "line": 86,
+                    "character": 73
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\data_enrichment\\orchestrator.py",
+            "severity": "error",
+            "message": "Argument of type \"str\" cannot be assigned to parameter \"OnlineSecurity\" of type \"Literal['Yes', 'No', 'No internet service']\" in function \"__init__\"\n  Type \"str\" is not assignable to type \"Literal['Yes', 'No', 'No internet service']\"\n    \"str\" is not assignable to type \"Literal['Yes']\"\n    \"str\" is not assignable to type \"Literal['No']\"\n    \"str\" is not assignable to type \"Literal['No internet service']\"",
+            "range": {
+                "start": {
+                    "line": 87,
+                    "character": 35
+                },
+                "end": {
+                    "line": 87,
+                    "character": 71
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\data_enrichment\\orchestrator.py",
+            "severity": "error",
+            "message": "Argument of type \"str\" cannot be assigned to parameter \"OnlineBackup\" of type \"Literal['Yes', 'No', 'No internet service']\" in function \"__init__\"\n  Type \"str\" is not assignable to type \"Literal['Yes', 'No', 'No internet service']\"\n    \"str\" is not assignable to type \"Literal['Yes']\"\n    \"str\" is not assignable to type \"Literal['No']\"\n    \"str\" is not assignable to type \"Literal['No internet service']\"",
+            "range": {
+                "start": {
+                    "line": 88,
+                    "character": 33
+                },
+                "end": {
+                    "line": 88,
+                    "character": 67
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\data_enrichment\\orchestrator.py",
+            "severity": "error",
+            "message": "Argument of type \"str\" cannot be assigned to parameter \"DeviceProtection\" of type \"Literal['Yes', 'No', 'No internet service']\" in function \"__init__\"\n  Type \"str\" is not assignable to type \"Literal['Yes', 'No', 'No internet service']\"\n    \"str\" is not assignable to type \"Literal['Yes']\"\n    \"str\" is not assignable to type \"Literal['No']\"\n    \"str\" is not assignable to type \"Literal['No internet service']\"",
+            "range": {
+                "start": {
+                    "line": 89,
+                    "character": 37
+                },
+                "end": {
+                    "line": 89,
+                    "character": 75
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\data_enrichment\\orchestrator.py",
+            "severity": "error",
+            "message": "Argument of type \"str\" cannot be assigned to parameter \"TechSupport\" of type \"Literal['Yes', 'No', 'No internet service']\" in function \"__init__\"\n  Type \"str\" is not assignable to type \"Literal['Yes', 'No', 'No internet service']\"\n    \"str\" is not assignable to type \"Literal['Yes']\"\n    \"str\" is not assignable to type \"Literal['No']\"\n    \"str\" is not assignable to type \"Literal['No internet service']\"",
+            "range": {
+                "start": {
+                    "line": 90,
+                    "character": 32
+                },
+                "end": {
+                    "line": 90,
+                    "character": 65
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\data_enrichment\\orchestrator.py",
+            "severity": "error",
+            "message": "Argument of type \"str\" cannot be assigned to parameter \"StreamingTV\" of type \"Literal['Yes', 'No', 'No internet service']\" in function \"__init__\"\n  Type \"str\" is not assignable to type \"Literal['Yes', 'No', 'No internet service']\"\n    \"str\" is not assignable to type \"Literal['Yes']\"\n    \"str\" is not assignable to type \"Literal['No']\"\n    \"str\" is not assignable to type \"Literal['No internet service']\"",
+            "range": {
+                "start": {
+                    "line": 91,
+                    "character": 32
+                },
+                "end": {
+                    "line": 91,
+                    "character": 65
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\data_enrichment\\orchestrator.py",
+            "severity": "error",
+            "message": "Argument of type \"str\" cannot be assigned to parameter \"StreamingMovies\" of type \"Literal['Yes', 'No', 'No internet service']\" in function \"__init__\"\n  Type \"str\" is not assignable to type \"Literal['Yes', 'No', 'No internet service']\"\n    \"str\" is not assignable to type \"Literal['Yes']\"\n    \"str\" is not assignable to type \"Literal['No']\"\n    \"str\" is not assignable to type \"Literal['No internet service']\"",
+            "range": {
+                "start": {
+                    "line": 92,
+                    "character": 36
+                },
+                "end": {
+                    "line": 92,
+                    "character": 73
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\data_enrichment\\orchestrator.py",
+            "severity": "error",
+            "message": "Argument of type \"str\" cannot be assigned to parameter \"Contract\" of type \"Literal['Month-to-month', 'One year', 'Two year']\" in function \"__init__\"\n  Type \"str\" is not assignable to type \"Literal['Month-to-month', 'One year', 'Two year']\"\n    \"str\" is not assignable to type \"Literal['Month-to-month']\"\n    \"str\" is not assignable to type \"Literal['One year']\"\n    \"str\" is not assignable to type \"Literal['Two year']\"",
+            "range": {
+                "start": {
+                    "line": 93,
+                    "character": 29
+                },
+                "end": {
+                    "line": 93,
+                    "character": 71
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\data_enrichment\\orchestrator.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | None\" cannot be assigned to parameter \"x\" of type \"ConvertibleToFloat\" in function \"__new__\"\n  Type \"Unknown | None\" is not assignable to type \"ConvertibleToFloat\"\n    Type \"None\" is not assignable to type \"ConvertibleToFloat\"\n      \"None\" is not assignable to \"str\"\n      \"None\" is incompatible with protocol \"Buffer\"\n        \"__buffer__\" is not present\n      \"None\" is incompatible with protocol \"SupportsFloat\"\n        \"__float__\" is not present\n      \"None\" is incompatible with protocol \"SupportsIndex\"\n  ...",
+            "range": {
+                "start": {
+                    "line": 96,
+                    "character": 41
+                },
+                "end": {
+                    "line": 96,
+                    "character": 71
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\data_enrichment\\orchestrator.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | None\" cannot be assigned to parameter \"x\" of type \"ConvertibleToFloat\" in function \"__new__\"\n  Type \"Unknown | None\" is not assignable to type \"ConvertibleToFloat\"\n    Type \"None\" is not assignable to type \"ConvertibleToFloat\"\n      \"None\" is not assignable to \"str\"\n      \"None\" is incompatible with protocol \"Buffer\"\n        \"__buffer__\" is not present\n      \"None\" is incompatible with protocol \"SupportsFloat\"\n        \"__float__\" is not present\n      \"None\" is incompatible with protocol \"SupportsIndex\"",
+            "range": {
+                "start": {
+                    "line": 96,
+                    "character": 41
+                },
+                "end": {
+                    "line": 96,
+                    "character": 71
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\data_enrichment\\orchestrator.py",
+            "severity": "error",
+            "message": "No overloads for \"to_dict\" match the provided arguments\n  Argument types: (Literal['index'])",
+            "range": {
+                "start": {
+                    "line": 140,
+                    "character": 27
+                },
+                "end": {
+                    "line": 142,
+                    "character": 13
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"shape\" for class \"list[Unknown]\"\n  Attribute \"shape\" is unknown",
+            "range": {
+                "start": {
+                    "line": 223,
+                    "character": 52
+                },
+                "end": {
+                    "line": 223,
+                    "character": 57
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"shape\" for class \"list[Unknown]\"\n  Attribute \"shape\" is unknown",
+            "range": {
+                "start": {
+                    "line": 223,
+                    "character": 72
+                },
+                "end": {
+                    "line": 223,
+                    "character": 77
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"shape\" for class \"list[Unknown]\"\n  Attribute \"shape\" is unknown",
+            "range": {
+                "start": {
+                    "line": 223,
+                    "character": 94
+                },
+                "end": {
+                    "line": 223,
+                    "character": 99
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "No overloads for \"__getitem__\" match the provided arguments",
+            "range": {
+                "start": {
+                    "line": 233,
+                    "character": 50
+                },
+                "end": {
+                    "line": 233,
+                    "character": 90
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Argument of type \"list[str]\" cannot be assigned to parameter \"s\" of type \"slice[Any, Any, Any]\" in function \"__getitem__\"\n  \"list[str]\" is not assignable to \"slice[Any, Any, Any]\"",
+            "range": {
+                "start": {
+                    "line": 233,
+                    "character": 50
+                },
+                "end": {
+                    "line": 233,
+                    "character": 90
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | Any | ((value: Unknown, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize, /) -> int)\" cannot be assigned to parameter \"reference_index\" of type \"Index\" in function \"_align_to_dataframe\"\n  Type \"Unknown | Any | ((value: Unknown, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize, /) -> int)\" is not assignable to type \"Index\"\n    \"MethodType\" is not assignable to \"Index\"",
+            "range": {
+                "start": {
+                    "line": 234,
+                    "character": 12
+                },
+                "end": {
+                    "line": 234,
+                    "character": 25
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "No overloads for \"__getitem__\" match the provided arguments",
+            "range": {
+                "start": {
+                    "line": 238,
+                    "character": 46
+                },
+                "end": {
+                    "line": 238,
+                    "character": 84
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Argument of type \"list[str]\" cannot be assigned to parameter \"s\" of type \"slice[Any, Any, Any]\" in function \"__getitem__\"\n  \"list[str]\" is not assignable to \"slice[Any, Any, Any]\"",
+            "range": {
+                "start": {
+                    "line": 238,
+                    "character": 46
+                },
+                "end": {
+                    "line": 238,
+                    "character": 84
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | Any | ((value: Unknown, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize, /) -> int)\" cannot be assigned to parameter \"reference_index\" of type \"Index\" in function \"_align_to_dataframe\"\n  Type \"Unknown | Any | ((value: Unknown, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize, /) -> int)\" is not assignable to type \"Index\"\n    \"MethodType\" is not assignable to \"Index\"",
+            "range": {
+                "start": {
+                    "line": 239,
+                    "character": 12
+                },
+                "end": {
+                    "line": 239,
+                    "character": 23
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "No overloads for \"__getitem__\" match the provided arguments",
+            "range": {
+                "start": {
+                    "line": 243,
+                    "character": 46
+                },
+                "end": {
+                    "line": 243,
+                    "character": 85
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Argument of type \"list[str]\" cannot be assigned to parameter \"s\" of type \"slice[Any, Any, Any]\" in function \"__getitem__\"\n  \"list[str]\" is not assignable to \"slice[Any, Any, Any]\"",
+            "range": {
+                "start": {
+                    "line": 243,
+                    "character": 46
+                },
+                "end": {
+                    "line": 243,
+                    "character": 85
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | Any | ((value: Unknown, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize, /) -> int)\" cannot be assigned to parameter \"reference_index\" of type \"Index\" in function \"_align_to_dataframe\"\n  Type \"Unknown | Any | ((value: Unknown, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize, /) -> int)\" is not assignable to type \"Index\"\n    \"MethodType\" is not assignable to \"Index\"",
+            "range": {
+                "start": {
+                    "line": 244,
+                    "character": 12
+                },
+                "end": {
+                    "line": 244,
+                    "character": 24
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "No overloads for \"__getitem__\" match the provided arguments",
+            "range": {
+                "start": {
+                    "line": 256,
+                    "character": 43
+                },
+                "end": {
+                    "line": 256,
+                    "character": 60
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Argument of type \"list[str]\" cannot be assigned to parameter \"s\" of type \"slice[Any, Any, Any]\" in function \"__getitem__\"\n  \"list[str]\" is not assignable to \"slice[Any, Any, Any]\"",
+            "range": {
+                "start": {
+                    "line": 256,
+                    "character": 43
+                },
+                "end": {
+                    "line": 256,
+                    "character": 60
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | Any | ((value: Unknown, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize, /) -> int)\" cannot be assigned to parameter \"reference_index\" of type \"Index\" in function \"_align_to_dataframe\"\n  Type \"Unknown | Any | ((value: Unknown, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize, /) -> int)\" is not assignable to type \"Index\"\n    \"MethodType\" is not assignable to \"Index\"",
+            "range": {
+                "start": {
+                    "line": 257,
+                    "character": 12
+                },
+                "end": {
+                    "line": 257,
+                    "character": 25
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "No overloads for \"__getitem__\" match the provided arguments",
+            "range": {
+                "start": {
+                    "line": 261,
+                    "character": 39
+                },
+                "end": {
+                    "line": 261,
+                    "character": 54
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Argument of type \"list[str]\" cannot be assigned to parameter \"s\" of type \"slice[Any, Any, Any]\" in function \"__getitem__\"\n  \"list[str]\" is not assignable to \"slice[Any, Any, Any]\"",
+            "range": {
+                "start": {
+                    "line": 261,
+                    "character": 39
+                },
+                "end": {
+                    "line": 261,
+                    "character": 54
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | Any | ((value: Unknown, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize, /) -> int)\" cannot be assigned to parameter \"reference_index\" of type \"Index\" in function \"_align_to_dataframe\"\n  Type \"Unknown | Any | ((value: Unknown, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize, /) -> int)\" is not assignable to type \"Index\"\n    \"MethodType\" is not assignable to \"Index\"",
+            "range": {
+                "start": {
+                    "line": 262,
+                    "character": 12
+                },
+                "end": {
+                    "line": 262,
+                    "character": 23
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "No overloads for \"__getitem__\" match the provided arguments",
+            "range": {
+                "start": {
+                    "line": 266,
+                    "character": 39
+                },
+                "end": {
+                    "line": 266,
+                    "character": 55
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Argument of type \"list[str]\" cannot be assigned to parameter \"s\" of type \"slice[Any, Any, Any]\" in function \"__getitem__\"\n  \"list[str]\" is not assignable to \"slice[Any, Any, Any]\"",
+            "range": {
+                "start": {
+                    "line": 266,
+                    "character": 39
+                },
+                "end": {
+                    "line": 266,
+                    "character": 55
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | Any | ((value: Unknown, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize, /) -> int)\" cannot be assigned to parameter \"reference_index\" of type \"Index\" in function \"_align_to_dataframe\"\n  Type \"Unknown | Any | ((value: Unknown, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize, /) -> int)\" is not assignable to type \"Index\"\n    \"MethodType\" is not assignable to \"Index\"",
+            "range": {
+                "start": {
+                    "line": 267,
+                    "character": 12
+                },
+                "end": {
+                    "line": 267,
+                    "character": 24
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | Any | list[Unknown]\" cannot be assigned to parameter \"y_split\" of type \"Series\" in function \"_build_full\"\n  Type \"Unknown | Any | list[Unknown]\" is not assignable to type \"Series\"\n    \"list[Unknown]\" is not assignable to \"Series\"",
+            "range": {
+                "start": {
+                    "line": 287,
+                    "character": 62
+                },
+                "end": {
+                    "line": 287,
+                    "character": 69
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | Any | ((value: Unknown, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize, /) -> int)\" cannot be assigned to parameter \"idx\" of type \"Index\" in function \"_build_full\"\n  Type \"Unknown | Any | ((value: Unknown, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize, /) -> int)\" is not assignable to type \"Index\"\n    \"MethodType\" is not assignable to \"Index\"",
+            "range": {
+                "start": {
+                    "line": 287,
+                    "character": 71
+                },
+                "end": {
+                    "line": 287,
+                    "character": 84
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | Any | list[Unknown]\" cannot be assigned to parameter \"y_split\" of type \"Series\" in function \"_build_full\"\n  Type \"Unknown | Any | list[Unknown]\" is not assignable to type \"Series\"\n    \"list[Unknown]\" is not assignable to \"Series\"",
+            "range": {
+                "start": {
+                    "line": 288,
+                    "character": 56
+                },
+                "end": {
+                    "line": 288,
+                    "character": 61
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | Any | ((value: Unknown, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize, /) -> int)\" cannot be assigned to parameter \"idx\" of type \"Index\" in function \"_build_full\"\n  Type \"Unknown | Any | ((value: Unknown, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize, /) -> int)\" is not assignable to type \"Index\"\n    \"MethodType\" is not assignable to \"Index\"",
+            "range": {
+                "start": {
+                    "line": 288,
+                    "character": 63
+                },
+                "end": {
+                    "line": 288,
+                    "character": 74
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | Any | list[Unknown]\" cannot be assigned to parameter \"y_split\" of type \"Series\" in function \"_build_full\"\n  Type \"Unknown | Any | list[Unknown]\" is not assignable to type \"Series\"\n    \"list[Unknown]\" is not assignable to \"Series\"",
+            "range": {
+                "start": {
+                    "line": 289,
+                    "character": 59
+                },
+                "end": {
+                    "line": 289,
+                    "character": 65
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\feature_engineering.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | Any | ((value: Unknown, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize, /) -> int)\" cannot be assigned to parameter \"idx\" of type \"Index\" in function \"_build_full\"\n  Type \"Unknown | Any | ((value: Unknown, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize, /) -> int)\" is not assignable to type \"Index\"\n    \"MethodType\" is not assignable to \"Index\"",
+            "range": {
+                "start": {
+                    "line": 289,
+                    "character": 67
+                },
+                "end": {
+                    "line": 289,
+                    "character": 79
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\model_training\\evaluator.py",
+            "severity": "error",
+            "message": "Type \"Series | Unknown | DataFrame\" is not assignable to declared type \"Series\"\n  Type \"Series | Unknown | DataFrame\" is not assignable to type \"Series\"\n    \"DataFrame\" is not assignable to \"Series\"",
+            "range": {
+                "start": {
+                    "line": 203,
+                    "character": 34
+                },
+                "end": {
+                    "line": 203,
+                    "character": 48
+                }
+            },
+            "rule": "reportAssignmentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\model_training\\evaluator.py",
+            "severity": "error",
+            "message": "Type \"Series | Unknown | DataFrame\" is not assignable to declared type \"Series\"\n  Type \"Series | Unknown | DataFrame\" is not assignable to type \"Series\"\n    \"DataFrame\" is not assignable to \"Series\"",
+            "range": {
+                "start": {
+                    "line": 208,
+                    "character": 35
+                },
+                "end": {
+                    "line": 208,
+                    "character": 50
+                }
+            },
+            "rule": "reportAssignmentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\model_training\\evaluator.py",
+            "severity": "error",
+            "message": "\"sklearn\" is not exported from module \"mlflow\"",
+            "range": {
+                "start": {
+                    "line": 330,
+                    "character": 19
+                },
+                "end": {
+                    "line": 330,
+                    "character": 26
+                }
+            },
+            "rule": "reportPrivateImportUsage"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\model_training\\trainer.py",
+            "severity": "error",
+            "message": "Type \"Series | Unknown | DataFrame\" is not assignable to declared type \"Series\"\n  Type \"Series | Unknown | DataFrame\" is not assignable to type \"Series\"\n    \"DataFrame\" is not assignable to \"Series\"",
+            "range": {
+                "start": {
+                    "line": 260,
+                    "character": 30
+                },
+                "end": {
+                    "line": 260,
+                    "character": 44
+                }
+            },
+            "rule": "reportAssignmentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\model_training\\trainer.py",
+            "severity": "error",
+            "message": "Type \"list[Unknown] | Any | Unknown | coo_array\" is not assignable to declared type \"ndarray[_AnyShape, dtype[Any]]\"\n  Type \"list[Unknown] | Any | Unknown | coo_array\" is not assignable to type \"ndarray[_AnyShape, dtype[Any]]\"\n    \"coo_array\" is not assignable to \"ndarray[_AnyShape, dtype[Any]]\"",
+            "range": {
+                "start": {
+                    "line": 303,
+                    "character": 36
+                },
+                "end": {
+                    "line": 309,
+                    "character": 9
+                }
+            },
+            "rule": "reportAssignmentType"
+        },
+        {
+            "file": "c:\\Users\\sebas\\Desktop\\ai-ml-telecom-customer-churn\\src\\components\\model_training\\trainer.py",
+            "severity": "error",
+            "message": "Type \"list[Unknown] | Any | Unknown | coo_array\" is not assignable to declared type \"ndarray[_AnyShape, dtype[Any]]\"\n  Type \"list[Unknown] | Any | Unknown | coo_array\" is not assignable to type \"ndarray[_AnyShape, dtype[Any]]\"\n    \"coo_array\" is not assignable to \"ndarray[_AnyShape, dtype[Any]]\"",
+            "range": {
+                "start": {
+                    "line": 339,
+                    "character": 33
+                },
+                "end": {
+                    "line": 345,
+                    "character": 9
+                }
+            },
+            "rule": "reportAssignmentType"
+        }
+    ],
+    "summary": {
+        "filesAnalyzed": 47,
+        "errorCount": 57,
+        "warningCount": 0,
+        "informationCount": 0,
+        "timeInSec": 12.56
+    }
+}
+

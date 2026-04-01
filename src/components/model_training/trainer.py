@@ -25,6 +25,8 @@ Mlflow ui:
 
 from __future__ import annotations
 
+from typing import cast
+
 import joblib
 import numpy as np
 import optuna
@@ -258,7 +260,7 @@ class LateFusionTrainer:
         """
         feature_cols = _get_branch_columns(df, prefixes)
         X = df[feature_cols].to_numpy()
-        y_series: pd.Series = df[target_col]
+        y_series: pd.Series = cast(pd.Series, df[target_col])
         y, _ = _encode_target(y_series)
         return X, y
 
@@ -301,12 +303,15 @@ class LateFusionTrainer:
             use_label_encoder=False,
         )
         cv = StratifiedKFold(n_splits=self.config.cv_folds, shuffle=True, random_state=rs)
-        cv_res_struct: np.ndarray = cross_val_predict(
-            struct_oof_model,
-            X_train_struct,
-            y_train_struct,
-            cv=cv,
-            method="predict_proba",
+        cv_res_struct = cast(
+            np.ndarray,
+            cross_val_predict(
+                struct_oof_model,
+                X_train_struct,
+                y_train_struct,
+                cv=cv,
+                method="predict_proba",
+            ),
         )
         oof_struct = cv_res_struct[:, 1]  # probability of Churn=Yes
 
@@ -337,12 +342,15 @@ class LateFusionTrainer:
             eval_metric="logloss",
             use_label_encoder=False,
         )
-        cv_res_nlp: np.ndarray = cross_val_predict(
-            nlp_oof_model,
-            X_train_nlp,
-            y_train_nlp,
-            cv=cv,
-            method="predict_proba",
+        cv_res_nlp = cast(
+            np.ndarray,
+            cross_val_predict(
+                nlp_oof_model,
+                X_train_nlp,
+                y_train_nlp,
+                cv=cv,
+                method="predict_proba",
+            ),
         )
         oof_nlp = cv_res_nlp[:, 1]
 

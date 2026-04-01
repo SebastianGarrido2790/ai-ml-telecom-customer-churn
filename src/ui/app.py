@@ -7,6 +7,7 @@ applies a consistent theme and serves the dashboard on a configurable port.
 """
 
 import gradio as gr
+from gradio import themes
 
 from src.ui.pages.batch_predict import create_batch_predict_tab
 from src.ui.pages.run_comparison import create_run_comparison_tab
@@ -25,7 +26,7 @@ def build_app() -> gr.Blocks:
     Returns:
         A compiled Gradio Blocks application object.
     """
-    theme = gr.themes.Soft(
+    theme = themes.Soft(
         primary_hue="indigo",
         secondary_hue="blue",
         neutral_hue="slate",
