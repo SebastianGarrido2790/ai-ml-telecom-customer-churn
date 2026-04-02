@@ -1,6 +1,7 @@
 # Executive Summary & Technical Roadmap: Telecom Customer Churn MLOps
 
-| **Version** | v1.3 |
+| **Version** | v1.4 |
+| **Last Updated** | 2026-04-02 |
 
 ## 1. Project Overview
 
@@ -197,18 +198,62 @@ breakdowns.
 - **Dual-Branch Visualization**: Split probability bars for Structured vs. NLP branches.
 - **Observability**: Integrated deep links to the MLflow dashboard for full lineage.
 
-### Phase 8: CI/CD & Cloud Deployment (AWS) (PLANNED)
+### Phase 8: CI/CD & Cloud Deployment (DONE ✅)
 
-- [ ] Configure **GitHub Actions** modular workflows:
-    - Code linting (`ruff check` + `ruff format --check`).
-    - Static type checking (`pyright`).
-    - Unit tests (`pytest --cov=src --cov-fail-under=65`).
-    - Docker image build and vulnerability scan (Docker Scout / Trivy).
-    - Push to **AWS ECR** on merge to `main`.
-- [ ] Execute **Multi-Point Validation Gate** (`validate_system.sh`) as final pre-deploy
-      check: Pyright + Ruff → Pytest coverage → DVC status → Service health probes.
-- [ ] Define **AWS ECS Fargate** Task Definitions for both API services and the Gradio UI.
-- [ ] Configure OIDC-based GitHub → AWS authentication (no long-lived secrets).
+Phase 8 delivers a **dual-path deployment architecture**: a fully operational LocalStack
+simulation that exercises 100% of the production AWS pipeline at zero cost, and a
+complete Full AWS implementation plan ready to activate by supplying live credentials.
+
+**Architectural Decisions (5 formal decisions):**
+
+| Decision | Chosen Option | Rationale |
+|---|---|---|
+| **I — Authentication** | OIDC federation (no static keys) | Ephemeral STS tokens; `AWS_ROLE_ARN` is non-sensitive |
+| **J — ECS Deployment** | Rolling update (default ECS) | Zero-downtime; Blue/Green deferred to Phase 9 when SLA defined |
+| **K — Service Scope** | 3 customer-facing services | `mlflow-server` ECS deploy deferred (requires EFS); Phase 9 task def delivered |
+| **L — Artifact Delivery** | S3 fetch at startup (`entrypoint.sh`) | Enforces DVC/Docker separation of concerns; works identically in LocalStack + real AWS |
+| **M — Cloud Target** | LocalStack simulation | $0 cost; 100% AWS parity; activates with live secrets |
+
+**CI Pipeline (`ci.yml`) — Two-pillar quality gate on every push + PR:**
+- [x] **Pillar 1 (Code Quality):** `ruff check` + `ruff format --check` + `pyright` — blocks merge on any violation.
+- [x] **Pillar 2 (Unit Tests):** `pytest --cov=src --cov-fail-under=65` — enforces hard 65% coverage floor.
+- [x] Single job design: quality checks share one `uv` virtual environment (< 3 min total feedback loop).
+
+**CD Pipeline (`cd.yml`) — Full deployment on merge to `main`:**
+- [x] **Stage 1 — Build & Push:** Parallel matrix over 3–4 services; Docker Buildx with ECR layer cache;
+      SHA-tagged + `latest` dual-tag strategy for immutable deploys.
+- [x] **Stage 2 — Vulnerability Scan:** Docker Scout blocks on `critical` CVEs (`only-fixed: true`).
+- [x] **Stage 3 — Deploy:** Dependency-ordered rolling updates
+      `embedding-service → prediction-api → gradio-ui` with `wait-for-service-stability: true` gating.
+- [x] **Stage 4 — Health Check:** Post-deploy `curl` against ALB endpoints validates live service health.
+- [x] **Concurrency control:** `cancel-in-progress: false` — no deployment is ever interrupted mid-rollout.
+
+**LocalStack Simulation (operational):**
+- [x] `localstack/localstack:3.1.0` added to `docker-compose.yaml` as a sixth container.
+- [x] `entrypoint.sh` shared across all three services — `aws s3 sync` with conditional
+      `--endpoint-url $AWS_ENDPOINT_URL` flag; `exec "$@"` for PID 1 / SIGTERM correctness.
+- [x] All three service Dockerfiles updated with `awscli` install and `entrypoint.sh` copy.
+- [x] `localstack/setup-localstack@v0.2.2` GitHub Action spins up LocalStack inside the runner.
+
+**Pre-commit Quality Gate (`.pre-commit-config.yaml`):**
+- [x] `ruff`, `ruff-format`, `pyright`, `trailing-whitespace`, `end-of-file-fixer`,
+      `check-yaml/json/toml`, `detect-private-key`, `check-added-large-files`.
+- [x] Custom hooks: `no-artifacts-in-git` (forces DVC workflow) + `no-env-files` (enforces `.env.example`).
+
+**ECS Task Definitions (4 delivered):**
+- [x] `task-definitions/embedding-service.json` — 1 vCPU / 2 GB (SentenceTransformer memory).
+- [x] `task-definitions/prediction-api.json` — 0.5 vCPU / 1 GB.
+- [x] `task-definitions/gradio-ui.json` — 0.5 vCPU / 1 GB.
+- [x] `task-definitions/mlflow-server.json` — 0.5 vCPU / 1 GB (Phase 9 activation reference).
+- [x] `awslogs` CloudWatch log driver configured on all four definitions.
+- [x] IAM role separation: `ecsTaskExecutionRole` (ECR pull + CloudWatch write) vs.
+      `ecsTaskRole` (S3 artifact read only).
+
+**Full AWS Path (documented — zero code changes required to activate):**
+- [x] One-time setup: ECR repos, S3 artifact bucket, ECS Fargate cluster, OIDC provider in IAM.
+- [x] GitHub Secrets: `AWS_ROLE_ARN`, `AWS_ACCOUNT_ID`, `AWS_REGION`, `ECR_REGISTRY`,
+      `ARTIFACTS_S3_BUCKET`, `ECS_CLUSTER`, `DOCKER_HUB_USERNAME`, `DOCKER_HUB_TOKEN`.
+- [x] IAM Role trust policy scoped to repository + `refs/heads/main` ref only.
 
 ### Phase 9: Monitoring, Tracing & AgentOps (PLANNED)
 
@@ -233,6 +278,7 @@ breakdowns.
 | Phase 5: Late Fusion Model Architecture | [model_training.md](../architecture/model_training.md) |
 | Phase 6: Microservice Inference Architecture | [inference_architecture.md](../architecture/inference_architecture.md) |
 | Phase 7: Gradio Dashboard Architecture | [gradio_ui.md](../architecture/gradio_ui.md) |
+| **Phase 8: CI/CD & Cloud Deployment** | [cicd_cloud_deployment.md](../architecture/cicd_cloud_deployment.md) |
 | **Decision: Data Quality Checker** | [data_quality_checker.md](../decisions/data_quality_checker.md) |
 | **Decision: Late Fusion vs. Unified Model** | [model_architecture_decision.md](../decisions/model_architecture_decision.md) |
 | **Decision: Embedding Microservice Extraction** | [embedding_service_decision.md](../decisions/embedding_service_decision.md) |
@@ -258,6 +304,11 @@ breakdowns.
 | `nlp_model.pkl` | Phase 5 | `artifacts/model_training/` | Serialized model |
 | `meta_model.pkl` | Phase 5 | `artifacts/model_training/` | Serialized model |
 | `evaluation_report.json` | Phase 5 | `artifacts/model_training/` | MLflow-linked / DVC gate |
+| `.github/workflows/ci.yml` | Phase 8 | `.github/workflows/` | GitHub Actions CI pipeline |
+| `.github/workflows/cd.yml` | Phase 8 | `.github/workflows/` | GitHub Actions CD pipeline (LocalStack + AWS) |
+| `task-definitions/*.json` (×4) | Phase 8 | `task-definitions/` | ECS Fargate task definitions |
+| `.pre-commit-config.yaml` | Phase 8 | Project root | Pre-commit quality gate hooks |
+| `docker/entrypoint.sh` | Phase 8 | `docker/` | S3 artifact fetch startup script |
 
 ---
 
@@ -277,9 +328,18 @@ breakdowns.
 4. **Explainable AI:** Sentiment tags and `p_structured` / `p_nlp` branch probabilities
    in every response expose the "why" behind every churn score.
 5. **Industrial Scalability:** Decoupled FTI pattern + two-microservice inference layer
-   allows each component to scale independently in ECS Fargate (Phase 8).
+   allows each component to scale independently in ECS Fargate. Task definitions for all
+   four services are delivered; Phase 9 activates the full Fargate fleet.
 6. **Reproducibility:** Every pipeline stage is parameterized and DVC-versioned.
    `dvc repro` reconstructs the entire system from raw data to deployed artifacts.
 7. **Integrity by Design:** The C1 leakage fix is permanently enforced by a unit test
    (`test_customer_input_context_churn_field_absent`) and the DVC dependency graph —
    any future change to the enrichment schema re-invalidates the pipeline.
+8. **Zero-Cost Cloud Rehearsal (Phase 8):** The LocalStack simulation exercises the
+   complete AWS IaC pipeline — ECR push, S3 artifact seeding, ECS Fargate rolling
+   deployment, and post-deploy health checks — at $0 cost with no credit card. Switching
+   to live AWS requires only supplying six GitHub Secrets; no code changes.
+9. **Supply Chain Security (Phase 8):** Docker Scout CVE scanning is embedded in the CD
+   pipeline, blocking on unpatched critical vulnerabilities before any image reaches ECS.
+   The OIDC-only authentication model eliminates long-lived AWS credentials from all
+   systems, making the deployment chain auditable in CloudTrail by session ID.

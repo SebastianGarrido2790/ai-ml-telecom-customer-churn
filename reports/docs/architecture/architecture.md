@@ -1,5 +1,7 @@
 # Telecom Customer Churn Prediction: Agentic MLOps Architecture Report
 
+> **Architecture Version:** v1.4 | **Last Updated:** 2026-04-02 | **Phases Complete:** 1–8
+
 ## 1. Executive Summary
 
 This document presents the comprehensive architecture for the **Telecom Customer Churn
@@ -121,17 +123,34 @@ POST /v1/predict (high-risk profile: Fiber optic, month-to-month, tenure=1):
 
 **Gradio UI** (port 7860): COMPLETE ✅ (Phase 7). Interactive dashboard with SHAP and MLflow integration.
 
+### 3.5 CI/CD & Cloud Deployment — COMPLETE ✅ (Phase 8)
+
+The delivery layer automates the full lifecycle from `git push` to a running cloud environment.
+Two GitHub Actions workflows implement **trunk-based development** with a five-decision
+architecture (OIDC auth, rolling updates, three-service ECS scope, S3 artifact fetch,
+LocalStack simulation).
+
+- **CI (`ci.yml`):** Two-pillar gate on every branch — `ruff` + `pyright` (Pillar 1) and
+  `pytest --cov-fail-under=65` (Pillar 2). Blocks merge on any failure.
+- **CD (`cd.yml`):** Parallel matrix build → Docker Scout CVE scan → dependency-ordered
+  rolling deployment (`embedding-service → prediction-api → gradio-ui`) → ALB health check.
+- **LocalStack Simulation:** Full AWS pipeline (ECR, S3, ECS Fargate) emulated at $0 cost
+  inside the GitHub Actions runner. Identical workflow activates against live AWS with
+  six GitHub Secrets — **zero code changes required**.
+- **Pre-commit Gate:** `ruff`, `pyright`, `detect-private-key`, `no-artifacts-in-git`, and
+  `no-env-files` hooks enforce quality at the developer workstation before CI.
+
 ### 3.4 FTI Pipeline Diagram
 
 ```mermaid
 flowchart LR
     classDef done fill:#d9ead3,stroke:#6aa84f,stroke-width:2px,color:#000;
-    classDef planned fill:#e8ebf7,stroke:#6673af,stroke-width:2px,color:#000;
+    classDef cicd fill:#d0e4ff,stroke:#3c78d8,stroke-width:2px,color:#000;
     classDef registry fill:#fff2cc,stroke:#d6b656,stroke-width:2px,color:#000;
 
-    RawData[(Raw Telecom &\nInteraction Data)]
+    RawData[(Raw Telecom and\nInteraction Data)]
 
-    subgraph FP ["Feature Pipeline ✅ Complete"]
+    subgraph FP ["Feature Pipeline Complete"]
         direction TB
         S0[Stage 0: Data Ingestion]:::done
         S1[Stage 1: Validate Raw]:::done
@@ -143,7 +162,7 @@ flowchart LR
 
     FeatureStore[(Feature Store\nDVC — 2 preprocessors\ntrain/val/test CSVs)]:::registry
 
-    subgraph TP ["Training Pipeline ✅ Complete"]
+    subgraph TP ["Training Pipeline Complete"]
         direction TB
         S5[Stage 5: Late Fusion Training]:::done
         MLflowTracker[MLflow — 3 runs\nstructured / nlp / fusion]:::done
@@ -152,7 +171,7 @@ flowchart LR
 
     ModelRegistry[(Model Registry\ntelco-churn-late-fusion v2)]:::registry
 
-    subgraph IP ["Inference Pipeline ✅ Complete — Phase 6 & 7"]
+    subgraph IP ["Inference Pipeline Complete — Phase 6 and 7"]
         direction TB
         EmbedSvc[Embedding Microservice\nFastAPI :8001\nWarmup protocol]:::done
         PredAPI[Prediction API\nFastAPI :8000\nCircuit breaker]:::done
@@ -160,11 +179,20 @@ flowchart LR
         UX --> PredAPI --> EmbedSvc
     end
 
+    subgraph CD ["CI/CD and Cloud — Complete Phase 8"]
+        direction TB
+        CI[GitHub Actions CI\nruff + pyright + pytest]:::cicd
+        CDPipe[GitHub Actions CD\nBuild + Scout + ECR + ECS]:::cicd
+        LocalStack[LocalStack Simulation\nECR + S3 + ECS Fargate]:::cicd
+        CI --> CDPipe --> LocalStack
+    end
+
     RawData --> FP
     FP --> FeatureStore
     FeatureStore --> TP
     TP --> ModelRegistry
     ModelRegistry -->|Deploy| IP
+    IP -->|git push to main| CD
 ```
 
 ---
@@ -209,12 +237,25 @@ flowchart LR
 > See [inference_architecture.md](inference_architecture.md) for full architecture, circuit
 > breaker design, warmup protocol, and operational verification.
 
-8. **UI Development & Containerization (Phase 7 — Complete):** A dynamic Gradio Dashboard 
-   providing an interactive churn risk calculator, SHAP feature importance visualizations, 
-   and deep integration with MLflow. The entire 5-container infrastructure is orchestrated 
+8. **UI Development & Containerization (Phase 7 — Complete):** A dynamic Gradio Dashboard
+   providing an interactive churn risk calculator, SHAP feature importance visualizations,
+   and deep integration with MLflow. The entire 5-container infrastructure is orchestrated
    via Docker Compose.
 
 > See [gradio_ui.md](gradio_ui.md) for dashboard architecture and containerization details.
+
+9. **CI/CD & Cloud Deployment (Phase 8 — Complete):** A dual-path deployment architecture
+   with a fully operational **LocalStack simulation** ($0 cost, 100% AWS parity) and a
+   documented **Full AWS path** (activate with six GitHub Secrets, zero code changes).
+   Two GitHub Actions workflows (`ci.yml` and `cd.yml`) implement trunk-based development
+   with a five-decision architecture: OIDC-only auth (Decision I1), rolling updates
+   (Decision J1), three-service ECS scope (Decision K2), S3 artifact fetch at startup
+   (Decision L1), and LocalStack as cloud target (Decision M1). ECS task definitions for
+   all four services are delivered; `embedding-service`, `prediction-api`, and `gradio-ui`
+   deploy to Fargate; `mlflow-server` is pushed to ECR and available for Phase 9 activation.
+
+> See [cicd_cloud_deployment.md](cicd_cloud_deployment.md) for full pipeline architecture,
+> IAM/OIDC security model, task definition design, and the dual-path deployment roadmap.
 
 ---
 
@@ -224,7 +265,7 @@ flowchart LR
 |---|---|
 | Language | Python 3.11+ (strict type hints via `pyright`) |
 | Dependency Management | `uv` |
-| Agent Orchestration | `pydantic-ai` (Phase 2), `langgraph` (Phase 7 planned) |
+| Agent Orchestration | `pydantic-ai` (Phase 2), `langgraph` (Phase 9 planned) |
 | LLM | Gemini 2.0 Flash (Google AI SDK) |
 | ML Models | `xgboost`, `scikit-learn` (Logistic Regression meta-learner) |
 | Imbalance Handling | `imbalanced-learn` (SMOTE, per-branch) |
@@ -232,9 +273,14 @@ flowchart LR
 | MLOps / Tracking | `mlflow`, `dvc` |
 | Data Validation | `great-expectations` v1.0+, `pydantic` v2.x |
 | Serving | `fastapi`, `uvicorn` (2 microservices — operational) |
+| Containerization | `docker`, `docker-compose` (5-service stack + LocalStack) |
 | Inter-service HTTP | `httpx` (async, with circuit breaker) |
 | UI | `gradio` (Phase 7 — Complete) |
-| Linting / Formatting | `ruff` |
+| CI/CD | GitHub Actions (`ci.yml` + `cd.yml`) — trunk-based development |
+| Cloud Simulation | `localstack` 3.1.0 — S3, ECR, ECS Fargate emulation |
+| Cloud Target | AWS ECS Fargate + ECR + S3 (Full path — Decision M1 → M2 ready) |
+| Auth / Security | OIDC federation (GitHub → AWS STS), Docker Scout CVE scanning |
+| Linting / Formatting | `ruff`, `pre-commit` |
 | Observability | `logfire` (Phase 2 tracing), OpenTelemetry (Phase 9 planned) |
 
 ---
@@ -257,11 +303,21 @@ flowchart LR
 │   ├── params.yaml               # Tunable hyperparameters
 │   └── schema.yaml               # Data contracts (column names & types)
 ├── data/                         # Raw datasets managed by DVC
-├── docker/                       # Dockerfiles
-│   ├── embedding-service/        # Dockerfile for the embedding microservice
-│   ├── gradio-ui/                # Dockerfile for the Gradio dashboard
-│   ├── mlflow-server/            # Dockerfile for the MLflow server
-│   └── prediction-api/           # Dockerfile for the prediction microservice
+├── docker/                       # Dockerfiles + shared entrypoint
+│   ├── embedding_service/        # Dockerfile for the embedding microservice
+│   ├── gradio_ui/                # Dockerfile for the Gradio dashboard
+│   ├── mlflow_server/            # Dockerfile for the MLflow server
+│   ├── prediction_api/           # Dockerfile for the prediction microservice
+│   └── entrypoint.sh             # Shared S3 artifact fetch script (Phase 8)
+├── task-definitions/             # ECS Fargate task definitions (Phase 8)
+│   ├── embedding-service.json    # 1 vCPU / 2 GB — SentenceTransformer memory
+│   ├── prediction-api.json       # 0.5 vCPU / 1 GB
+│   ├── gradio-ui.json            # 0.5 vCPU / 1 GB
+│   └── mlflow-server.json        # 0.5 vCPU / 1 GB (Phase 9 activation reference)
+├── .github/
+│   └── workflows/
+│       ├── ci.yml                # Pillar 1 (ruff + pyright) + Pillar 2 (pytest) on all branches
+│       └── cd.yml                # Build + Scout + ECR push + ECS deploy on main
 ├── reports/docs/                 # Product and technical documentation
 ├── src/
 │   ├── api/
@@ -285,7 +341,8 @@ flowchart LR
 │   └── utils/                    # logger, feature_utils, exceptions, common
 ├── tests/unit/                   # 53 passing unit tests across 6 test files
 ├── .dockerignore                 # Docker ignore file
-├── docker-compose.yml            # Orchestrates the 5-container infrastructure
+├── .pre-commit-config.yaml       # Pre-commit quality gate (Phase 8)
+├── docker-compose.yaml           # Orchestrates the 6-container infrastructure (+ LocalStack)
 ├── dvc.yaml                      # 6-stage pipeline DAG
 └── pyproject.toml
 ```
@@ -293,6 +350,17 @@ flowchart LR
 ---
 
 ## 7. Quality Assurance & Observability
+
+### Testing Pyramid
+
+| Layer | Gate | Tool | Threshold |
+|---|---|---|---|
+| **Local (pre-commit)** | Lint + types, credential guard, DVC enforcement | `ruff`, `pyright`, `pre-commit` hooks | Zero violations |
+| **CI (every push)** | Code quality + unit tests | `ruff`, `pyright`, `pytest` | ≥ 65% coverage |
+| **CD (main merge)** | Supply chain security | Docker Scout CVE scan | No unpatched critical CVEs |
+| **Post-deploy** | Live service health | `curl` against ALB endpoints | HTTP 200 on `/v1/health` |
+
+### Completed Quality Gates
 
 - **Unit Testing:** 53 passing tests across 6 test files. Phase 6 adds 24 new tests
   covering embedding schemas, prediction schemas, circuit breaker correctness, and
@@ -307,6 +375,23 @@ flowchart LR
 - **MLflow Tracking:** 3 experiment runs per training cycle with lift metrics.
 - **Operational Verification:** Both microservices health-checked and real prediction
   verified (`churn_probability: 0.7006`, `nlp_branch_available: true`).
-- **Observability (Planned — Phase 9):** OpenTelemetry spans for Chain of Thought,
-  tool latency, and token usage.
-- **HITL (Phase 7 — Complete):** Key risk decisions surfaced through the Gradio dashboard, offering branch-level probability breakdowns and SHAP visual explanations.
+- **Pre-commit Gate (Phase 8):** `ruff`, `pyright`, `detect-private-key`,
+  `check-added-large-files`, `no-artifacts-in-git`, `no-env-files` — quality enforced
+  at the developer workstation before any commit reaches CI.
+- **CI Pipeline (Phase 8):** Two-pillar gate (code quality + tests) blocks any branch
+  merge on lint, type, or test failure. Feedback loop < 3 min.
+- **CD Pipeline (Phase 8):** Docker Scout CVE scan embedded in the image build stage;
+  dependency-ordered rolling deployment with `wait-for-service-stability` health gating;
+  post-deploy ALB health check confirms live service availability.
+- **HITL (Phase 7):** Key risk decisions surfaced through the Gradio dashboard, offering
+  branch-level probability breakdowns and SHAP visual explanations.
+
+### Planned (Phase 9)
+
+- **OpenTelemetry Tracing:** Spans for Chain of Thought, tool latency, and token usage
+  across the Agentic enrichment workflow and both inference microservices.
+- **AgentOps Metrics:** Plan Success Rate (PSR), Tool Call Accuracy (TCA), retry latency,
+  and `nlp_branch_available` ratio in production.
+- **Data Drift Detection:** Inference payload distribution vs. training distribution monitoring.
+- **Blue/Green Deployment:** AWS CodeDeploy + ALB target groups for sub-second rollback.
+- **MLflow on ECS with EFS:** Persistent `mlruns/` across Fargate task replacements.
