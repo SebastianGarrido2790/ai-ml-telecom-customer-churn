@@ -19,7 +19,7 @@ The train/val/test CSVs remain unchanged — they will still contain all merged 
 
 **Rationale for this design (vs. alternatives):**
 
-- **Alternatives considered:** (1) Splitting at inference time by column prefix (`nlp__*` vs `num__*` / `cat__*`) from the unified output — avoids re-engineering Phase 4 but makes the Anti-Skew guarantee implicit rather than explicit. (2) Keeping one preprocessor, duplicating logic in the embedding service — violates Rule 2.9 (DRY for features).
+- **Alternatives considered:** (1) Splitting at inference time by column prefix (`nlp__*` vs `num__*` / `cat__*`) from the unified output, avoids re-engineering Phase 4 but makes the Anti-Skew guarantee implicit rather than explicit. (2) Keeping one preprocessor, duplicating logic in the embedding service (DRY for features).
 - **This design wins** because `nlp_preprocessor.pkl` IS the embedding service's artifact. Zero duplication. The PCA fitted parameters are identical between training and serving because they come from the same file.
 
 ---
@@ -63,7 +63,7 @@ The train/val/test CSVs remain unchanged — they will still contain all merged 
 
 The meta-learner must be trained on **Out-of-Fold (OOF) predictions**, not on the same training set used to train the base models. This is the standard stacking protocol that prevents leakage into the meta-learner:
 
-1. Use `cross_val_predict(method='predict_proba')` on the train set for both Branch 1 and Branch 2 models — producing OOF probability arrays.
+1. Use `cross_val_predict(method='predict_proba')` on the train set for both Branch 1 and Branch 2 models, producing OOF probability arrays.
 2. Stack the OOF arrays as input features for the Logistic Regression meta-learner.
 3. Retrain both base models on the full train set.
 4. At evaluation, get predictions from the fully retrained base models on val/test, stack them, and pass through the fitted meta-learner.
@@ -181,7 +181,7 @@ Client → POST /v1/predict (CustomerFeatureRequest)
 
 ### Circuit Breaker for Embedding Service
 
-The prediction API must implement a fallback if the embedding service is unreachable — a Rule 2.2 (Custom Exception Handling) requirement. If `POST /v1/embed` returns a non-200 or times out, the API falls back to a zero-vector of dimension 20 and adds `"nlp_branch_available": false` to the response. The structured Branch 1 prediction continues uninterrupted.
+The prediction API must implement a fallback if the embedding service is unreachable, a Custom Exception Handling requirement. If `POST /v1/embed` returns a non-200 or times out, the API falls back to a zero-vector of dimension 20 and adds `"nlp_branch_available": false` to the response. The structured Branch 1 prediction continues uninterrupted.
 
 ### New Config Entity Required
 

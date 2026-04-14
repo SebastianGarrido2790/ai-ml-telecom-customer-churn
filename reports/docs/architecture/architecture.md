@@ -4,17 +4,9 @@
 
 ## 1. Executive Summary
 
-This document presents the comprehensive architecture for the **Telecom Customer Churn
-Prediction** platform. This project represents a shift from traditional MLOps
-(Model-Centric) to an **Agentic MLOps** paradigm. It orchestrates intelligent systems
-by combining deterministic traditional machine learning models (XGBoost + Logistic
-Regression stacker) with probabilistic AI Agents (Google Gemini 2.0 Flash + pydantic-ai)
-to analyze both quantitative telecom usage metrics and qualitative customer interactions
-(synthetic ticket notes and sentiment analysis).
+This document presents the comprehensive architecture for the **Telecom Customer Churn Prediction** platform. This project represents a shift from traditional MLOps (Model-Centric) to an **Agentic MLOps** paradigm. It orchestrates intelligent systems by combining deterministic traditional machine learning models (XGBoost + Logistic Regression stacker) with probabilistic AI Agents (Google Gemini 2.0 Flash + pydantic-ai) to analyze both quantitative telecom usage metrics and qualitative customer interactions (synthetic ticket notes and sentiment analysis).
 
-The system adheres to the **FTI (Feature, Training, Inference)** pattern and the
-"Agentic Architecture" standard, ensuring deep decoupling between data logic, model
-training, and the intelligent agents serving predictions and business insights.
+The system adheres to the **FTI (Feature, Training, Inference)** pattern and the "Agentic Architecture" standard, ensuring deep decoupling between data logic, model training, and the intelligent agents serving predictions and business insights.
 
 ---
 
@@ -22,12 +14,8 @@ training, and the intelligent agents serving predictions and business insights.
 
 The **Brain vs. Brawn** separation of concerns governs all system design decisions:
 
-- **The Brain (Agents):** pydantic-ai + Gemini 2.0 Flash. They reason, route, interpret
-  business context, and synthesize predictions into actionable strategies. They operate
-  on probabilities.
-- **The Brawn (Tools):** Two FastAPI microservices (Embedding Service + Prediction API),
-  Great Expectations, Pydantic, and deterministic ML models. They are typed, deterministic,
-  and purely objective.
+- **The Brain (Agents):** pydantic-ai + Gemini 2.0 Flash. They reason, route, interpret business context, and synthesize predictions into actionable strategies. They operate on probabilities.
+- **The Brawn (Tools):** Two FastAPI microservices (Embedding Service + Prediction API), Great Expectations, Pydantic, and deterministic ML models. They are typed, deterministic, and purely objective.
 
 ### 2.1 Brain vs. Brawn Diagram
 
@@ -67,21 +55,16 @@ graph TD
 
 ### 3.1 Feature Pipeline — COMPLETE ✅
 
-Responsible for ingesting, validating, and transforming raw telecom data into
-high-quality predictive signals. Produces **two independently serialized preprocessors**
-to support the Late Fusion training architecture and the Embedding Microservice.
+Responsible for ingesting, validating, and transforming raw telecom data into high-quality predictive signals. Produces **two independently serialized preprocessors** to support the Late Fusion training architecture and the Embedding Microservice.
 
 - **Data Contracts:** Great Expectations v1.0+ at two validation checkpoints.
-- **Agentic Enrichment:** pydantic-ai Agent generates leakage-free ticket notes from
-  17 observable CRM fields (C1 fix applied — `Churn` field permanently excluded).
-- **Split Preprocessors:** `structured_preprocessor.pkl` (numeric + categorical) and
-  `nlp_preprocessor.pkl` (TextEmbedder + PCA) — each fitted on Train only.
+- **Agentic Enrichment:** pydantic-ai Agent generates leakage-free ticket notes from 17 observable CRM fields (C1 fix applied — `Churn` field permanently excluded).
+- **Split Preprocessors:** `structured_preprocessor.pkl` (numeric + categorical) and `nlp_preprocessor.pkl` (TextEmbedder + PCA) — each fitted on Train only.
 - **Versioning:** DVC tracks all artifacts and configuration dependencies.
 
 ### 3.2 Training Pipeline — COMPLETE ✅
 
-Implements the **Late Fusion stacking architecture** with three MLflow-tracked experiment
-runs: structured baseline (Branch 1), NLP baseline (Branch 2), and the stacked meta-learner.
+Implements the **Late Fusion stacking architecture** with three MLflow-tracked experiment runs: structured baseline (Branch 1), NLP baseline (Branch 2), and the stacked meta-learner.
 
 - **Leakage-Free Stacking:** OOF cross-validation prevents meta-learner leakage.
 - **Independent SMOTE:** Applied per branch in each branch's own geometric space.
@@ -90,24 +73,18 @@ runs: structured baseline (Branch 1), NLP baseline (Branch 2), and the stacked m
 
 ### 3.3 Inference Pipeline — COMPLETE ✅ (Phase 6)
 
-Deployed as **two decoupled FastAPI microservices**, enforcing Rule 1.3 (Tools as
-Microservices). Both services are operational and verified against real predictions.
+Deployed as **two decoupled FastAPI microservices**, enforcing Tools as Microservices. Both services are operational and verified against real predictions.
 
 **Embedding Microservice (port 8001):**
 - Loads `nlp_preprocessor.pkl` at startup via `lifespan`.
-- Runs SentenceTransformer warmup on startup — eliminates cold-start latency on
-  the first real request and keeps the inter-service `httpx` timeout at 5s.
+- Runs SentenceTransformer warmup on startup — eliminates cold-start latency on the first real request and keeps the inter-service `httpx` timeout at 5s.
 - Exposes `POST /v1/embed` and `GET /v1/health`.
 
 **Prediction API (port 8000):**
-- Loads all four artifacts at startup: `structured_preprocessor.pkl`,
-  `structured_model.pkl`, `nlp_model.pkl`, `meta_model.pkl`.
-- `InferenceService` owns all computation: DataFrame reconstruction → structured
-  preprocessing → embedding call (with circuit breaker) → base model scoring →
-  meta-learner stacking.
+- Loads all four artifacts at startup: `structured_preprocessor.pkl`, `structured_model.pkl`, `nlp_model.pkl`, `meta_model.pkl`.
+- `InferenceService` owns all computation: DataFrame reconstruction → structured preprocessing → embedding call (with circuit breaker) → base model scoring → meta-learner stacking.
 - Exposes `POST /v1/predict`, `POST /v1/predict/batch`, `GET /v1/health`.
-- **Circuit breaker:** If embedding service is unreachable, falls back to zero-vector
-  `(n, 20)`, sets `nlp_branch_available=False`, and continues structured prediction.
+- **Circuit breaker:** If embedding service is unreachable, falls back to zero-vector `(n, 20)`, sets `nlp_branch_available=False`, and continues structured prediction.
 
 **Phase 6 operational proof:**
 
@@ -125,20 +102,12 @@ POST /v1/predict (high-risk profile: Fiber optic, month-to-month, tenure=1):
 
 ### 3.5 CI/CD & Cloud Deployment — COMPLETE ✅ (Phase 8)
 
-The delivery layer automates the full lifecycle from `git push` to a running cloud environment.
-Two GitHub Actions workflows implement **trunk-based development** with a five-decision
-architecture (OIDC auth, rolling updates, three-service ECS scope, S3 artifact fetch,
-LocalStack simulation).
+The delivery layer automates the full lifecycle from `git push` to a running cloud environment. Two GitHub Actions workflows implement **trunk-based development** with a five-decision architecture (OIDC auth, rolling updates, three-service ECS scope, S3 artifact fetch, and LocalStack simulation).
 
-- **CI (`ci.yml`):** Two-pillar gate on every branch — `ruff` + `pyright` (Pillar 1) and
-  `pytest --cov-fail-under=65` (Pillar 2). Blocks merge on any failure.
-- **CD (`cd.yml`):** Parallel matrix build → Docker Scout CVE scan → dependency-ordered
-  rolling deployment (`embedding-service → prediction-api → gradio-ui`) → ALB health check.
-- **LocalStack Simulation:** Full AWS pipeline (ECR, S3, ECS Fargate) emulated at $0 cost
-  inside the GitHub Actions runner. Identical workflow activates against live AWS with
-  six GitHub Secrets — **zero code changes required**.
-- **Pre-commit Gate:** `ruff`, `pyright`, `detect-private-key`, `no-artifacts-in-git`, and
-  `no-env-files` hooks enforce quality at the developer workstation before CI.
+- **CI (`ci.yml`):** Two-pillar gate on every branch — `ruff` + `pyright` (Pillar 1) and `pytest --cov-fail-under=65` (Pillar 2). Blocks merge on any failure.
+- **CD (`cd.yml`):** Parallel matrix build → Docker Scout CVE scan → dependency-ordered rolling deployment (`embedding-service → prediction-api → gradio-ui`) → ALB health check.
+- **LocalStack Simulation:** Full AWS pipeline (ECR, S3, ECS Fargate) emulated at $0 cost inside the GitHub Actions runner. Identical workflow activates against live AWS with six GitHub Secrets — **zero code changes required**.
+- **Pre-commit Gate:** `ruff`, `pyright`, `detect-private-key`, `no-artifacts-in-git`, and `no-env-files` hooks enforce quality at the developer workstation before CI.
 
 ### 3.4 FTI Pipeline Diagram
 
@@ -199,63 +168,35 @@ flowchart LR
 
 ## 4. Phase 2: Agentic Data Enrichment
 
-1. **Agentic Data Enrichment (Phase 2 — Complete):** pydantic-ai orchestrates Gemini
-   2.0 Flash in the Feature Pipeline. Synthesizes "Soft Signals" (Ticket Notes) from
-   "Hard Signals" (Usage Statistics) using 17 observable CRM fields.
+1. **Agentic Data Enrichment (Phase 2 — Complete):** pydantic-ai orchestrates Gemini 2.0 Flash in the Feature Pipeline. Synthesizes "Soft Signals" (Ticket Notes) from "Hard Signals" (Usage Statistics) using 17 observable CRM fields.
 
-2. **C1 Leakage Fix (Phase 5 — Applied):** The original enrichment schema included the
-   `Churn` target variable, causing the LLM to embed label information directly into
-   ticket notes. After detection during Phase 5 model evaluation (NLP branch Recall=1.000),
-   the schema was redesigned, the system prompt was rewritten with a CRM-agent persona,
-   and the deterministic fallback was rewritten using feature-signal logic only.
+2. **C1 Leakage Fix (Phase 5 — Applied):** The original enrichment schema included the `Churn` target variable, causing the LLM to embed label information directly into ticket notes. After detection during Phase 5 model evaluation (NLP branch Recall=1.000), the schema was redesigned, the system prompt was rewritten with a CRM-agent persona, and the deterministic fallback was rewritten using feature-signal logic only.
 
-3. **Fallback & Resiliency:** 3-tier fallback chain (Gemini → Ollama → deterministic
-   feature-based rules). No target-variable reference at any tier.
+3. **Fallback & Resiliency:** 3-tier fallback chain (Gemini → Ollama → deterministic feature-based rules). No target-variable reference at any tier.
 
-4. **Structured Outputs:** All agent outputs are validated against `SyntheticNoteOutput`
-   before being written to disk.
+4. **Structured Outputs:** All agent outputs are validated against `SyntheticNoteOutput` before being written to disk.
 
 > See [data_enrichment.md](data_enrichment.md) for full architecture and leakage investigation.
 
-5. **NLP Engineering (Phase 4 — Complete):** `TextEmbedder` (all-MiniLM-L6-v2) + PCA
-   (20 components) isolated in `nlp_preprocessor.pkl`. The structured features are
-   independently handled by `structured_preprocessor.pkl`. `primary_sentiment_tag` is
-   excluded from both preprocessors (Decision A2).
+5. **NLP Engineering (Phase 4 — Complete):** `TextEmbedder` (all-MiniLM-L6-v2) + PCA (20 components) isolated in `nlp_preprocessor.pkl`. The structured features are independently handled by `structured_preprocessor.pkl`. `primary_sentiment_tag` is excluded from both preprocessors (Decision A2).
 
 > See [feature_engineering.md](feature_engineering.md) for architecture details.
 
-6. **Late Fusion Training (Phase 5 — Complete):** Two XGBoost base models trained on
-   separate feature branches with OOF stacking into a Logistic Regression meta-learner.
+6. **Late Fusion Training (Phase 5 — Complete):** Two XGBoost base models trained on separate feature branches with OOF stacking into a Logistic Regression meta-learner.
 
 > See [model_training.md](model_training.md) for full architecture and experimental results.
 
-7. **Inference Microservices (Phase 6 — Complete):** Two decoupled FastAPI services
-   serve the Late Fusion pipeline in production. The Embedding Microservice owns the
-   NLP branch; the Prediction API orchestrates the full inference flow with a circuit
-   breaker fallback.
+7. **Inference Microservices (Phase 6 — Complete):** Two decoupled FastAPI services serve the Late Fusion pipeline in production. The Embedding Microservice owns the NLP branch; the Prediction API orchestrates the full inference flow with a circuit breaker fallback.
 
-> See [inference_architecture.md](inference_architecture.md) for full architecture, circuit
-> breaker design, warmup protocol, and operational verification.
+> See [inference_architecture.md](inference_architecture.md) for full architecture, circuit breaker design, warmup protocol, and operational verification.
 
-8. **UI Development & Containerization (Phase 7 — Complete):** A dynamic Gradio Dashboard
-   providing an interactive churn risk calculator, SHAP feature importance visualizations,
-   and deep integration with MLflow. The entire 5-container infrastructure is orchestrated
-   via Docker Compose.
+8. **UI Development & Containerization (Phase 7 — Complete):** A dynamic Gradio Dashboard providing an interactive churn risk calculator, SHAP feature importance visualizations, and deep integration with MLflow. The entire 5-container infrastructure is orchestrated via Docker Compose.
 
 > See [gradio_ui.md](gradio_ui.md) for dashboard architecture and containerization details.
 
-9. **CI/CD & Cloud Deployment (Phase 8 — Complete):** A dual-path deployment architecture
-   with a fully operational **LocalStack simulation** ($0 cost, 100% AWS parity) and a
-   documented **Full AWS path** (activate with six GitHub Secrets, zero code changes).
-   Two GitHub Actions workflows (`ci.yml` and `cd.yml`) implement trunk-based development
-   with a five-decision architecture: OIDC-only auth (Decision I1), rolling updates
-   (Decision J1), three-service ECS scope (Decision K2), S3 artifact fetch at startup
-   (Decision L1), and LocalStack as cloud target (Decision M1). ECS task definitions for
-   all four services are delivered; `embedding-service`, `prediction-api`, and `gradio-ui`
-   deploy to Fargate; `mlflow-server` is pushed to ECR and available for Phase 9 activation.
+9. **CI/CD & Cloud Deployment (Phase 8 — Complete):** A dual-path deployment architecture with a fully operational **LocalStack simulation** ($0 cost, 100% AWS parity) and a documented **Full AWS path** (activate with six GitHub Secrets, zero code changes). Two GitHub Actions workflows (`ci.yml` and `cd.yml`) implement trunk-based development with a five-decision architecture: OIDC-only auth (Decision I1), rolling updates (Decision J1), three-service ECS scope (Decision K2), S3 artifact fetch at startup (Decision L1), and LocalStack as cloud target (Decision M1). ECS task definitions for all four services are delivered; `embedding-service`, `prediction-api`, and `gradio-ui` deploy to Fargate; `mlflow-server` is pushed to ECR and available for Phase 9 activation.
 
-> See [cicd_cloud_deployment.md](cicd_cloud_deployment.md) for full pipeline architecture,
-> IAM/OIDC security model, task definition design, and the dual-path deployment roadmap.
+> See [cicd_cloud_deployment.md](cicd_cloud_deployment.md) for full pipeline architecture, IAM/OIDC security model, task definition design, and the dual-path deployment roadmap.
 
 ---
 
@@ -362,36 +303,21 @@ flowchart LR
 
 ### Completed Quality Gates
 
-- **Unit Testing:** 53 passing tests across 6 test files. Phase 6 adds 24 new tests
-  covering embedding schemas, prediction schemas, circuit breaker correctness, and
-  DataFrame reconstruction. See [test_suite.md](../runbooks/test_suite.md).
-- **Data Validation:** GX v1.0+ suites at two checkpoints. C1 fix required adding
-  `"Dissatisfied"` to the enriched sentiment tag expectation.
-  See [data_validation_gx.md](data_validation_gx.md).
-- **Leakage Detection & Remediation:** Detected empirically during Phase 5 (NLP
-  Recall=1.000), traced to `Churn` in `CustomerInputContext`, remediated via C1 fix.
-  Permanently enforced by `test_customer_input_context_churn_field_absent`.
+- **Unit Testing:** 53 passing tests across 6 test files. Phase 6 adds 24 new tests covering embedding schemas, prediction schemas, circuit breaker correctness, and DataFrame reconstruction. See [test_suite.md](../runbooks/test_suite.md).
+- **Data Validation:** GX v1.0+ suites at two checkpoints. C1 fix required adding `"Dissatisfied"` to the enriched sentiment tag expectation. See [data_validation_gx.md](data_validation_gx.md).
+- **Leakage Detection & Remediation:** Detected empirically during Phase 5 (NLP Recall=1.000), traced to `Churn` in `CustomerInputContext`, remediated via C1 fix. Permanently enforced by `test_customer_input_context_churn_field_absent`.
 - **DVC Pipeline:** 6-stage reproducible DAG. See [dvc_pipeline.md](dvc_pipeline.md).
 - **MLflow Tracking:** 3 experiment runs per training cycle with lift metrics.
-- **Operational Verification:** Both microservices health-checked and real prediction
-  verified (`churn_probability: 0.7006`, `nlp_branch_available: true`).
-- **Pre-commit Gate (Phase 8):** `ruff`, `pyright`, `detect-private-key`,
-  `check-added-large-files`, `no-artifacts-in-git`, `no-env-files` — quality enforced
-  at the developer workstation before any commit reaches CI.
-- **CI Pipeline (Phase 8):** Two-pillar gate (code quality + tests) blocks any branch
-  merge on lint, type, or test failure. Feedback loop < 3 min.
-- **CD Pipeline (Phase 8):** Docker Scout CVE scan embedded in the image build stage;
-  dependency-ordered rolling deployment with `wait-for-service-stability` health gating;
-  post-deploy ALB health check confirms live service availability.
-- **HITL (Phase 7):** Key risk decisions surfaced through the Gradio dashboard, offering
-  branch-level probability breakdowns and SHAP visual explanations.
+- **Operational Verification:** Both microservices health-checked and real prediction verified (`churn_probability: 0.7006`, `nlp_branch_available: true`).
+- **Pre-commit Gate (Phase 8):** `ruff`, `pyright`, `detect-private-key`, `check-added-large-files`, `no-artifacts-in-git`, `no-env-files` — quality enforced at the developer workstation before any commit reaches CI.
+- **CI Pipeline (Phase 8):** Two-pillar gate (code quality + tests) blocks any branch merge on lint, type, or test failure. Feedback loop < 3 min.
+- **CD Pipeline (Phase 8):** Docker Scout CVE scan embedded in the image build stage; dependency-ordered rolling deployment with `wait-for-service-stability` health gating; post-deploy ALB health check confirms live service availability.
+- **HITL (Phase 7):** Key risk decisions surfaced through the Gradio dashboard, offering branch-level probability breakdowns and SHAP visual explanations.
 
 ### Planned (Phase 9)
 
-- **OpenTelemetry Tracing:** Spans for Chain of Thought, tool latency, and token usage
-  across the Agentic enrichment workflow and both inference microservices.
-- **AgentOps Metrics:** Plan Success Rate (PSR), Tool Call Accuracy (TCA), retry latency,
-  and `nlp_branch_available` ratio in production.
+- **OpenTelemetry Tracing:** Spans for Chain of Thought, tool latency, and token usage across the Agentic enrichment workflow and both inference microservices.
+- **AgentOps Metrics:** Plan Success Rate (PSR), Tool Call Accuracy (TCA), retry latency, and `nlp_branch_available` ratio in production.
 - **Data Drift Detection:** Inference payload distribution vs. training distribution monitoring.
 - **Blue/Green Deployment:** AWS CodeDeploy + ALB target groups for sub-second rollback.
 - **MLflow on ECS with EFS:** Persistent `mlruns/` across Fargate task replacements.

@@ -2,7 +2,7 @@
 Pydantic request and response schemas for the Embedding Microservice.
 
 All I/O contracts are typed explicitly — no untyped dict payloads permitted
-(Rule: Pydantic Request/Response Models).
+(Pydantic Request/Response Models).
 """
 
 from pydantic import BaseModel, Field

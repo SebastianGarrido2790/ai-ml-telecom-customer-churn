@@ -10,10 +10,7 @@
 
 ## 1. Executive Summary
 
-Phase 8 closes the loop on the **FTI (Feature, Training, Inference)** architecture by
-adding a **Continuous Integration / Continuous Deployment** layer that automates the
-delivery of all containerized microservices — from a developer's `git push` to a running
-production environment.
+Phase 8 closes the loop on the **FTI (Feature, Training, Inference)** architecture by adding a **Continuous Integration / Continuous Deployment** layer that automates the delivery of all containerized microservices, from a developer's `git push` to a running production environment.
 
 The phase is executed along **two parallel architectural paths**:
 
@@ -22,19 +19,13 @@ The phase is executed along **two parallel architectural paths**:
 | **LocalStack Simulation** | AWS services emulated in Docker on the local runner | ✅ Complete |
 | **Full AWS Implementation** | Real Fargate / ECR / S3 / IAM — zero code changes required | 🔵 Documented — activate by supplying live credentials |
 
-Both paths are **structurally identical**: the same GitHub Actions YAML files, the same
-ECS task definitions, the same Docker images. The only difference is the AWS endpoint
-(`localhost:4566` vs. the public AWS control plane). This guarantees that the
-LocalStack simulation is a **faithful rehearsal** of a live production deployment, not
-a simplified mock.
+Both paths are **structurally identical**: the same GitHub Actions YAML files, the same ECS task definitions, the same Docker images. The only difference is the AWS endpoint (`localhost:4566` vs. the public AWS control plane). This guarantees that the LocalStack simulation is a **faithful rehearsal** of a live production deployment, not a simplified mock.
 
 ---
 
 ## 2. Architectural Decisions
 
-Five formal decisions govern this phase. Every decision was evaluated against at least
-two options before a recommendation was made, in compliance with the **Comparative
-Planning** mandate.
+Five formal decisions govern this phase. Every decision was evaluated against at least two options before a recommendation was made, in compliance with the **Comparative Planning** mandate.
 
 ### Decision 1 (I) — AWS Authentication Strategy
 
@@ -45,10 +36,7 @@ Planning** mandate.
 | Setup complexity | Medium (one-time OIDC provider registration) | Low |
 | Security posture | Best practice — principle of least privilege | Violates least-privilege |
 
-**Rationale:** OIDC federation means GitHub Actions never stores a real AWS credential.
-The runner obtains a short-lived STS token by presenting a signed JWT to AWS IAM, which
-validates the token against the repository and branch conditions in the role's trust
-policy. No secrets are rotated; no keys are leaked.
+**Rationale:** OIDC federation means GitHub Actions never stores a real AWS credential. The runner obtains a short-lived STS token by presenting a signed JWT to AWS IAM, which validates the token against the repository and branch conditions in the role's trust policy. No secrets are rotated; no keys are leaked.
 
 ### Decision 2 (J) — ECS Deployment Strategy
 
@@ -59,10 +47,7 @@ policy. No secrets are rotated; no keys are leaked.
 | Downtime | Zero (stateless services) | Zero |
 | Appropriate for SLA | < 99.9% | ≥ 99.9% |
 
-**Rationale:** Blue/Green is the correct pattern when SLAs demand sub-second rollback.
-For a portfolio project without a defined SLA, rolling update provides the identical
-zero-downtime guarantee with no additional infrastructure cost. Blue/Green is the
-natural Phase 9 migration path once SLA requirements are formally defined.
+**Rationale:** Blue/Green is the correct pattern when SLAs demand sub-second rollback. For a portfolio project without a defined SLA, rolling update provides the identical zero-downtime guarantee with no additional infrastructure cost. Blue/Green is the natural Phase 9 migration path once SLA requirements are formally defined.
 
 ### Decision 3 (K) — ECS Service Scope
 
@@ -72,11 +57,7 @@ natural Phase 9 migration path once SLA requirements are formally defined.
 | MLflow storage | Local / EC2 | EFS mount — VPC subnet routing required |
 | Portfolio value | High — three customer-facing services visible | Same, plus internal tooling overhead |
 
-**Rationale:** `mlflow-server` is an internal tool. Running it on Fargate requires
-EFS for `mlruns/` persistence — a non-trivial VPC/subnet/mount-target configuration
-that adds cost and complexity without demonstrating additional MLOps engineering skill.
-The task definition for `mlflow-server` is delivered as an artifact so Phase 9 can
-activate it without any code changes.
+**Rationale:** `mlflow-server` is an internal tool. Running it on Fargate requires EFS for `mlruns/` persistence — a non-trivial VPC/subnet/mount-target configuration that adds cost and complexity without demonstrating additional MLOps engineering skill. The task definition for `mlflow-server` is delivered as an artifact so Phase 9 can activate it without any code changes.
 
 ### Decision 4 (L) — Artifact Delivery to Fargate
 
@@ -87,12 +68,7 @@ activate it without any code changes.
 | Infrastructure | S3 bucket + IAM `s3:GetObject` | None | VPC, EFS, mount targets, access points |
 | Cold-start penalty | ~1–2 s for 5 MB artifacts | None | None |
 
-**Rationale:** ML artifacts are DVC-managed data, not application code. Keeping them
-separate enforces the FTI principle that the **Feature Store** and **Model Registry**
-are independent of the **Inference Pipeline** container. The cold-start penalty for
-~5 MB of `.pkl` files is negligible. The startup script conditionally appends
-`--endpoint-url $AWS_ENDPOINT_URL` to every `aws s3 sync` call — identical behavior
-in LocalStack and real AWS.
+**Rationale:** ML artifacts are DVC-managed data, not application code. Keeping them separate enforces the FTI principle that the **Feature Store** and **Model Registry** are independent of the **Inference Pipeline** container. The cold-start penalty for ~5 MB of `.pkl` files is negligible. The startup script conditionally appends `--endpoint-url $AWS_ENDPOINT_URL` to every `aws s3 sync` call — identical behavior in LocalStack and real AWS.
 
 ### Decision 5 (M) — Cloud Provider Target
 
@@ -103,19 +79,14 @@ in LocalStack and real AWS.
 | AWS architectural parity | 100% — same IaC, same CLI commands | 100% |
 | Activation path | Supply live credentials | Already documented |
 
-**Rationale:** The "Cloud Bill Hurdle" (`decisions/cloud_bill_hurdle.md`) made a live
-AWS account impractical for this phase. LocalStack 3.1.0 (Community) provides full
-fidelity for S3, ECR, and ECS at `localhost:4566`. The entire AWS-specific code
-(Terraform provider, GitHub Actions, task definitions, entrypoint script) is written
-**without any LocalStack-specific logic** — switching to real AWS requires only
+**Rationale:** The "Cloud Bill Hurdle" (`decisions/cloud_bill_hurdle.md`) made a live AWS account impractical for this phase. LocalStack 3.1.0 (Community) provides full fidelity for S3, ECR, and ECS at `localhost:4566`. The entire AWS-specific code (Terraform provider, GitHub Actions, task definitions, entrypoint script) is written **without any LocalStack-specific logic** — switching to real AWS requires only
 supplying live GitHub Secrets.
 
 ---
 
 ## 3. CI/CD Pipeline Architecture
 
-The pipeline follows **trunk-based development**: all quality gates are enforced on
-every branch via CI; deployment to the cloud environment occurs only on `main`.
+The pipeline follows **trunk-based development**: all quality gates are enforced on every branch via CI; deployment to the cloud environment occurs only on `main`.
 
 ```mermaid
 flowchart TD
@@ -161,10 +132,7 @@ flowchart TD
 
 **Trigger:** `push` to any branch + `pull_request` targeting `main`.
 
-**Design choice — single job:** The two pillars run in one job sharing a single
-`uv`-managed virtual environment. Splitting into a parallel matrix would add runner
-startup overhead (≥ 30 s per runner) that exceeds the total quality-check runtime
-(< 3 min).
+**Design choice — single job:** The two pillars run in one job sharing a single `uv`-managed virtual environment. Splitting into a parallel matrix would add runner startup overhead (≥ 30 s per runner) that exceeds the total quality-check runtime (< 3 min).
 
 ```
 jobs:
@@ -180,9 +148,7 @@ jobs:
       - pytest --cov=src --cov-fail-under=65 --tb=short
 ```
 
-**Gate semantics:** Any step failure exits non-zero, and the GitHub branch protection
-rule `Require status checks to pass before merging` blocks the PR. Code never enters
-`main` with a failing type check, lint error, or test regression.
+**Gate semantics:** Any step failure exits non-zero, and the GitHub branch protection rule `Require status checks to pass before merging` blocks the PR. Code never enters `main` with a failing type check, lint error, or test regression.
 
 ### 3.2 CD Workflow (`cd.yml`)
 
@@ -194,8 +160,7 @@ concurrency:
   group: cd-main
   cancel-in-progress: false   # never cancel a running deployment
 ```
-Only one deployment may run simultaneously. A second `main` push queues rather than
-cancels the active deployment — prevents partial-rollout race conditions.
+Only one deployment may run simultaneously. A second `main` push queues rather than cancels the active deployment, preventing partial-rollout race conditions.
 
 #### Stage 1 — Build & Push (parallel matrix)
 
@@ -222,11 +187,9 @@ Each image is tagged with **two tags**:
 - `{ECR_REGISTRY}/{repo}:{github.sha}` — immutable, pinned to the exact commit.
 - `{ECR_REGISTRY}/{repo}:latest` — mutable, always points to the latest main build.
 
-The deploy job references the **SHA tag** exclusively, ensuring that a rolling update
-cannot pull an image that was pushed by a concurrent build.
+The deploy job references the **SHA tag** exclusively, ensuring that a rolling update cannot pull an image that was pushed by a concurrent build.
 
-**Layer caching:** `docker/build-push-action@v6` stores the build cache in ECR itself
-(`buildcache` tag). No external cache backend (GitHub Cache, S3) is required.
+**Layer caching:** `docker/build-push-action@v6` stores the build cache in ECR itself (`buildcache` tag). No external cache backend (GitHub Cache, S3) is required.
 
 #### Stage 2 — Docker Scout CVE Scan
 
@@ -239,9 +202,7 @@ cannot pull an image that was pushed by a concurrent build.
     exit-code:   true
 ```
 
-**Policy rationale:** Blocking only on `critical` + `only-fixed` avoids build failures
-on unfixable CVEs in base OS packages — a common source of false-positive CI blocks
-in production pipelines. `high` CVEs are reported in the job log but do not block release.
+**Policy rationale:** Blocking only on `critical` + `only-fixed` avoids build failures on unfixable CVEs in base OS packages, a common source of false-positive CI blocks in production pipelines. `high` CVEs are reported in the job log but do not block release.
 
 #### Stage 3 — Deploy to ECS Fargate (sequential, dependency-ordered)
 
@@ -253,15 +214,9 @@ prediction-api      (deploys second — gradio-ui depends on its /v1/predict end
 gradio-ui           (deploys last — user-facing layer)
 ```
 
-Each service uses `aws-actions/amazon-ecs-render-task-definition@v1` to inject the
-immutable SHA-tagged image URI into the JSON task definition, then
-`aws-actions/amazon-ecs-deploy-task-definition@v2` to register the new revision and
-trigger the rolling update. The action polls ECS until the service reaches steady
-state (`wait-for-minutes: 10`) before proceeding to the next service.
+Each service uses `aws-actions/amazon-ecs-render-task-definition@v1` to inject the immutable SHA-tagged image URI into the JSON task definition, then `aws-actions/amazon-ecs-deploy-task-definition@v2` to register the new revision and trigger the rolling update. The action polls ECS until the service reaches steady state (`wait-for-minutes: 10`) before proceeding to the next service.
 
-**`mlflow-server`** is pushed to ECR in Stage 1 but not deployed in Stage 3
-(Decision K2). Its task definition lives in `task-definitions/mlflow-server.json`
-and can be activated in Phase 9 without any workflow changes.
+**`mlflow-server`** is pushed to ECR in Stage 1 but not deployed in Stage 3 (Decision K2). Its task definition lives in `task-definitions/mlflow-server.json` and can be activated in Phase 9 without any workflow changes.
 
 #### Stage 4 — Post-Deploy Health Check
 
@@ -270,18 +225,13 @@ curl -sf --max-time 10 "http://${ALB_DNS_PRED}/v1/health"   | python3 -m json.to
 curl -sf --max-time 10 "http://${ALB_DNS_GRADIO}/" > /dev/null && echo "200 OK"
 ```
 
-ALB DNS names are stored as GitHub Actions **variables** (not secrets). Health check
-failure at this stage triggers a job failure, making the deployment visible in GitHub
-without an automatic rollback (ECS keeps the previous task definition revision active
-as a rollback baseline).
+ALB DNS names are stored as GitHub Actions **variables** (not secrets). Health check failure at this stage triggers a job failure, making the deployment visible in GitHub without an automatic rollback (ECS keeps the previous task definition revision active as a rollback baseline).
 
 ---
 
 ## 4. LocalStack Simulation Architecture
 
-The LocalStack path replaces every real AWS endpoint with `http://localhost:4566`,
-running inside the GitHub Actions runner via the `localstack/setup-localstack@v0.2.2`
-action.
+The LocalStack path replaces every real AWS endpoint with `http://localhost:4566`, running inside the GitHub Actions runner via the `localstack/setup-localstack@v0.2.2` action.
 
 ```mermaid
 flowchart LR
@@ -350,15 +300,11 @@ jobs:
       - name: Update ECS services          # awslocal ecs create-service --launch-type FARGATE
 ```
 
-**Key parity mechanism:** The `cd.yml` for LocalStack uses `sed` to replace `ACCOUNT_ID`
-and `REGION` placeholders in the task definition JSONs with mock values before calling
-`awslocal ecs register-task-definition`. This is the **only** structural difference
-from the real AWS workflow — the logic, ordering, and health check steps are identical.
+**Key parity mechanism:** The `cd.yml` for LocalStack uses `sed` to replace `ACCOUNT_ID` and `REGION` placeholders in the task definition JSONs with mock values before calling `awslocal ecs register-task-definition`. This is the **only** structural difference from the real AWS workflow, the logic, ordering, and health check steps are identical.
 
 ### 4.3 Local Development Stack (docker-compose.yaml)
 
-The full local development environment adds `localstack` as a fifth container alongside
-the four application services:
+The full local development environment adds `localstack` as a fifth container alongside the four application services:
 
 ```yaml
 localstack:
@@ -392,9 +338,7 @@ gradio-ui:
 
 ## 5. Artifact Delivery Pattern (Decision L1)
 
-The startup entrypoint script is the bridge between the **DVC-managed Feature Store /
-Model Registry** and the running Fargate container. It replaces the local Docker Compose
-bind mount (`./artifacts:/app/artifacts`) that cannot exist on Fargate.
+The startup entrypoint script is the bridge between the **DVC-managed Feature Store / Model Registry** and the running Fargate container. It replaces the local Docker Compose bind mount (`./artifacts:/app/artifacts`) that cannot exist on Fargate.
 
 ```bash
 #!/bin/bash
@@ -435,12 +379,9 @@ sequenceDiagram
 ```
 
 **Robustness notes:**
-- The `exec "$@"` pattern ensures the service process inherits the PID 1 slot —
-  critical for receiving SIGTERM from ECS during rolling update drains.
-- The `[ -n "$AWS_ENDPOINT_URL" ]` guard ensures the script works unmodified in
-  both LocalStack and real AWS environments.
-- For ~5 MB of `.pkl` files the S3 sync completes in < 2 s; ECS health check grace
-  periods accommodate this.
+- The `exec "$@"` pattern ensures the service process inherits the PID 1 slot, critical for receiving SIGTERM from ECS during rolling update drains.
+- The `[ -n "$AWS_ENDPOINT_URL" ]` guard ensures the script works unmodified in both LocalStack and real AWS environments.
+- For ~5 MB of `.pkl` files the S3 sync completes in < 2 s; ECS health check grace periods accommodate this.
 
 ---
 
@@ -490,8 +431,7 @@ All four task definitions follow an identical structure. Key parameters:
 | `ecsTaskExecutionRole` | ECS agent — pull image from ECR, push logs to CloudWatch | AWS-managed `AmazonECSTaskExecutionRolePolicy` |
 | `ecsTaskRole` | Application code — fetch artifacts from S3 | `s3:GetObject` + `s3:ListBucket` scoped to artifact bucket |
 
-This mirrors the **Brain vs. Brawn** principle: the ECS control plane (execution role)
-is separated from the application runtime (task role).
+This mirrors the **Brain vs. Brawn** principle: the ECS control plane (execution role) is separated from the application runtime (task role).
 
 ### 6.3 Placeholder Map
 
@@ -580,15 +520,10 @@ flowchart TD
 
 **Key security properties:**
 
-1. **No long-lived secrets in GitHub** — `AWS_ROLE_ARN` is a resource identifier.
-   A leaked ARN cannot authenticate without a valid GitHub-issued JWT.
-2. **Repository + branch scoping** — the IAM trust condition
-   `"token.actions.githubusercontent.com:sub": "repo:ORG/REPO:ref:refs/heads/main"`
-   prevents any other repository or branch from assuming the role.
-3. **Session naming** — `role-session-name: github-cd-{run_id}` makes every deployment
-   traceable in AWS CloudTrail logs.
-4. **Principle of least privilege** — the role has `ecr:*` and `ecs:*` scoped to
-   `telecom-churn-*` resources only; `s3:GetObject` is scoped to the artifact bucket ARN.
+1. **No long-lived secrets in GitHub** — `AWS_ROLE_ARN` is a resource identifier. A leaked ARN cannot authenticate without a valid GitHub-issued JWT.
+2. **Repository + branch scoping** — the IAM trust condition `"token.actions.githubusercontent.com:sub": "repo:ORG/REPO:ref:refs/heads/main"` prevents any other repository or branch from assuming the role.
+3. **Session naming** — `role-session-name: github-cd-{run_id}` makes every deployment traceable in AWS CloudTrail logs.
+4. **Principle of least privilege** — the role has `ecr:*` and `ecs:*` scoped to `telecom-churn-*` resources only; `s3:GetObject` is scoped to the artifact bucket ARN.
 
 ---
 
@@ -680,8 +615,7 @@ flowchart LR
 
 The Phase 9 migration from LocalStack to real AWS requires **zero code changes**:
 1. Replace dummy GitHub Secrets with live AWS values.
-2. Run the one-time AWS infrastructure setup (ECR repos, S3 bucket, ECS cluster, OIDC
-   provider, IAM roles).
+2. Run the one-time AWS infrastructure setup (ECR repos, S3 bucket, ECS cluster, OIDC provider, IAM roles).
 3. Merge any branch to `main` — the CD workflow fires automatically.
 
 ---

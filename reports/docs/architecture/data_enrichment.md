@@ -2,21 +2,11 @@
 
 ## 1. Purpose
 
-The Data Enrichment phase synthesizes **"Soft Signals"** (qualitative sentiment) from
-**"Hard Signals"** (quantitative behavioral data) to fill the qualitative gap in the raw
-Telco dataset. It uses a **Hybrid Agentic Pipeline** powered by **pydantic-ai**, combining
-Google Gemini 2.0 Flash with local Ollama fallbacks. It produces structured, validated ticket
-notes and sentiment tags for every customer row.
+The Data Enrichment phase synthesizes **"Soft Signals"** (qualitative sentiment) from **"Hard Signals"** (quantitative behavioral data) to fill the qualitative gap in the raw Telco dataset. It uses a **Hybrid Agentic Pipeline** powered by **pydantic-ai**, combining Google Gemini 2.0 Flash with local Ollama fallbacks. It produces structured, validated ticket notes and sentiment tags for every customer row.
 
-> **MLOps Principle (Agentic Architecture):** The Agent (Brain) does not compute. It reasons
-> and routes. Deterministic data transformation is delegated to validated Tools (Brawn). The
-> enrichment pipeline enforces this by using Pydantic schemas as the contract boundary between
-> the raw DataFrame and the LLM.
+> **MLOps Principle (Agentic Architecture):** The Agent (Brain) does not compute. It reasons and routes. Deterministic data transformation is delegated to validated Tools (Brawn). The enrichment pipeline enforces this by using Pydantic schemas as the contract boundary between the raw DataFrame and the LLM.
 
-**Framework Decision:** `pydantic-ai` was selected over `LangChain/LangGraph` for this phase
-because it offers faster deterministic schema validation inside Python without heavy
-abstractions, aligning with the "Strict Typing" and "Production-Readiness" rules for this
-project.
+**Framework Decision:** `pydantic-ai` was selected over `LangChain/LangGraph` for this phase because it offers faster deterministic schema validation inside Python without heavy abstractions, aligning with the "Strict Typing" and "Production-Readiness" rules for this project.
 
 ---
 
@@ -116,8 +106,7 @@ Every row of the raw CSV is validated against this schema **before** being passe
 
 ### 4.2 Output Contract: `SyntheticNoteOutput`
 
-Guarantees that the LLM output is always parseable and categorically valid before being
-written to disk.
+Guarantees that the LLM output is always parseable and categorically valid before being written to disk.
 
 | Field | Type | Constraint |
 |---|---|---|
@@ -145,12 +134,7 @@ written to disk.
 
 ## 6. System Prompt Design (C1 Enhanced)
 
-> **C1 Enhancement:** The original system prompt contained explicit `LOGIC GATES` conditioning
-> generation on `Churn=Yes/No` (e.g., *"If `Churn=Yes`, the note MUST be negative"*). All
-> churn-conditional gates were removed. The prompt now adopts a CRM-agent persona: the LLM
-> writes a note as a support agent would immediately after a live call, based only on observable
-> service signals. Frustration can emerge legitimately from high charges + no tech support,
-> but never from label knowledge.
+> **C1 Enhancement:** The original system prompt contained explicit `LOGIC GATES` conditioning generation on `Churn=Yes/No` (e.g., *"If `Churn=Yes`, the note MUST be negative"*). All churn-conditional gates were removed. The prompt now adopts a CRM-agent persona: the LLM writes a note as a support agent would immediately after a live call, based only on observable service signals. Frustration can emerge legitimately from high charges + no tech support, but never from label knowledge.
 
 The leakage-free prompt instructs:
 - Write from the perspective of a support agent **during a call** (before any churn decision).
@@ -176,9 +160,7 @@ All enrichment parameters are centralized in `config/params.yaml`.
 
 ## 8. DVC Integration
 
-The enrichment stage is registered in `dvc.yaml` as the `enrich_data` stage. `schemas.py`
-and `prompts.py` are declared as dependencies, so any change to the input contract or system
-prompt automatically invalidates the cache and forces a full re-run.
+The enrichment stage is registered in `dvc.yaml` as the `enrich_data` stage. `schemas.py` and `prompts.py` are declared as dependencies, so any change to the input contract or system prompt automatically invalidates the cache and forces a full re-run.
 
 ```yaml
 enrich_data:
@@ -214,9 +196,7 @@ The output artifact is the raw Telco dataset with two new columns:
 
 ### 10.1 Original Run (Leaky — v1)
 
-First execution used the original 7-field schema with `Churn` included. The leakage was
-detected during Phase 5 model evaluation when the NLP branch achieved Recall=1.000 and
-ROC-AUC=0.9999 on the held-out test set — statistically impossible from genuine NLP signal.
+First execution used the original 7-field schema with `Churn` included. The leakage was detected during Phase 5 model evaluation when the NLP branch achieved Recall=1.000 and ROC-AUC=0.9999 on the held-out test set statistically impossible from genuine NLP signal.
 
 **Sentiment Distribution (Leaky):**
 
@@ -232,8 +212,7 @@ The 99.3% churn rate for `Frustrated` is the statistical fingerprint of label le
 
 ### 10.2 C1-Fixed Run (Leakage-Free — v2, Current)
 
-After applying the C1 fix (schema + prompt + fallback rewrite), the pipeline was re-executed
-on the full 7,043-row dataset. All 4 GX expectations passed with 0 violations.
+After applying the C1 fix (schema + prompt + fallback rewrite), the pipeline was re-executed on the full 7,043-row dataset. All 4 GX expectations passed with 0 violations.
 
 **Sentiment Distribution (Leakage-Free):**
 
@@ -245,10 +224,7 @@ on the full 7,043-row dataset. All 4 GX expectations passed with 0 violations.
 | Satisfied | 438 | 6.2% | 8.7% |
 | Neutral | 353 | 5.0% | 9.3% |
 
-The churn rates per tag now form a credible ordinal relationship — Frustrated (40.2%) >
-Dissatisfied (30.2%) > Billing Inquiry (26.1%) > Satisfied (8.7%) — without any tag being
-a near-deterministic proxy of the target. This is the correct profile for a legitimate
-qualitative soft signal.
+The churn rates per tag now form a credible ordinal relationship — Frustrated (40.2%) > Dissatisfied (30.2%) > Billing Inquiry (26.1%) > Satisfied (8.7%) — without any tag being a near-deterministic proxy of the target. This is the correct profile for a legitimate qualitative soft signal.
 
 ### 10.3 Validation Summary (v2)
 

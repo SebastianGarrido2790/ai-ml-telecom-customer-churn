@@ -2,17 +2,9 @@
 
 ## 1. Executive Summary
 
-This document details the architecture, implementation decisions, and operational
-findings for Phase 6 of the Telecom Customer Churn Prediction project. Phase 6
-implements the **Inference Pipeline** ("I") of the FTI pattern as two decoupled
-FastAPI microservices, enforcing Rule 1.3 (Tools as Microservices) and completing
-the path from raw customer data to a live churn risk score.
+This document details the architecture, implementation decisions, and operational findings for Phase 6 of the Telecom Customer Churn Prediction project. Phase 6 implements the **Inference Pipeline** ("I") of the FTI pattern as two decoupled FastAPI microservices, enforcing Tools as Microservices and completing the path from raw customer data to a live churn risk score.
 
-The phase introduces four production-grade patterns that distinguish this system
-from a notebook-to-API promotion: the three-layer service architecture
-(config → lifespan → router → inference logic), the inter-service circuit breaker,
-the SentenceTransformer warmup protocol, and the `depends_on: condition:
-service_healthy` startup ordering contract for Phase 7 Docker Compose.
+The phase introduces four production-grade patterns that distinguish this system from a notebook-to-API promotion: the three-layer service architecture (config → lifespan → router → inference logic), the inter-service circuit breaker, the SentenceTransformer warmup protocol, and the `depends_on: condition: service_healthy` startup ordering contract for Phase 7 Docker Compose.
 
 ---
 
@@ -39,8 +31,7 @@ service_healthy` startup ordering contract for Phase 7 Docker Compose.
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-The `prediction-api` is the only public-facing service. `embedding-service` is an
-internal dependency — callers never interact with it directly.
+The `prediction-api` is the only public-facing service. `embedding-service` is an internal dependency — callers never interact with it directly.
 
 ---
 
@@ -70,8 +61,7 @@ src/
 
 ### 3.1 Three-Layer Ownership Model
 
-Each service enforces a strict boundary between three layers. No layer may
-import or call into a layer it does not own.
+Each service enforces a strict boundary between three layers. No layer may import or call into a layer it does not own.
 
 | Layer | Files | Owns | Never Touches |
 |---|---|---|---|
@@ -81,9 +71,7 @@ import or call into a layer it does not own.
 | **Computation** | `inference.py` | DataFrame construction, preprocessing, HTTP embed call, model prediction | FastAPI `Request`, HTTP verbs |
 | **Contracts** | `schemas.py` (both) | Field types, validation constraints, defaults | Preprocessing, file I/O |
 
-This boundary is enforced structurally: `router.py` contains zero `import numpy`
-or `import pandas` statements. `inference.py` contains zero `from fastapi import`
-statements. Violations are immediately visible as import errors.
+This boundary is enforced structurally: `router.py` contains zero `import numpy` or `import pandas` statements. `inference.py` contains zero `from fastapi import` statements. Violations are immediately visible as import errors.
 
 ---
 
@@ -169,18 +157,13 @@ CustomerFeatureRequest  (19 structured fields + ticket_note)
 | `BatchPredictResponse` | Outbound | `predictions: list[ChurnPredictionResponse]`, `total: int`, `nlp_branch_available: bool` |
 | `PredictionHealthResponse` | Outbound | `status: str`, `model_version: str` |
 
-`TotalCharges` is typed `str | None` — not `float` — because the raw Telco dataset
-stores blank strings for customers with `tenure=0`. `InferenceService._build_structured_df()`
-converts `None` to `""` before passing to `NumericCleaner`, which coerces to `NaN`
-for median imputation. This preserves the exact preprocessing path used in training,
-satisfying the Anti-Skew Mandate (Rule 2.9).
+`TotalCharges` is typed `str | None` — not `float` — because the raw Telco dataset stores blank strings for customers with `tenure=0`. `InferenceService._build_structured_df()` converts `None` to `""` before passing to `NumericCleaner`, which coerces to `NaN` for median imputation. This preserves the exact preprocessing path used in training, satisfying the Anti-Skew Mandate.
 
 ---
 
 ## 6. Circuit Breaker
 
-`InferenceService._get_embeddings()` implements a soft circuit breaker for the
-inter-service HTTP call. Three failure modes are handled identically:
+`InferenceService._get_embeddings()` implements a soft circuit breaker for the inter-service HTTP call. Three failure modes are handled identically:
 
 | Failure Mode | Trigger | Response |
 |---|---|---|
@@ -188,17 +171,11 @@ inter-service HTTP call. Three failure modes are handled identically:
 | `httpx.HTTPStatusError` | Embedding service returns non-2xx | Zero-vector `(n, 20)`, `nlp_branch_available=False` |
 | `httpx.RequestError` | Connection refused / DNS failure | Zero-vector `(n, 20)`, `nlp_branch_available=False` |
 
-In all three cases: a `WARNING` is logged with the exact exception type and message,
-the structured Branch 1 prediction continues uninterrupted, and the caller receives
-a valid `ChurnPredictionResponse` with `nlp_branch_available=False` and `p_nlp=0.0`.
+In all three cases: a `WARNING` is logged with the exact exception type and message, the structured Branch 1 prediction continues uninterrupted, and the caller receives a valid `ChurnPredictionResponse` with `nlp_branch_available=False` and `p_nlp=0.0`.
 
-The prediction API never returns a 5xx due to embedding service unavailability.
-This makes `prediction-api` independently operable — it degrades to a structured-only
-predictor rather than failing entirely.
+The prediction API never returns a 5xx due to embedding service unavailability. This makes `prediction-api` independently operable, it degrades to a structured-only predictor rather than failing entirely.
 
-**Batch circuit breaker behavior:** The circuit breaker applies to the entire batch.
-All notes in a `BatchPredictRequest` are sent in a single `POST /v1/embed` call.
-If that call fails, all customers in the batch receive `nlp_branch_available=False`.
+**Batch circuit breaker behavior:** The circuit breaker applies to the entire batch. All notes in a `BatchPredictRequest` are sent in a single `POST /v1/embed` call. If that call fails, all customers in the batch receive `nlp_branch_available=False`.
 
 ---
 
@@ -206,17 +183,12 @@ If that call fails, all customers in the batch receive `nlp_branch_available=Fal
 
 ### 7.1 The Cold-Start Problem
 
-The `TextEmbedder` inside `nlp_preprocessor.pkl` uses lazy loading — the PyTorch
-SentenceTransformer model is not loaded until the first `transform()` call (governed
-by the `@property model` decorator in `feature_utils.py`). Without mitigation, the
-first `/v1/embed` request triggers a ~10–13 second model load, which exhausts the
-prediction API's 5-second `httpx` timeout and silently returns a zero-vector for
+The `TextEmbedder` inside `nlp_preprocessor.pkl` uses lazy loading — the PyTorch SentenceTransformer model is not loaded until the first `transform()` call (governed by the `@property model` decorator in `feature_utils.py`). Without mitigation, the first `/v1/embed` request triggers a ~10–13 second model load, which exhausts the prediction API's 5-second `httpx` timeout and silently returns a zero-vector for
 the first real customer request.
 
 ### 7.2 The Fix
 
-The embedding service `lifespan` function in `main.py` runs one dummy `transform()`
-call immediately after `joblib.load()`, before `yield` hands control to uvicorn:
+The embedding service `lifespan` function in `main.py` runs one dummy `transform()` call immediately after `joblib.load()`, before `yield` hands control to uvicorn:
 
 ```python
 logger.info("Warming NLP preprocessor (first transform initialises SentenceTransformer).")
@@ -239,9 +211,7 @@ INFO  Embedding Microservice ready. Model: all-MiniLM-L6-v2-pca20 | Dim: 20
 
 ### 7.3 Production Implication for Phase 7
 
-The warmup extends the embedding service's startup window. In Docker Compose, the
-prediction API must not receive traffic until the embedding service has fully
-completed warmup. This is enforced via:
+The warmup extends the embedding service's startup window. In Docker Compose, the prediction API must not receive traffic until the embedding service has fully completed warmup. This is enforced via:
 
 ```yaml
 # docker-compose.yaml (Phase 7)
@@ -259,8 +229,7 @@ embedding-service:
     start_period: 30s   # accommodates warmup duration
 ```
 
-The `/v1/health` endpoint only returns after `yield` — which only executes after
-the warmup completes. This gives an exact startup ordering guarantee.
+The `/v1/health` endpoint only returns after `yield` — which only executes after the warmup completes. This gives an exact startup ordering guarantee.
 
 ---
 
@@ -306,12 +275,7 @@ api:
     model_version: "late-fusion-v2"
 ```
 
-> **Windows note:** `localhost` resolves to `::1` (IPv6) on Windows by default.
-> The embedding service binds to `0.0.0.0` (IPv4 only). Using `localhost` in the
-> prediction API config therefore causes a connection refused error on Windows.
-> `127.0.0.1` is explicit and correct for both local and Docker Compose environments.
-> In Docker Compose (Phase 7), `host` is overridden to the container service name
-> (`embedding-service`) via environment variable injection.
+> **Windows note:** `localhost` resolves to `::1` (IPv6) on Windows by default. The embedding service binds to `0.0.0.0` (IPv4 only). Using `localhost` in the prediction API config therefore causes a connection refused error on Windows. `127.0.0.1` is explicit and correct for both local and Docker Compose environments. In Docker Compose (Phase 7), `host` is overridden to the container service name (`embedding-service`) via environment variable injection.
 
 ---
 
@@ -340,10 +304,7 @@ Phase 6 was verified against the following acceptance criteria:
 }
 ```
 
-Customer profile: Fiber optic, month-to-month contract, no tech support, no security
-add-ons, tenure=1 month, `MonthlyCharges=$95.50`. Both branches agree on elevated
-risk; the structured branch (0.89) is the stronger signal, consistent with the Phase 5
-evaluation results where structured features carried higher discriminative power.
+Customer profile: Fiber optic, month-to-month contract, no tech support, no security add-ons, tenure=1 month, `MonthlyCharges=$95.50`. Both branches agree on elevated risk; the structured branch (0.89) is the stronger signal, consistent with the Phase 5 evaluation results where structured features carried higher discriminative power.
 
 ---
 

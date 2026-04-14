@@ -24,7 +24,7 @@
 
 ### CI/CD Pipeline Architecture
 
-Two workflows following the **trunk-based development** model (Rule 6.2):
+Two workflows following the **trunk-based development** model:
 
 ```
 Every push / PR to any branch:

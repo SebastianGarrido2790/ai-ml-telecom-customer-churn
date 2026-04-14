@@ -89,7 +89,7 @@ RUN apt-get update && apt-get install -y awscli && rm -rf /var/lib/apt/lists/*
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Ensure /app and all its children are owned by the non-root user (Rule 6.1)
+# Ensure /app and all its children are owned by the non-root user
 RUN chown -R appuser:appgroup /app
 
 USER appuser

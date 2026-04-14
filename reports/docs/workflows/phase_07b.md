@@ -16,7 +16,7 @@ Five components confirmed:
 
 **Decision H1** — Gradio as a fifth Docker Compose service is locked. Phase 7B will deliver:
 
-- `src/ui/` — modular Gradio application (pages, components, data loaders — no monolithic `app.py` per Rule 9)
+- `src/ui/` — modular Gradio application (pages, components, data loaders, no monolithic `app.py`)
 - `docker/gradio_ui/Dockerfile` — multi-stage build, non-root user, health check
 - `docker-compose.yaml` — updated to uncomment and complete the `gradio-ui` service with `depends_on: prediction-api: condition: service_healthy` and `PREDICTION_API_URL=http://prediction-api:8000`
 

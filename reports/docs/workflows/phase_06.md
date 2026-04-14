@@ -2,7 +2,7 @@
 
 **Decision Confirmed: D2 (Separated)**
 
-The three-layer separation in Phase 6 follows Brain vs. Brawn Rule and the Single Responsibility Principle (SRP). Here is the complete ownership map across all 14 files.
+The three-layer separation in Phase 6 follows Brain vs. Brawn approach and the Single Responsibility Principle (SRP). Here is the complete ownership map across all 14 files.
 
 The three-layer architecture across both services follows a strict boundary: configuration owns artifact paths, `main.py` owns startup/shutdown, `router.py` owns HTTP, `inference.py` owns all computation, and schemas own validation. Here is the complete ownership map with the rationale for each boundary.Each boundary enforces a specific rule.
 

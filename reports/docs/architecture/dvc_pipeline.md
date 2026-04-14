@@ -4,14 +4,13 @@
 
 **DVC (Data Version Control)** is the backbone of the project's reproducibility and lineage tracking. It manages the full DAG (Directed Acyclic Graph) of pipeline stages, ensuring that every run of `dvc repro` produces **bit-for-bit identical outputs** given the same inputs.
 
-> **MLOps Principle (Rule 2.4 — MLOps Integrity Check):** All pipeline stages must support data versioning via DVC. Any change to code, configuration, or data **automatically invalidates** the affected stage and all downstream stages.
+> **MLOps Integrity Check:** All pipeline stages must support data versioning via DVC. Any change to code, configuration, or data **automatically invalidates** the affected stage and all downstream stages.
 
 ---
 
 ## 2. Current Pipeline DAG (6 Stages — FTI Feature + Training Pipelines)
 
-The pipeline now spans two FTI layers: the complete Feature Pipeline (Stages 0–4) and
-the Training Pipeline (Stage 5). The Inference Pipeline (Stage 6+) is planned for Phase 6.
+The pipeline now spans two FTI layers: the complete Feature Pipeline (Stages 0–4) and the Training Pipeline (Stage 5). The Inference Pipeline (Stage 6+) is planned for Phase 6.
 
 ```mermaid
 flowchart LR

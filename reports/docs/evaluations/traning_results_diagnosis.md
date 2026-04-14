@@ -6,7 +6,7 @@ I have successfully completed **Phase 5: Model Development** following the **Lat
 
 ### 🚀 Implementation & Execution Summary
 
-1.  **Refactored Feature Engineering**: Split the unified preprocessor into `structured_preprocessor.pkl` and `nlp_preprocessor.pkl`. This ensures **Training-Serving Parity (Rule 2.9)** while allowing the **TextEmbedder** `src/utils/feature_utils.py` to be isolated for the upcoming Phase 6 microservice.
+1.  **Refactored Feature Engineering**: Split the unified preprocessor into `structured_preprocessor.pkl` and `nlp_preprocessor.pkl`. This ensures **Training-Serving Parity** while allowing the **TextEmbedder** `src/utils/feature_utils.py` to be isolated for the upcoming Phase 6 microservice.
 2.  **Late Fusion Model Training**:
     *   **Structured Branch**: Optimized an XGBoost model on tabular data (Optuna search, 30 trials).
     *   **NLP Branch**: Optimized an XGBoost model on the ticket embeddings (Optuna search, 20 trials).
@@ -29,7 +29,7 @@ The model evaluation results demonstrate a **massive ROI** for the AI-enriched f
 > [!NOTE]
 > The exceptionally high performance of the NLP branch is due to the `ticket_notes` being generated during Phase 2 with full knowledge of the churn state. While this represents a "best-case scenario," it qualitatively proves that the **TextEmbedder captures 100% of the intent** documented in those notes, which the structured features (Contract, TechSupport, etc.) only partially reflect.
 
-The NLP branch achieving Recall=1.000, Precision=0.993, and ROC-AUC=0.9999 on a held-out test set is not a valid result — it is a **data leakage confirmation**. This needs to be resolved before Phase 6 is built on top of it, because a production inference API serving a perfect model that only works due to synthetic data leakage provides zero business value and would fail immediately on real customer data.
+The NLP branch achieving Recall=1.000, Precision=0.993, and ROC-AUC=0.9999 on a held-out test set is not a valid result, it is a **data leakage confirmation**. This needs to be resolved before Phase 6 is built on top of it, because a production inference API serving a perfect model that only works due to synthetic data leakage provides zero business value and would fail immediately on real customer data.
 
 The leakage mechanism is precise: the `ticket_note` embeddings encode the churn label directly because Phase 2 generated those notes **using `Churn` as an input field** in `CustomerInputContext` in `src/components/data_enrichment/schemas.py`. The LLM learned to write "Customer expressed frustration and is planning to switch" for `Churn=Yes` and "Customer is satisfied with service" for `Churn=No`. The `TextEmbedder` then encoded that semantic content into vectors that are perfectly separable.
 
@@ -98,15 +98,15 @@ This requires re-running Phase 2 (7,043 LLM calls) and Phases 3–5 in sequence.
 
 Retain the current results as an **upper-bound benchmark** — explicitly documented as such in `artifacts/model_training/evaluation_report.json` and the architecture docs. Add a new `leakage_aware` flag to the report schema. Proceed to Phase 6 using only the `structured_model.pkl` for the production inference path. The NLP microservice is still built and deployed (for portfolio value), but the meta-model in production uses `[P_struct, 0.0]` as input — i.e., the NLP branch output is zeroed until leakage-free notes are available.
 
-**Effort:** Low — no re-execution required. **Validity:** Technically honest if documented correctly, but the core value proposition (AI enrichment improves prediction) remains unproven.
+**Effort:** Low, no re-execution required. **Validity:** Technically honest if documented correctly, but the core value proposition (AI enrichment improves prediction) remains unproven.
 
 ---
 
 ## Recommendation
 
-**Option C1.** The entire justification for Phase 2 — the claim that qualitative AI signals add predictive power beyond structured features — requires a leakage-free experiment to be valid. Option C2 produces a portfolio that a technical interviewer will immediately identify as flawed. Option C1 produces one that demonstrates we caught and corrected a real-world leakage problem, which is itself a senior-level MLOps competency worth showcasing.
+**Option C1.** The entire justification for Phase 2, including the claim that qualitative AI signals add predictive power beyond structured features, requires a leakage-free experiment to be valid. Option C2 produces a portfolio that a technical interviewer will immediately identify as flawed. Option C1 produces one that demonstrates we caught and corrected a real-world leakage problem, which is itself a senior-level MLOps competency worth showcasing.
 
-The prompt fix is straightforward. The `Churn` field is removed from `CustomerInputContext`. The system prompt is rewritten to describe the interaction from the perspective of a support agent writing notes during or after a call, based only on what the customer said and what service data is visible in the CRM. Frustration, billing complaints, and technical issues can still emerge — but they must be grounded in observable features (high charges, month-to-month contract, fiber optic with no tech support) rather than the label.
+The prompt fix is straightforward. The `Churn` field is removed from `CustomerInputContext`. The system prompt is rewritten to describe the interaction from the perspective of a support agent writing notes during or after a call, based only on what the customer said and what service data is visible in the CRM. Frustration, billing complaints, and technical issues can still emerge, but they must be grounded in observable features (high charges, month-to-month contract, fiber optic with no tech support) rather than the label.
 
 ---
 
@@ -130,7 +130,7 @@ providers\ unless grounded in observable billing/contract friction.
     *   Removed the \if customer_context.Churn == \Yes\\ branch.
     *   The fallback now uses a rule-based engine (Contract + Charges + Service) to generate realistic, label-blind notes when APIs fail.
 4.  **Pipeline Re-execution**: 
-    *   The \nrich_data\ stage has been updated in \dvc.yaml\ to include all schema and prompt files as dependencies.
+    *   The \enrich_data\ stage has been updated in \dvc.yaml\ to include all schema and prompt files as dependencies.
     *   The DVC pipeline is currently configured with \limit: 0\ in \params.yaml\ for a full dataset re-run (approx. 7.8 hours on Gemini Free Tier).
 
 ### 🔍 Verification Results:

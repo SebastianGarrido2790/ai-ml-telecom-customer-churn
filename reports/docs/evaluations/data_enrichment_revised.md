@@ -60,7 +60,7 @@ The current `LOGIC GATES` section explicitly instructs the LLM with rules like *
 `_process_row()` at line 52 passes `Churn=str(row.get("Churn", "No"))` into `CustomerInputContext`. Once `Churn` is removed from the schema, this argument must be removed from the constructor call.
 
 **`tests\unit\test_enrichment.py` — 3 test updates:**
-All three tests that construct `CustomerInputContext` pass `"Churn": "Yes"` or `"Churn": "Maybe"`. These must be updated to reflect the new schema. The `test_customer_input_context_invalid_literals` test currently relies on `Churn: "Maybe"` as one of its two invalid fields — it needs a replacement invalid field to preserve its intent.
+All three tests that construct `CustomerInputContext` pass `"Churn": "Yes"` or `"Churn": "Maybe"`. These must be updated to reflect the new schema. The `test_customer_input_context_invalid_literals` test currently relies on `Churn: "Maybe"` as one of its two invalid fields, it needs a replacement invalid field to preserve its intent.
 
 **`src\components\stage_02_data_enrichment.py` and `src\components\stage_03_enriched_validation.py` — no changes required.** Both are conductors with no direct reference to the `Churn` field.
 
@@ -68,7 +68,7 @@ All three tests that construct `CustomerInputContext` pass `"Churn": "Yes"` or `
 
 ### New `CustomerInputContext` — Field Expansion
 
-The schema gains fields to compensate for losing the label — giving the LLM more legitimate CRM signals to ground a realistic note. This matches what a real support agent would actually see:
+The schema gains fields to compensate for losing the label, giving the LLM more legitimate CRM signals to ground a realistic note. This matches what a real support agent would actually see:
 
 ```
 Removed : Churn

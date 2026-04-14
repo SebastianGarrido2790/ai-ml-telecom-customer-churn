@@ -4,7 +4,7 @@ Feature Engineering Component.
 This module implements the categorical encoding, numerical scaling, and NLP-based
 text embedding transformations for the Telco Churn dataset. It follows the FTI
 Feature layer pattern to provide two production-ready, independently serialized
-preprocessors that enforce the Anti-Skew Mandate (Rule 2.9).
+preprocessors that enforce the Anti-Skew Mandate.
 
 Preprocessor Split Design:
     - structured_preprocessor.pkl: Numeric + Categorical pipelines only.

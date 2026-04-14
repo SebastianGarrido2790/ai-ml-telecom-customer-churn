@@ -116,4 +116,3 @@ mlflow.db
 
 # Assistant / Agent Global Rules
 .agents/
-GEMINI.md

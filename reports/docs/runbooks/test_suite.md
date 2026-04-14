@@ -2,12 +2,10 @@
 
 ## 1. Purpose
 
-This document describes the project's unit testing strategy — the first tier of the
-**Testing Pyramid** defined in Rule 4.1 of the Antigravity MLOps Standard.
+This document describes the project's unit testing strategy, the first tier of the **Testing Pyramid**.
 
 > **Testing Pyramid Layer 1 (Pytest):** Strictly for **Tools and Pipelines**.
-> Ensure deterministic code works 100% of the time. Tests must be fast,
-> isolated, and never make live API calls.
+> Ensure deterministic code works 100% of the time. Tests must be fast, isolated, and never make live API calls.
 
 ---
 
@@ -62,11 +60,7 @@ enrichment pipeline.
 
 **Module Under Test:** `src/components/data_enrichment/schemas`
 
-> **C1 Enhancement:** Following the leakage investigation (Phase 5), the `Churn` field was
-> removed from `CustomerInputContext` and the schema was expanded to 17 observable CRM fields.
-> The test suite was updated to reflect the new schema. A dedicated leakage-prevention test
-> (`test_customer_input_context_churn_field_absent`) was added to permanently guard against
-> re-introduction of the target variable into the input contract.
+> **C1 Enhancement:** Following the leakage investigation (Phase 5), the `Churn` field was removed from `CustomerInputContext` and the schema was expanded to 17 observable CRM fields. The test suite was updated to reflect the new schema. A dedicated leakage-prevention test (`test_customer_input_context_churn_field_absent`) was added to permanently guard against re-introduction of the target variable into the input contract.
 
 #### Original Coverage (5 tests)
 
@@ -104,8 +98,7 @@ def test_customer_input_context_churn_field_absent() -> None:
 
 ### 3.4 `tests/test_feature_engineering.py` — Phase 4 Transformation Logic
 
-**Purpose:** Validates custom Scikit-Learn transformers and the data splitting/preprocessing
-orchestration. Ensures NLP embeddings and PCA logic integrate without leakage.
+**Purpose:** Validates custom Scikit-Learn transformers and the data splitting/preprocessing orchestration. Ensures NLP embeddings and PCA logic integrate without leakage.
 
 **Modules Under Test:** `src/components/feature_engineering.py`, `src/utils/feature_utils.py`
 
@@ -119,9 +112,7 @@ orchestration. Ensures NLP embeddings and PCA logic integrate without leakage.
 
 ### 3.5 `tests/unit/test_model_training.py` — Phase 5 Late Fusion Training
 
-**Purpose:** Validates the four deterministic guarantees of the Late Fusion training pipeline.
-No live Optuna search, no MLflow server, and no LLM calls are triggered — all external
-dependencies are replaced with minimal fixtures.
+**Purpose:** Validates the four deterministic guarantees of the Late Fusion training pipeline. No live Optuna search, no MLflow server, and no LLM calls are triggered, all external dependencies are replaced with minimal fixtures.
 
 **Modules Under Test:** `src/components/model_training/trainer.py`
 
@@ -165,8 +156,7 @@ well-formed.
 
 ### 3.6 `tests/unit/test_api_schemas.py` — Phase 6 API & Inference Contracts
 
-**Purpose:** Validates the deterministic guarantees of the inference pipeline, including
-Pydantic schema validation for microservices and the inter-service circuit breaker logic.
+**Purpose:** Validates the deterministic guarantees of the inference pipeline, including Pydantic schema validation for microservices and the inter-service circuit breaker logic.
 
 **Modules Under Test:** `src/api/prediction_service/schemas.py`, `src/api/embedding_service/schemas.py`, `src/api/prediction_service/inference.py`
 

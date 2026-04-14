@@ -1,7 +1,7 @@
 # =============================================================================
 # Telecom Customer Churn MLOps — Makefile
 # Consolidates dev, test, pipeline, Docker, and AWS deployment workflows.
-# Rule 2.10 — Onboarding Hygiene: Makefile is a mandatory Day-One artifact.
+# Onboarding Hygiene: Makefile is a mandatory Day-One artifact.
 # =============================================================================
 
 .PHONY: lint typecheck test pipeline build up down down-v logs \
@@ -227,7 +227,7 @@ localstack-deploy:
 	@echo "For actual deployment logic to LocalStack, see .github/workflows/cd.yml. In local dev, Docker Compose replaces this."
 
 # ---------------------------------------------------------------------------
-# Multi-Point Validation Gate (Rule 6.4)
+# Multi-Point Validation Gate
 # ---------------------------------------------------------------------------
 
 validate:
@@ -293,7 +293,7 @@ help:
 	@echo "    artifacts-pull    Sync S3 → artifacts/"
 	@echo ""
 	@echo "  Validation:"
-	@echo "    validate          Rule 6.4 Multi-Point Validation Gate"
+	@echo "    validate          Multi-Point Validation Gate"
 	@echo ""
 	@echo "  Utilities:"
 	@echo "    clean             Remove Python cache files"

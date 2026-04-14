@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Multi-Point Validation Gate — Rule 6.4
+# Multi-Point Validation Gate
 # Enforces four independent quality pillars before any production deployment.
 # Run before every PR merge or docker compose up in CI.
 #

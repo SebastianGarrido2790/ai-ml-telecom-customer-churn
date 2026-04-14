@@ -2,13 +2,9 @@
 
 ## 1. Purpose
 
-The Data Validation phase acts as a **quality gate** in the FTI Feature Pipeline.
-It prevents "garbage in, garbage out" by blocking data that fails statistical or
-schema contracts from reaching the training or inference stages.
+The Data Validation phase acts as a **quality gate** in the FTI Feature Pipeline. It prevents "garbage in, garbage out" by blocking data that fails statistical or schema contracts from reaching the training or inference stages.
 
-> **MLOps Principle (The Inspector):** The `DataValidator` component does not mutate data
-> — it evaluates it. Its sole responsibility is to validate a DataFrame against a predefined
-> Expectation Suite and `raise` a loud, typed exception if any contract is violated.
+> **MLOps Principle (The Inspector):** The `DataValidator` component does not mutate data, it evaluates it. Its sole responsibility is to validate a DataFrame against a predefined Expectation Suite and `raise` a loud, typed exception if any contract is violated.
 
 ---
 
@@ -47,8 +43,7 @@ Feature Pipeline
 
 **File:** `src/components/data_validation.py`
 
-The `DataValidator` class wraps the **Great Expectations v1.0+ API** in a clean interface
-that pipeline stages can use without knowing the internals of GX.
+The `DataValidator` class wraps the **Great Expectations v1.0+ API** in a clean interface that pipeline stages can use without knowing the internals of GX.
 
 ### 3.1 Design Decisions
 
@@ -84,8 +79,7 @@ that pipeline stages can use without knowing the internals of GX.
 
 ## 4. Schema Integration (`schema.yaml`)
 
-The validation suites are **parameterized** by `config/schema.yaml`, which is the authoritative
-schema definition for both the raw and enriched datasets.
+The validation suites are **parameterized** by `config/schema.yaml`, which is the authoritative schema definition for both the raw and enriched datasets.
 
 ```yaml
 COLUMNS:
@@ -100,15 +94,13 @@ ENRICHED_COLUMNS:
   primary_sentiment_tag: category
 ```
 
-The `ConfigurationManager` loads this schema and passes it into the `DataValidationConfig`
-and `DataEnrichmentConfig` entities, which are then consumed by the pipeline stages.
+The `ConfigurationManager` loads this schema and passes it into the `DataValidationConfig` and `DataEnrichmentConfig` entities, which are then consumed by the pipeline stages.
 
 ---
 
 ## 5. Exception Architecture
 
-The `StatisticalContractViolation` exception is a **domain-specific, loud failure** mechanism.
-It satisfies the **Rule 2.2 (Custom Exception Handling)** standard for Agentic Systems.
+The `StatisticalContractViolation` exception is a **domain-specific, loud failure** mechanism. It satisfies the **Custom Exception Handling** standard for Agentic Systems.
 
 ```python
 raise StatisticalContractViolation(

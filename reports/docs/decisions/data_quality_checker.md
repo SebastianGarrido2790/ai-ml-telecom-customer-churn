@@ -17,7 +17,7 @@ We have selected **Great Expectations (GX)** as the primary "Data Inspector" for
 ### Why Great Expectations?
 
 1.  **Expectations-as-Code:** It provides a standardized domain-specific language (DSL) to describe what data *should* look like (e.g., `expect_column_values_to_be_between`).
-2.  **Separation of Concerns:** It acts as the **Inspector** Layer (Rule 2.1), checking data integrity without mutating it. This separates validation logic from the transformation logic (The Mechanic).
+2.  **Separation of Concerns:** It acts as the **Inspector** Layer, checking data integrity without mutating it. This separates validation logic from the transformation logic (The Mechanic).
 3.  **Rich Validation Metadata:** Unlike simple assertions, GX generates `ValidationResult` objects that contain specific details about which rows failed and why, enabling **Agentic Healing** (where an agent can read the error and try to fix the data).
 4.  **Pipeline Guardrails:** By integrating GX into DVC stages, we ensure that a pipeline stage **stops immediately** if data quality conditions are not met, protecting downstream training/inference.
 

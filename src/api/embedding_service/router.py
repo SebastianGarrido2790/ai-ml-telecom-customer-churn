@@ -6,7 +6,7 @@ Endpoints:
     GET  /v1/health  — Container readiness probe.
 
 This module is a pure HTTP conductor. All transformation logic is delegated
-to the fitted nlp_preprocessor pipeline loaded at startup (Rule — Brain vs.
+to the fitted nlp_preprocessor pipeline loaded at startup (Brain vs.
 Brawn separation). The router never touches sklearn or numpy directly.
 """
 
