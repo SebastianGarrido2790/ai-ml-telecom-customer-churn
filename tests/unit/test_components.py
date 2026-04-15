@@ -226,43 +226,15 @@ def test_feature_engineering_init(mock_st, temp_dir):
 @patch("src.components.feature_engineering.pd.read_csv")
 @patch("src.components.feature_engineering.joblib.dump")
 @patch("sentence_transformers.SentenceTransformer")
-def test_feature_engineering_run(mock_st, mock_dump, mock_read, temp_dir):
+def test_feature_engineering_run(mock_st, mock_dump, mock_read, temp_dir, sample_telco_df):
     """Verifies end-to-end execution of the feature engineering component.
 
     Includes stratified splitting validation.
     """
     from src.components.feature_engineering import FeatureEngineering
 
-    mock_df = pd.DataFrame(
-        {
-            "customerID": ["1"],
-            "gender": ["Male"],
-            "SeniorCitizen": [0],
-            "Partner": ["No"],
-            "Dependents": ["No"],
-            "tenure": [1],
-            "PhoneService": ["Yes"],
-            "MultipleLines": ["No"],
-            "InternetService": ["DSL"],
-            "OnlineSecurity": ["No"],
-            "OnlineBackup": ["No"],
-            "DeviceProtection": ["No"],
-            "TechSupport": ["No"],
-            "StreamingTV": ["No"],
-            "StreamingMovies": ["No"],
-            "Contract": ["Month-to-month"],
-            "PaperlessBilling": ["No"],
-            "PaymentMethod": ["Electronic check"],
-            "MonthlyCharges": [29.85],
-            "TotalCharges": ["29.85"],
-            "Churn": ["No"],
-            "ticket_note": ["test note"],
-            "primary_sentiment_tag": ["Neutral"],
-        }
-    )
-    # Duplicate rows to satisfy train_test_split (needs >1 sample for stratified split)
-    mock_df = pd.concat([mock_df] * 10, ignore_index=True)
-    mock_read.return_value = mock_df
+    # Use the centralized sample_telco_df
+    mock_read.return_value = sample_telco_df
 
     config = FeatureEngineeringConfig(
         root_dir=temp_dir,

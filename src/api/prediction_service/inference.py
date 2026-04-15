@@ -28,12 +28,14 @@ from __future__ import annotations
 import httpx
 import numpy as np
 import pandas as pd
+from pandas import DataFrame, Series
 
 from src.api.prediction_service.schemas import (
     BatchPredictResponse,
     ChurnPredictionResponse,
     CustomerFeatureRequest,
 )
+from src.utils.array_utils import ensure_ndarray
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -222,23 +224,13 @@ class InferenceService:
         """
         # --- Step 1 & 2: Structured preprocessing ---
         struct_df = self._build_structured_df(customers)
-        from pandas import DataFrame, Series
 
         struct_features: np.ndarray | DataFrame | Series = self.structured_preprocessor.transform(  # type: ignore[attr-defined]
             struct_df
         )
 
         # Ensure numpy array for model consumption
-        from typing import Any, cast
-
-        if hasattr(struct_features, "toarray"):
-            struct_features_np: np.ndarray = cast(Any, struct_features).toarray()
-        elif hasattr(struct_features, "to_numpy"):
-            struct_features_np: np.ndarray = cast(Any, struct_features).to_numpy()
-        elif hasattr(struct_features, "values"):
-            struct_features_np: np.ndarray = cast(Any, struct_features).values
-        else:
-            struct_features_np = np.asarray(struct_features)
+        struct_features_np = ensure_ndarray(struct_features)
 
         # --- Step 3: NLP embeddings (with circuit breaker) ---
         ticket_notes = [c.ticket_note for c in customers]

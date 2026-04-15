@@ -21,6 +21,8 @@ This document describes the project's unit testing strategy, the first tier of t
 its output would be non-deterministic and fragile. Instead, we test the **rigid contracts
 around** the LLM — the Pydantic schemas that validate its inputs and outputs.
 
+**Shared Infrastructure:** To ensure consistency and reduce boilerplate, all common fixtures (Standardized DataFrames, Mocks, Temp Files) are centralized in `conftest.py` files at the root and unit levels.
+
 ---
 
 ## 3. Test Files
@@ -107,6 +109,8 @@ def test_customer_input_context_churn_field_absent() -> None:
 | `TestNumericCleaner` | `NumericCleaner` | Coerces object-type columns to floats; handles blank strings. |
 | `TestTextEmbedder` | `TextEmbedder` | Lazy loads `SentenceTransformer`; handles pickling safely. |
 | `test_data_splitting_and_processing` | `FeatureEngineering` | Stratified train/val/test split; total samples preserved. |
+
+> **v1.2 Refactor:** Redundant fixtures in this file were removed and replaced with the centralized `sample_telco_df` and `mock_sentence_transformer` fixtures from the root `conftest.py`.
 
 ---
 
@@ -219,6 +223,33 @@ Includes `TestChurnPredictionResponse` (3 tests) and `TestBatchSchemas` (3 tests
 | `test_health_check` | `/health` | API is alive and reachable. |
 | `test_prediction_endpoint_success` | `/predict` | End-to-end inference flow with mocked models succeeds. |
 
+### 3.10 `tests/unit/test_array_utils.py` — Array Handling Utilities (v1.2)
+**Purpose:** Validates the robust conversion of various data formats (Sparse, Pandas, List) into dense Numpy arrays for model inference.
+
+| Test | Component Tested | What It Proves |
+|---|---|---|
+| `test_ensure_ndarray_from_sparse` | `ensure_ndarray` | Correctly densifies Scipy CSR matrices. |
+| `test_ensure_ndarray_from_dataframe`| `ensure_ndarray` | Extracts values from Pandas DataFrames. |
+| `test_ensure_ndarray_from_numpy` | `ensure_ndarray` | Returns existing numpy arrays unchanged. |
+
+---
+
+## 4. Shared Test Infrastructure (`conftest.py`)
+
+The project uses a hierarchical `conftest.py` structure to eliminate fixture duplication and ensure a "Single Source of Truth" for test data.
+
+### 4.1 Root `tests/conftest.py` — Suite-Wide Fixtures
+| Fixture | Purpose |
+|---|---|
+| `mock_sentence_transformer` | A persistent mock that intercepts `SentenceTransformer` calls, returning consistent vectors while preventing any external HTTP requests/downloads. |
+| `sample_telco_df` | A factory that returns a valid 10-row Telco DataFrame containing all 19 raw and 20 NLP features, used for integration and component testing. |
+
+### 4.2 Unit `tests/unit/conftest.py` — Unit-Specific Fixtures
+| Fixture | Purpose |
+|---|---|
+| `temp_config_files` | Creates temporary `config.yaml` and `params.yaml` files in a `tmp_path` for configuration testing. |
+| `mock_config_manager` | Bootstraps a `ConfigurationManager` instance pre-loaded with the temporary test config files. |
+
 ---
 
 ## 4. Test Execution
@@ -239,12 +270,12 @@ uv run pytest tests/unit/test_api_schemas.py -v
 uv run pytest tests/unit/test_api_schemas.py::TestCircuitBreaker::test_timeout_triggers_zero_vector_fallback -v
 ```
 
-**Current output (114 passing tests):**
+**Current output (126 passing tests):**
 ```
 tests/unit/test_data_ingestion.py          3 passed
 tests/unit/test_pydantic_entities.py       2 passed
 tests/unit/test_enrichment.py             11 passed
-tests/test_feature_engineering.py          1 passed
+tests/test_feature_engineering.py          5 passed
 tests/unit/test_model_training.py         12 passed
 tests/unit/test_api_schemas.py            24 passed
 tests/unit/test_config.py                 10 passed
@@ -253,8 +284,10 @@ tests/unit/test_utils.py                  15 passed
 tests/unit/test_components.py             10 passed
 tests/unit/test_model.py                  12 passed
 tests/unit/test_api.py                     6 passed
+tests/unit/test_array_utils.py             5 passed
+tests/unit/test_config_manager.py          3 passed
 ──────────────────────────────────────────────────────
-TOTAL                                    114 passed
+TOTAL                                    126 passed
 ```
 
 ---
@@ -291,6 +324,7 @@ graph LR
     T6 --> CustomerFeatureRequest
     T6 --> ChurnPredictionResponse
     T6 --> TestCircuitBreaker["Circuit Breaker Logic"]
+    T7["test_array_utils.py\n(5)"] --> ArrayUtils["ensure_ndarray"]
 ```
 
 ---

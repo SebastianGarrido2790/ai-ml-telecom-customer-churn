@@ -12,16 +12,16 @@ Brawn separation). The router never touches sklearn or numpy directly.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import numpy as np
+import pandas as pd
 from fastapi import APIRouter, HTTPException, Request
+from pandas import DataFrame, Series
 
 from src.api.embedding_service.schemas import EmbedRequest, EmbedResponse, HealthResponse
+from src.utils.array_utils import ensure_ndarray
 from src.utils.logger import get_logger
-
-if TYPE_CHECKING:
-    pass
 
 logger = get_logger(__name__)
 
@@ -70,24 +70,12 @@ async def embed(payload: EmbedRequest, request: Request) -> EmbedResponse:
     preprocessor = state.nlp_preprocessor
 
     try:
-        import pandas as pd
-        from pandas import DataFrame, Series
-
         # ColumnTransformer expects a DataFrame with the 'ticket_note' column
         notes_df = pd.DataFrame({"ticket_note": payload.ticket_notes})
         transformed: np.ndarray | DataFrame | Series = preprocessor.transform(notes_df)
 
         # Ensure numpy array for serialization
-        from typing import Any, cast
-
-        if hasattr(transformed, "toarray"):
-            transformed_np: np.ndarray = cast(Any, transformed).toarray()
-        elif hasattr(transformed, "to_numpy"):
-            transformed_np: np.ndarray = cast(Any, transformed).to_numpy()
-        elif hasattr(transformed, "values"):
-            transformed_np: np.ndarray = cast(Any, transformed).values
-        else:
-            transformed_np = np.asarray(transformed)
+        transformed_np = ensure_ndarray(transformed)
 
         embeddings: list[list[float]] = transformed_np.tolist()
         dim = transformed_np.shape[1]
