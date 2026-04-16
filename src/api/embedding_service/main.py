@@ -19,7 +19,9 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 import joblib
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from src.api.embedding_service.router import router
 from src.config.configuration import ConfigurationManager
@@ -63,6 +65,7 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
     application.state.nlp_preprocessor = nlp_preprocessor
     application.state.model_version = embed_cfg.model_version
     application.state.pca_components = embed_cfg.pca_components
+    application.state.api_key = embed_cfg.api_key
 
     # Warm the SentenceTransformer to eliminate cold-start latency on the first
     # real request. The TextEmbedder uses lazy loading — the PyTorch model is
@@ -99,7 +102,34 @@ def create_app() -> FastAPI:
         version="1.0.0",
         lifespan=lifespan,
     )
-    application.include_router(router)
+
+    # 1. CORS Middleware
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # Restrict this in production
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # 2. Global Exception Handler
+    @application.exception_handler(Exception)
+    async def global_exception_handler(request: Request, exc: Exception):
+        logger.error(f"Global exception caught: {type(exc).__name__}: {exc!s}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal server error. Please check logs for correlation-id."},
+        )
+
+    # 3. API Key Validation Dependency
+    async def validate_api_key(request: Request, x_api_key: str = Header(...)):
+        if x_api_key != request.app.state.api_key:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid API Key",
+            )
+
+    application.include_router(router, dependencies=[Depends(validate_api_key)])
     return application
 
 

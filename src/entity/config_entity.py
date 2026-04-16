@@ -239,6 +239,7 @@ class EmbeddingServiceConfig:
     nlp_preprocessor_path: Path
     model_version: str
     pca_components: int
+    api_key: str
 
 
 @dataclass(frozen=True)
@@ -271,3 +272,4 @@ class PredictionAPIConfig:
     embedding_service_url: str
     model_version: str
     pca_components: int
+    api_key: str

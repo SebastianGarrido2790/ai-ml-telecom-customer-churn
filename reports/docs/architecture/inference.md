@@ -1,10 +1,10 @@
-# Phase 6: Inference Pipeline — Microservice Architecture Report
+# Phase 6 & Phase 3 (Hardening): Inference Pipeline — Secure Microservice Architecture
 
 ## 1. Executive Summary
 
-This document details the architecture, implementation decisions, and operational findings for Phase 6 of the Telecom Customer Churn Prediction project. Phase 6 implements the **Inference Pipeline** ("I") of the FTI pattern as two decoupled FastAPI microservices, enforcing Tools as Microservices and completing the path from raw customer data to a live churn risk score.
+This document details the architecture, implementation decisions, and operational findings for the Telecom Customer Churn Inference Pipeline. It implements the **Inference Pipeline** ("I") of the FTI pattern as two decoupled FastAPI microservices, enforcing Tools as Microservices while layering on **Phase 3 security hardening**.
 
-The phase introduces four production-grade patterns that distinguish this system from a notebook-to-API promotion: the three-layer service architecture (config → lifespan → router → inference logic), the inter-service circuit breaker, the SentenceTransformer warmup protocol, and the `depends_on: condition: service_healthy` startup ordering contract for Phase 7 Docker Compose.
+Beyond standard inference logic, this system implements production-grade security and reliability patterns: **X-API-Key authentication**, **Global Exception Masking** (to prevent information leakage), inter-service circuit breakers, and batch payload throttling.
 
 ---
 
@@ -153,7 +153,7 @@ CustomerFeatureRequest  (19 structured fields + ticket_note)
 |---|---|---|
 | `CustomerFeatureRequest` | Inbound | 19 structured fields + `ticket_note`; `customerID` optional; `TotalCharges: str | None` |
 | `ChurnPredictionResponse` | Outbound | `churn_probability`, `churn_prediction`, `p_structured`, `p_nlp`, `nlp_branch_available`, `model_version` |
-| `BatchPredictRequest` | Inbound | `customers: list[CustomerFeatureRequest]` (min_length=1) |
+| `BatchPredictRequest` | Inbound | `customers: list[CustomerFeatureRequest]` (**max_length=1000**) |
 | `BatchPredictResponse` | Outbound | `predictions: list[ChurnPredictionResponse]`, `total: int`, `nlp_branch_available: bool` |
 | `PredictionHealthResponse` | Outbound | `status: str`, `model_version: str` |
 
@@ -281,15 +281,16 @@ api:
 
 ## 9. Operational Verification
 
-Phase 6 was verified against the following acceptance criteria:
+Phase 6/3 was verified against the following acceptance criteria:
 
 | Check | Result |
 |---|---|
-| `GET /v1/health` (port 8001) | `{"status":"healthy","model_version":"all-MiniLM-L6-v2-pca20"}` ✅ |
-| `GET /v1/health` (port 8000) | `{"status":"healthy","model_version":"late-fusion-v2"}` ✅ |
-| `POST /v1/predict` — high-risk customer | `churn_probability: 0.7006`, `churn_prediction: true`, `nlp_branch_available: true` ✅ |
-| Circuit breaker test | `nlp_branch_available: false`, zero-vector fallback, no 5xx ✅ |
-| Unit tests | 24/24 passing (`test_api_schemas.py`) ✅ |
+| `GET /v1/health` (port 8001) | `{"status":"healthy",...}` (Authorized) ✅ |
+| `GET /v1/health` (port 8000) | `{"status":"healthy",...}` (Authorized) ✅ |
+| Auth Enforcement | Missing/Invalid key returns 401/422 ✅ |
+| Error Masking | Real 500s masked by generic sanitized message ✅ |
+| Batch Limit | 1001 records rejected with 422 ✅ |
+| Unit tests | 124/124 passing (Full suite) ✅ |
 
 **Verified prediction (high-risk profile):**
 
@@ -308,7 +309,46 @@ Customer profile: Fiber optic, month-to-month contract, no tech support, no secu
 
 ---
 
-## 10. Test Suite
+## 10. Security Architecture & Hardening (Phase 3)
+
+Following the codebase review, the inference stack was hardened for production deployment.
+
+The **API Key** is a security guardrail that transforms the inference services from "experimental prototypes" into a **Production-Ready API**. 
+
+In its previous state, the system had "naked" endpoints—meaning anyone on the same network could send requests to your ML models, potentially consuming server resources or harvesting predictive data without permission.
+
+### Why we implemented it (Phase 3 Hardening):
+
+1.  **Authentication & Authorization**: It ensures that only authorized clients (like your Gradio Dashboard) can trigger predictions. Without an `X-API-Key`, the service now rejects requests with a `401 Unauthorized` (or `422` if the header is missing entirely).
+2.  **Resource Protection**: Machine learning inference (especially the NLP branch which loads a heavy SentenceTransformer model) is computationally expensive. The API key prevents arbitrary traffic from overloading your CPU/GPU.
+3.  **Inter-Service Trust**: Since the **Prediction API** must call the **Embedding Microservice** to get ticket note vectors, the Embedding service uses the key to verify that the incoming request is coming from your internal system and not an external actor.
+4.  **Information Security**: It prevents "Model Inversion" or data harvesting attacks, where an unauthorized user could programmatically query your model millions of times to reverse-engineer your training data or steal your intellectual property.
+
+### How it works in this system:
+*   **The Backend**: Both the Prediction and Embedding services are now "Hardened." They inspect the `X-API-Key` header of every incoming request.
+*   **The UI**: The Gradio Dashboard now automatically attaches this key to its requests so the backend knows the UI is a "trusted friend."
+*   **Default Mode**: For development, it defaults to a secure string (`dev-key-churn-2024`), but in a real cloud production environment (Azure/AWS), you would replace this with a unique, rotated secret stored in a **Key Vault**.
+
+> [!NOTE]
+> This is a core part of the **Agentic Data Science** mindset: we don't just build a model that *works*; we build a system that is *secure and reliable*.
+
+### 10.1 X-API-Key Authentication Guardrails
+The system implements a shared-secret authentication model. All non-health-check traffic must include a valid `X-API-Key` header.
+*   **Implementation:** FastAPI `Header` dependencies injected into the `APIRouter` of both services.
+*   **Inter-Service Auth:** The `prediction-api` (client) identifies itself to the `embedding-service` (server) using the same key, ensuring a trusted internal request path.
+
+### 10.2 Global Exception Masking
+To prevent the leakage of sensitive infrastructure details (pathnames, package versions, connection timeouts) in production, a catch-all exception handler is implemented.
+*   **Behavior:** Logs the raw, detailed traceback to the server logs for developer diagnosis, but returns a generic `{"detail": "Internal server error. Please check logs for correlation-id."}` with a 500 status to the client.
+
+### 10.3 Batch Payload Throttling
+To protect the system from Memory-Exhaustion (DoS) attacks, the batch prediction endpoint enforces a strict payload size limit.
+*   **Constraint:** `customers: list[CustomerFeatureRequest] = Field(..., max_length=1000)`.
+*   **Rationale:** Limits the maximum peak memory during preprocessing and embedding generation to predictable levels.
+
+---
+
+## 11. Test Suite
 
 **File:** `tests/unit/test_api_schemas.py` — 24 tests, 6 classes.
 
@@ -326,7 +366,7 @@ All external dependencies (joblib artifacts, httpx calls) are replaced with
 
 ---
 
-## 11. Files Delivered
+## 12. Files Delivered
 
 | File | Type | Purpose |
 |---|---|---|
@@ -346,7 +386,7 @@ All external dependencies (joblib artifacts, httpx calls) are replaced with
 
 ---
 
-## 12. Related Documents
+## 13. Related Documents
 
 | Topic | Document |
 |---|---|

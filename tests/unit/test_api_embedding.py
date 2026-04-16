@@ -34,15 +34,18 @@ def client():
     mock_config.nlp_preprocessor_path = "mock_path.pkl"
     mock_config.model_version = "test-v1"
     mock_config.pca_components = 2
+    mock_config.api_key = "test-api-key"
 
     with (
         patch("src.api.embedding_service.main.ConfigurationManager") as mock_config_mgr,
         patch("src.api.embedding_service.main.joblib.load", return_value=mock_preprocessor),
     ):
         mock_config_mgr.return_value.get_embedding_service_config.return_value = mock_config
-        with TestClient(app) as c:
+        with TestClient(app, raise_server_exceptions=False) as c:
             # Ensure the mock is assigned to state for the test functions to manipulate
             c.app.state.nlp_preprocessor = mock_preprocessor
+            c.app.state.api_key = "test-api-key"
+            c.headers.update({"X-API-Key": "test-api-key"})
             yield c
 
 
@@ -89,9 +92,24 @@ def test_embed_endpoint_validation_error(client):
 
 
 def test_embed_endpoint_internal_error(client):
-    """Test 500 error when preprocessor fails."""
+    """Test 500 error when preprocessor fails — triggers global exception handler."""
     client.app.state.nlp_preprocessor.transform.side_effect = Exception("Mock Transform Fail")
     payload = {"ticket_notes": ["broken"]}
     response = client.post("/v1/embed", json=payload)
     assert response.status_code == 500
-    assert "Mock Transform Fail" in response.json()["detail"]
+    # Global exception handler masks the actual error message for safety
+    assert "Internal server error" in response.json()["detail"]
+
+
+def test_auth_missing_header(client):
+    """Test that requests without X-API-Key are rejected."""
+    client.headers.pop("X-API-Key")
+    response = client.get("/v1/health")
+    assert response.status_code == 422
+
+
+def test_auth_invalid_key(client):
+    """Test that requests with wrong X-API-Key are rejected."""
+    client.headers.update({"X-API-Key": "wrong-key"})
+    response = client.get("/v1/health")
+    assert response.status_code == 401

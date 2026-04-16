@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Fallback to localhost if run outside docker
 API_URL = os.environ.get("PREDICTION_API_URL", "http://localhost:8000")
+API_KEY = os.environ.get("API_KEY", "dev-key-churn-2024")
 
 
 def predict_single(customer_data: dict[str, Any]) -> dict[str, Any]:
@@ -31,7 +32,8 @@ def predict_single(customer_data: dict[str, Any]) -> dict[str, Any]:
         prediction flag, branch specifics) or an error message.
     """
     try:
-        response = httpx.post(f"{API_URL}/v1/predict", json=customer_data, timeout=10.0)
+        headers = {"X-API-Key": API_KEY}
+        response = httpx.post(f"{API_URL}/v1/predict", json=customer_data, headers=headers, timeout=10.0)
         response.raise_for_status()
         return response.json()
     except httpx.HTTPError as e:
@@ -50,8 +52,9 @@ def predict_batch(customers_list: list[dict[str, Any]]) -> dict[str, Any]:
         along with metadata about the total count and NLP branch availability.
     """
     try:
+        headers = {"X-API-Key": API_KEY}
         payload = {"customers": customers_list}
-        response = httpx.post(f"{API_URL}/v1/predict/batch", json=payload, timeout=30.0)
+        response = httpx.post(f"{API_URL}/v1/predict/batch", json=payload, headers=headers, timeout=30.0)
         response.raise_for_status()
         return response.json()
     except httpx.HTTPError as e:
@@ -66,7 +69,8 @@ def check_health() -> bool:
         True if the API returns a 200 OK status, False otherwise.
     """
     try:
-        response = httpx.get(f"{API_URL}/v1/health", timeout=5.0)
+        headers = {"X-API-Key": API_KEY}
+        response = httpx.get(f"{API_URL}/v1/health", headers=headers, timeout=5.0)
         return response.status_code == 200
     except httpx.HTTPError:
         return False

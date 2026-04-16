@@ -112,7 +112,8 @@ class BatchPredictRequest(BaseModel):
     customers: list[CustomerFeatureRequest] = Field(
         ...,
         min_length=1,
-        description="List of customer feature records for bulk scoring.",
+        max_length=1000,
+        description="List of customer feature records for bulk scoring. Maximum 1000 records per batch.",
     )
 
 

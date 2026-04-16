@@ -246,6 +246,7 @@ class ConfigurationManager:
             nlp_preprocessor_path=Path(feat_cfg.nlp_preprocessor_path),
             model_version=api_cfg.model_version,
             pca_components=int(fe_params.pca_components),
+            api_key=os.environ.get("API_KEY", "dev-key-churn-2024"),
         )
 
     def get_prediction_api_config(self) -> PredictionAPIConfig:
@@ -281,4 +282,5 @@ class ConfigurationManager:
             embedding_service_url=embedding_service_url,
             model_version=api_cfg.prediction_api.model_version,
             pca_components=int(fe_params.pca_components),
+            api_key=os.environ.get("API_KEY", "dev-key-churn-2024"),
         )

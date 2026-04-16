@@ -115,6 +115,7 @@ def _log_feature_importance(
     model: XGBClassifier,
     run_name: str,
     artifact_dir: Path,
+    feature_names: list[str] | None = None,
     top_n: int = 20,
 ) -> None:
     """Saves an XGBoost feature importance chart and logs it as an MLflow artifact.
@@ -123,6 +124,8 @@ def _log_feature_importance(
         model: Fitted XGBClassifier instance.
         run_name: Used as the filename prefix.
         artifact_dir: Local directory to save the PNG before logging.
+        feature_names: List of strings matching the feature order. If None,
+                      generic 'feature_i' labels are used.
         top_n: Number of top features to display in the chart.
     """
     importance = model.feature_importances_
@@ -132,7 +135,13 @@ def _log_feature_importance(
     fig, ax = plt.subplots(figsize=(8, 6))
     ax.barh(range(n_features), importance[top_idx])
     ax.set_yticks(range(n_features))
-    ax.set_yticklabels([f"feature_{i}" for i in top_idx], fontsize=8)
+
+    if feature_names is not None:
+        labels = [feature_names[i] for i in top_idx]
+    else:
+        labels = [f"feature_{i}" for i in top_idx]
+
+    ax.set_yticklabels(labels, fontsize=8)
     ax.set_xlabel("Importance Score")
     ax.set_title(f"Top {n_features} Feature Importances — {run_name}")
     fig.tight_layout()
@@ -182,29 +191,32 @@ class LateFusionEvaluator:
         np.ndarray,
         np.ndarray,
         np.ndarray,
+        list[str],
+        list[str],
     ]:
         """Loads and extracts branch-specific arrays for val and test splits.
 
         Returns:
-            Tuple of six arrays:
+            Tuple of eight items:
                 X_val_struct, X_val_nlp, y_val,
-                X_test_struct, X_test_nlp, y_test.
+                X_test_struct, X_test_nlp, y_test,
+                struct_cols, nlp_cols.
         """
         val_df = pd.read_csv(self.config.val_data_path)
         test_df = pd.read_csv(self.config.test_data_path)
         target = self.config.target_column
 
-        def _extract(df: pd.DataFrame, prefixes: tuple[str, ...]) -> np.ndarray:
+        def _extract(df: pd.DataFrame, prefixes: tuple[str, ...]) -> tuple[np.ndarray, list[str]]:
             cols = _get_branch_columns(df, prefixes)
-            return df[cols].to_numpy()
+            return df[cols].to_numpy(), cols
 
-        X_val_struct = _extract(val_df, STRUCTURED_PREFIX)
-        X_val_nlp = _extract(val_df, (NLP_PREFIX,))
+        X_val_struct, struct_cols = _extract(val_df, STRUCTURED_PREFIX)
+        X_val_nlp, nlp_cols = _extract(val_df, (NLP_PREFIX,))
         y_val_series: pd.Series = cast(pd.Series, val_df[target])
         y_val, _ = _encode_target(y_val_series)
 
-        X_test_struct = _extract(test_df, STRUCTURED_PREFIX)
-        X_test_nlp = _extract(test_df, (NLP_PREFIX,))
+        X_test_struct, _ = _extract(test_df, STRUCTURED_PREFIX)
+        X_test_nlp, _ = _extract(test_df, (NLP_PREFIX,))
         y_test_series: pd.Series = cast(pd.Series, test_df[target])
         y_test, _ = _encode_target(y_test_series)
 
@@ -215,6 +227,8 @@ class LateFusionEvaluator:
             X_test_struct,
             X_test_nlp,
             y_test,
+            struct_cols,
+            nlp_cols,
         )
 
     def evaluate(self) -> dict[str, Any]:
@@ -244,6 +258,8 @@ class LateFusionEvaluator:
             X_test_struct,
             X_test_nlp,
             y_test,
+            struct_cols,
+            nlp_cols,
         ) = self._get_val_test_arrays()
 
         report: dict[str, Any] = {}
@@ -264,7 +280,12 @@ class LateFusionEvaluator:
             xgboost.log_model(structured_model, artifact_path="model")  # type: ignore
 
             _log_confusion_matrix(y_test, y_pred_struct, "structured_baseline", self._artifact_dir)
-            _log_feature_importance(structured_model, "structured_baseline", self._artifact_dir)
+            _log_feature_importance(
+                structured_model,
+                "structured_baseline",
+                self._artifact_dir,
+                feature_names=struct_cols,
+            )
 
             report["structured_baseline"] = {
                 "run_id": run_struct.info.run_id,
@@ -286,7 +307,12 @@ class LateFusionEvaluator:
             xgboost.log_model(nlp_model, artifact_path="model")  # type: ignore
 
             _log_confusion_matrix(y_test, y_pred_nlp, "nlp_baseline", self._artifact_dir)
-            _log_feature_importance(nlp_model, "nlp_baseline", self._artifact_dir)
+            _log_feature_importance(
+                nlp_model,
+                "nlp_baseline",
+                self._artifact_dir,
+                feature_names=nlp_cols,
+            )
 
             report["nlp_baseline"] = {
                 "run_id": run_nlp.info.run_id,

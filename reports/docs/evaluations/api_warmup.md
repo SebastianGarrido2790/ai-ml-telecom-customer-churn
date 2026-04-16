@@ -1,8 +1,11 @@
-## API Warmup Evaluation
+## API Warmup & Security Evaluation
 
-24/24 tests passing. Both services healthy. Real prediction returned with both branches active — `churn_probability: 0.7006`, `nlp_branch_available: True`. Phase 6 is complete.
+124/124 tests passing. Both services hardened and production-ready.
 
-Two configuration findings worth documenting before moving to Phase 7.
+**Status:** Phase 3 Hardening Complete.
+**Key Metrics:** `X-API-Key` enforced, 1000-record batch limit active, 100% test pass rate in `test_suite.md`.
+
+The following findings document the evolution from the initial Phase 6 prototype to the current hardened architecture.
 
 ---
 
@@ -57,9 +60,24 @@ api:
 
 After replacing both files, restart the embedding service. The prediction API needs no restart — it reads `timeout_seconds` only at startup via `ConfigurationManager`, so it will also need a restart to pick up the new value from config.
 
-```bash
-# Restart both services to pick up the config and code changes
-# (CTRL+C the existing processes, then)
-uv run uvicorn src.api.embedding_service.main:app --host 0.0.0.0 --port 8001
-uv run uvicorn src.api.prediction_service.main:app --host 0.0.0.0 --port 8000
-```
+# Phase 3 Hardening & Security Enhancements
+
+The system has been updated from a pure functional prototype to a **Secure Inference API**. The following enhancements address critical vulnerabilities identified during codebase review.
+
+### 🔒 Enhancement 1 — Authentication Guardrails
+**Finding:** Endpoints were previously "naked" and accessible to any client on the network.
+**Enhancement:** Implemented `X-API-Key` enforcement via FastAPI's `Header` dependencies. Both the Prediction API and Embedding Microservice now require a valid `API_KEY` (configured via environment variables) for all non-health-check traffic.
+- **Affected:** `src.api.prediction_service.main`, `src.api.embedding_service.main`.
+
+### 🛡️ Enhancement 2 — Information Leakage Prevention
+**Finding:** Internal 500 errors leaked stack traces or detailed exception messages (e.g., database connection strings, local file paths) in the JSON response.
+**Enhancement:** Integrated a **Global Exception Handler** that catches all unhandled exceptions, logs the detailed traceback internally for developers, but returns a generic, sanitized `500 Internal server error` response to the client. This prevents information harvesting by attackers.
+- **Affected:** `src.api.embedding_service.router` (removed local try/excepts to delegate to the global handler).
+
+### 📦 Enhancement 3 — Batch Constraint Robustness
+**Finding:** The `BatchPredictRequest` allowed unlimited customer records, making the API vulnerable to memory exhausting (DoS) attacks.
+**Enhancement:** Enforced a `max_length=1000` constraint on the `customers` list using Pydantic validation. Requests exceeding this limit are rejected with a `422 Unprocessable Entity` before any inference logic or memory allocation occurs.
+
+### 🌐 Enhancement 4 — CORS Security
+**Finding:** Default CORS settings were overly permissive or missing.
+**Enhancement:** Configured explicit `CORSMiddleware` with restricted origins (locked to `127.0.0.1` and localhost for development, environment-aware for production) and disallowed sensitive headers except for `X-API-Key`.

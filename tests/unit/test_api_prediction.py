@@ -40,6 +40,7 @@ def mock_artifacts():
         "structured_model": mock_struct_model,
         "nlp_model": mock_nlp_model,
         "meta_model": mock_meta_model,
+        "api_key": "test-api-key",
     }
 
 
@@ -54,6 +55,7 @@ def client(mock_artifacts):
     mock_config.embedding_service_url = "http://mock-embed:8001"
     mock_config.model_version = "test-v1"
     mock_config.pca_components = 20
+    mock_config.api_key = "test-api-key"
     mock_config.timeout_seconds = 1.0
 
     def mock_joblib_load(path):
@@ -74,7 +76,8 @@ def client(mock_artifacts):
         mock_v = mock_config_mgr.return_value
         mock_v.get_prediction_api_config.return_value = mock_config
         mock_v.get_embedding_service_config.return_value = mock_config
-        with TestClient(app) as c:
+        with TestClient(app, raise_server_exceptions=False) as c:
+            c.headers.update({"X-API-Key": "test-api-key"})  # Default valid header
             yield c
 
 
@@ -187,3 +190,31 @@ def test_predict_endpoint_validation_error(client):
     payload = {"customers": [{"customerID": "MISSING_FIELDS"}]}
     response = client.post("/v1/predict", json=payload)
     assert response.status_code == 422
+
+
+def test_auth_missing_header(client):
+    """Test that requests without X-API-Key are rejected."""
+    # Temporarily remove default header
+    client.headers.pop("X-API-Key")
+    response = client.get("/v1/health")
+    assert response.status_code == 422
+    assert "x-api-key" in response.text.lower()
+
+
+def test_auth_invalid_key(client):
+    """Test that requests with wrong X-API-Key are rejected."""
+    client.headers.update({"X-API-Key": "wrong-key"})
+    response = client.get("/v1/health")
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid API Key"
+
+
+def test_batch_limit_exceeded(client, sample_payload):
+    """Test that batches exceeding 1000 items are rejected (Schema Hardening)."""
+    # Duplicate the sample customer 1001 times
+    customer = sample_payload["customers"][0]
+    large_payload = {"customers": [customer] * 1001}
+    response = client.post("/v1/predict/batch", json=large_payload)
+    assert response.status_code == 422
+    # Pydantic v2 error message for max_length
+    assert "1000" in response.text

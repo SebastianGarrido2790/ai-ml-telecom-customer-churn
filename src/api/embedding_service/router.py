@@ -16,7 +16,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Request
 from pandas import DataFrame, Series
 
 from src.api.embedding_service.schemas import EmbedRequest, EmbedResponse, HealthResponse
@@ -69,23 +69,15 @@ async def embed(payload: EmbedRequest, request: Request) -> EmbedResponse:
     state: Any = request.app.state
     preprocessor = state.nlp_preprocessor
 
-    try:
-        # ColumnTransformer expects a DataFrame with the 'ticket_note' column
-        notes_df = pd.DataFrame({"ticket_note": payload.ticket_notes})
-        transformed: np.ndarray | DataFrame | Series = preprocessor.transform(notes_df)
+    # ColumnTransformer expects a DataFrame with the 'ticket_note' column
+    notes_df = pd.DataFrame({"ticket_note": payload.ticket_notes})
+    transformed: np.ndarray | DataFrame | Series = preprocessor.transform(notes_df)
 
-        # Ensure numpy array for serialization
-        transformed_np = ensure_ndarray(transformed)
+    # Ensure numpy array for serialization
+    transformed_np = ensure_ndarray(transformed)
 
-        embeddings: list[list[float]] = transformed_np.tolist()
-        dim = transformed_np.shape[1]
-
-    except Exception as exc:
-        logger.error(f"Embedding transform failed: {exc!s}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Embedding generation failed: {exc!s}",
-        ) from exc
+    embeddings: list[list[float]] = transformed_np.tolist()
+    dim = transformed_np.shape[1]
 
     return EmbedResponse(
         embeddings=embeddings,

@@ -93,6 +93,7 @@ class InferenceService:
         embedding_service_url: str,
         model_version: str,
         pca_components: int,
+        api_key: str,
         timeout_seconds: float = 5.0,
     ) -> None:
         """Initialises InferenceService with all model artifacts and config.
@@ -105,6 +106,7 @@ class InferenceService:
             embedding_service_url: Base URL, e.g. 'http://localhost:8001'.
             model_version: Version string for response metadata.
             pca_components: PCA output dimension; used for zero-vector fallback.
+            api_key: Secret key for authenticating with Embedding Microservice.
             timeout_seconds: HTTP timeout for embedding service calls.
         """
         self.structured_preprocessor = structured_preprocessor
@@ -114,6 +116,7 @@ class InferenceService:
         self.embedding_service_url = embedding_service_url
         self.model_version = model_version
         self.pca_components = pca_components
+        self.api_key = api_key
         self._timeout = httpx.Timeout(timeout_seconds)
 
     def _build_structured_df(self, customers: list[CustomerFeatureRequest]) -> pd.DataFrame:
@@ -179,6 +182,7 @@ class InferenceService:
                 response = await client.post(
                     url,
                     json={"ticket_notes": ticket_notes},
+                    headers={"X-API-Key": self.api_key},
                 )
                 response.raise_for_status()
                 data = response.json()
