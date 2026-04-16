@@ -43,11 +43,21 @@ jobs:
           docker run -d --name localstack \
             -p 4566:4566 -p 4510-4559:4510-4559 \
             -e ACTIVATE_PRO=0 \
-            localstack/localstack:1.4.0
+            localstack/localstack:1.3.1
           
           # Wait for LocalStack to be ready
-          timeout 60s bash -c 'until curl -s http://localhost:4566/_localstack/health | grep -q "running"; do sleep 5; done'
-          echo "LocalStack is ready."
+          echo "Waiting for LocalStack to be ready..."
+          for i in {1..15}; do
+            if curl -s http://localhost:4566/_localstack/health | grep -q "running"; then
+              echo "LocalStack is ready."
+              exit 0
+            fi
+            echo "Still waiting... ($i/15)"
+            sleep 5
+          done
+          echo "ERROR: LocalStack failed to start within 75s. Dumping logs:"
+          docker logs localstack
+          exit 1
 
       - name: Install awslocal
         run: |
