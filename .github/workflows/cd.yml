@@ -38,13 +38,21 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Start LocalStack
-        uses: LocalStack/setup-localstack@v0.2.3
-        env:
-          LOCALSTACK_ACKNOWLEDGE_ACCOUNT_REQUIREMENT: "1"
-        with:
-          image-tag: 2.3.2
-          install-awslocal: "true"
+      - name: Start LocalStack (Manual Community Mode)
+        run: |
+          docker run -d --name localstack \
+            -p 4566:4566 -p 4510-4559:4510-4559 \
+            -e LOCALSTACK_ACKNOWLEDGE_ACCOUNT_REQUIREMENT=1 \
+            -e ACTIVATE_PRO=0 \
+            localstack/localstack:2.3.2
+          
+          # Wait for LocalStack to be ready
+          timeout 60s bash -c 'until curl -s http://localhost:4566/_localstack/health | grep -q "running"; do sleep 5; done'
+          echo "LocalStack is ready."
+
+      - name: Install awslocal
+        run: |
+          pip install awscli-local awscli
 
       - name: Start Local Docker Registry
         run: |
