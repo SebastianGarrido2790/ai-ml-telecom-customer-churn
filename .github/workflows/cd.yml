@@ -34,7 +34,6 @@ jobs:
       AWS_SECRET_ACCESS_KEY: test
       AWS_DEFAULT_REGION: us-east-1
       AWS_ENDPOINT_URL: http://localhost:4566
-      LOCALSTACK_ACKNOWLEDGE_ACCOUNT_REQUIREMENT: '1'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -44,7 +43,7 @@ jobs:
         env:
           LOCALSTACK_ACKNOWLEDGE_ACCOUNT_REQUIREMENT: "1"
         with:
-          image-tag: latest
+          image-tag: 2.3.2
           install-awslocal: "true"
 
       - name: Start Local Docker Registry
