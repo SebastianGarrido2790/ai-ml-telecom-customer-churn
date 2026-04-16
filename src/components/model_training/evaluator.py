@@ -136,10 +136,7 @@ def _log_feature_importance(
     ax.barh(range(n_features), importance[top_idx])
     ax.set_yticks(range(n_features))
 
-    if feature_names is not None:
-        labels = [feature_names[i] for i in top_idx]
-    else:
-        labels = [f"feature_{i}" for i in top_idx]
+    labels = [feature_names[i] for i in top_idx] if feature_names is not None else [f"feature_{i}" for i in top_idx]
 
     ax.set_yticklabels(labels, fontsize=8)
     ax.set_xlabel("Importance Score")
