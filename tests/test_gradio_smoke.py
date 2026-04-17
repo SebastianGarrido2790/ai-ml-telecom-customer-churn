@@ -112,9 +112,7 @@ class TestPredictSingle:
         assert "churn_prediction" in result
         assert isinstance(result["churn_probability"], float)
 
-    def test_injects_x_api_key_header(
-        self, mock_httpx_post: MagicMock, sample_customer: dict[str, Any]
-    ) -> None:
+    def test_injects_x_api_key_header(self, mock_httpx_post: MagicMock, sample_customer: dict[str, Any]) -> None:
         """predict_single must attach the X-API-Key header on every request."""
         from src.ui.data_loaders.api_client import predict_single
 
@@ -123,9 +121,7 @@ class TestPredictSingle:
         call_kwargs = mock_httpx_post.call_args.kwargs
         assert "X-API-Key" in call_kwargs["headers"], "X-API-Key header must be present"
 
-    def test_posts_to_correct_endpoint(
-        self, mock_httpx_post: MagicMock, sample_customer: dict[str, Any]
-    ) -> None:
+    def test_posts_to_correct_endpoint(self, mock_httpx_post: MagicMock, sample_customer: dict[str, Any]) -> None:
         """predict_single should POST to /v1/predict."""
         from src.ui.data_loaders.api_client import predict_single
 
@@ -172,9 +168,7 @@ class TestPredictBatch:
         assert "customers" in sent_json, "'customers' key must be present in batch payload"
         assert isinstance(sent_json["customers"], list)
 
-    def test_batch_injects_x_api_key_header(
-        self, mock_httpx_post: MagicMock, sample_customer: dict[str, Any]
-    ) -> None:
+    def test_batch_injects_x_api_key_header(self, mock_httpx_post: MagicMock, sample_customer: dict[str, Any]) -> None:
         """predict_batch must attach the X-API-Key header."""
         from src.ui.data_loaders.api_client import predict_batch
 
