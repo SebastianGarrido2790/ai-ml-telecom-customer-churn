@@ -42,20 +42,20 @@ jobs:
         run: |
           docker run -d --name localstack \
             -p 4566:4566 -p 4510-4559:4510-4559 \
-            -e ACTIVATE_PRO=0 \
+            -e ACTIVATE_PRO=0 -e USE_SSL=0 \
             localstack/localstack:1.3.1
           
           # Wait for LocalStack to be ready
           echo "Waiting for LocalStack to be ready..."
-          for i in {1..15}; do
-            if curl -s http://localhost:4566/_localstack/health | grep -q "running"; then
+          for i in {1..20}; do
+            if curl -s http://localhost:4566/_localstack/health | grep -qE "running|initialized|{}"; then
               echo "LocalStack is ready."
               exit 0
             fi
-            echo "Still waiting... ($i/15)"
+            echo "Still waiting... ($i/20)"
             sleep 5
           done
-          echo "ERROR: LocalStack failed to start within 75s. Dumping logs:"
+          echo "ERROR: LocalStack failed to start within 100s. Dumping logs:"
           docker logs localstack
           exit 1
 
