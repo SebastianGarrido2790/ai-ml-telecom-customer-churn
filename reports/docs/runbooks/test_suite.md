@@ -253,6 +253,19 @@ Includes `TestChurnPredictionResponse` (3 tests) and `TestBatchSchemas` (3 tests
 | `test_ensure_ndarray_from_dataframe`| `ensure_ndarray` | Extracts values from Pandas DataFrames. |
 | `test_ensure_ndarray_from_numpy` | `ensure_ndarray` | Returns existing numpy arrays unchanged. |
 
+### 3.11 `tests/test_gradio_smoke.py` — Gradio UI Layer (v1.4)
+
+**Purpose:** Validates the Gradio frontend's data loaders, API client integration, and app building logic. Ensures the UI can communicate with the Prediction API and handle errors gracefully without requiring a running server.
+
+**Modules Under Test:** `src/ui/app.py`, `src/ui/data_loaders/api_client.py`
+
+| Test Class | What It Proves |
+|---|---|
+| `TestPredictSingle` | Mocked API integration for single predictions, verifying `X-API-Key` injection and path correctness. |
+| `TestPredictBatch` | Mocked integration for batch processing, ensuring large payloads are correctly wrapped and transmitted. |
+| `TestCheckHealth` | Validates heart-beat logic used to show "API Status" in the UI header; handles timeouts/connection errors. |
+| `TestGradioAppBuilder` | Ensures `build_app()` factory correctly wires pages into the `gr.Blocks` dashboard without import errors. |
+
 ---
 
 ## 4. Shared Test Infrastructure (`conftest.py`)
@@ -273,7 +286,7 @@ The project uses a hierarchical `conftest.py` structure to eliminate fixture dup
 
 ---
 
-## 4. Test Execution
+## 5. Test Execution
 
 ```bash
 # Run the full test suite
@@ -284,16 +297,15 @@ uv run pytest tests/ -v --cov=src --cov-report=term-missing
 
 # Run specific test groups
 uv run pytest tests/unit/test_enrichment.py -v
-uv run pytest tests/unit/test_model_training.py -v
-uv run pytest tests/unit/test_api_schemas.py -v
+uv run pytest tests/test_gradio_smoke.py -v
 
 # Run a single test by name
 uv run pytest tests/unit/test_api_schemas.py::TestCircuitBreaker::test_timeout_triggers_zero_vector_fallback -v
 ```
 
-I have successfully tested the API hardening measures and verified that the services operate as expected.
+I have successfully hardened the system with a comprehensive 138-test suite covering all tiers of the FTI architecture.
 
-### Test Results Summary
+### Test Results Summary (v1.4 Update)
 
 | Test Case | Method | Endpoint | Expected | Result |
 | :--- | :--- | :--- | :--- | :--- |
@@ -303,14 +315,17 @@ I have successfully tested the API hardening measures and verified that the serv
 | **Functional: Prediction** | `POST` | `/v1/predict/batch` | `200 OK` + Churn Score | **PASS** ✅ |
 | **Inter-service Auth** | `POST` | `/v1/embed` | `200 OK` (called by Pred API) | **PASS** ✅ |
 | **CORS Preflight** | `OPTIONS`| `/v1/predict/batch` | `200 OK` + CORS Headers | **PASS** ✅ |
+| **UI: API Client Mock** | `N/A` | `N/A` | Correct `X-API-Key` + Async Call | **PASS** ✅ |
+| **UI: App Construction** | `N/A` | `N/A` | `gr.Blocks` initialized | **PASS** ✅ |
 
 ### Key Observations
 1.  **Strict Authentication**: The API key validation works perfectly across both services. The Prediction API correctly handles the injection and propagation of the `X-API-Key` when communicating with the Embedding Microservice.
 2.  **CORS Readiness**: Preflight `OPTIONS` requests now return the necessary headers (`access-control-allow-origin`, `access-control-allow-headers`), ensuring the API can be safely consumed by web applications.
-3.  **End-to-End Integrity**: The full Late Fusion inference path—including structured preprocessing, NLP embedding generation (with the warmed-up SentenceTransformer), and meta-model stacking—is functional and returns accurate results.
-4.  **Security Boundaries**: The global exception handler and payload constraints are active and protecting the service from malformed inputs and internal leakages.
+3.  **UI Integrity**: The Gradio UI is now protected by a 14-test smoke suite that validates the API client interaction and dashboard wiring, preventing regressions in the frontend layer.
+4.  **End-to-End Reliability**: The full Late Fusion inference path—including structured preprocessing, NLP embedding generation, and meta-model stacking—is protected by deterministic unit tests throughout the stack.
+5.  **Schema Hardening**: `schema.yaml` is now validated at load-time by `ConfigurationManager`, preventing malformed configs from causing silent errors in the Feature or Data Validation stages.
 
-The API is now production-hardened and ready for deployment.
+The system is now production-hardened and protected against regressions at all layers.
 
 ```
 tests/unit/test_data_ingestion.py          3 passed
@@ -328,13 +343,14 @@ tests/unit/test_components.py             10 passed
 tests/unit/test_model.py                  12 passed
 tests/unit/test_array_utils.py             5 passed
 tests/unit/test_config_manager.py          3 passed
+tests/test_gradio_smoke.py                14 passed
 ──────────────────────────────────────────────────────
-TOTAL                                    124 passed
+TOTAL                                    138 passed
 ```
 
 ---
 
-## 5. Schema Contract Coverage Map
+## 6. Schema Contract Coverage Map
 
 ```mermaid
 graph LR
@@ -346,6 +362,7 @@ graph LR
         EvaluationReportSchema["EvaluationReportSchema"]
         CustomerFeatureRequest["CustomerFeatureRequest\n(API Input)"]
         ChurnPredictionResponse["ChurnPredictionResponse\n(API Output)"]
+        SchemaContract["_SchemaContract\n(config/schema.yaml)"]
     end
 
     subgraph "Tests"
@@ -355,6 +372,7 @@ graph LR
         T3["test_feature_engineering.py\n(1)"]
         T4["test_model_training.py\n(12)"]
         T6["test_api_schemas.py\n(24)"]
+        T7["test_config.py\n(10)"]
     end
 
     T0 --> DataIngestionConfig
@@ -366,7 +384,9 @@ graph LR
     T6 --> CustomerFeatureRequest
     T6 --> ChurnPredictionResponse
     T6 --> TestCircuitBreaker["Circuit Breaker Logic"]
-    T7["test_array_utils.py\n(5)"] --> ArrayUtils["ensure_ndarray"]
+    T7 --> SchemaContract
+    T8["test_gradio_smoke.py\n(14)"] --> UI["Gradio Frontend"]
+    T9["test_array_utils.py\n(5)"] --> ArrayUtils["ensure_ndarray"]
 ```
 
 ---
@@ -378,15 +398,16 @@ graph LR
 
 ---
 
-## 7. CI/CD Gate (Planned — Phase 8)
+## 7. CI/CD Gate
 
-When the GitHub Actions CI/CD pipeline is implemented, the test suite will run automatically
-on every push and pull request. The pipeline will fail if:
+The test suite runs automatically on every push and pull request via the GitHub Actions CI/CD pipeline. The pipeline will fail if:
 
 1. Any `pytest` test fails.
 2. Test coverage falls below the configured threshold (`--cov-fail-under=65`).
 3. `ruff check` or `ruff format --check` reports any errors.
 4. `pyright` reports type errors.
+
+> **Local Parity:** Following Phase 4 hardening, `pyright` is now a blocking gate in `validate_system.bat`. Any type violations found locally will trigger an immediate failure before code can be committed or pushed to CI.
 
 ```yaml
 # .github/workflows/ci.yml

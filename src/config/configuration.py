@@ -13,6 +13,9 @@ Usage:
 
 import os
 from pathlib import Path
+from typing import Any
+
+from pydantic import BaseModel, ValidationError, field_validator
 
 from src.constants import CONFIG_FILE_PATH, PARAMS_FILE_PATH, SCHEMA_FILE_PATH
 from src.entity.config_entity import (
@@ -25,7 +28,62 @@ from src.entity.config_entity import (
     PredictionAPIConfig,
 )
 from src.utils.common import create_directories, read_yaml
+from src.utils.exceptions import DataQualityContext, SchemaContractViolation
 from src.utils.logger import get_logger
+
+
+class _SchemaContract(BaseModel):
+    """Pydantic contract for schema.yaml structural validation.
+
+    Validates that the three mandatory top-level keys are present and
+    that their column maps are non-empty dicts keyed by column name.
+
+    Attributes:
+        COLUMNS: Column-to-dtype map for the raw Telco dataset.
+        ENRICHED_COLUMNS: Column-to-dtype map for the enriched dataset.
+        TARGET_COLUMN: Mapping that must contain at least a ``name`` key.
+    """
+
+    COLUMNS: dict[str, Any]
+    ENRICHED_COLUMNS: dict[str, Any]
+    TARGET_COLUMN: dict[str, Any]
+
+    @field_validator("COLUMNS", "ENRICHED_COLUMNS")
+    @classmethod
+    def must_be_non_empty(cls, v: dict[str, Any]) -> dict[str, Any]:  # noqa: N805
+        """Ensures column maps contain at least one entry.
+
+        Args:
+            v: The value of the validated field.
+
+        Returns:
+            The validated value unchanged.
+
+        Raises:
+            ValueError: If the column map is empty.
+        """
+        if not v:
+            raise ValueError("Column map must contain at least one entry.")
+        return v
+
+    @field_validator("TARGET_COLUMN")
+    @classmethod
+    def must_have_name_key(cls, v: dict[str, Any]) -> dict[str, Any]:  # noqa: N805
+        """Ensures TARGET_COLUMN contains the required 'name' key.
+
+        Args:
+            v: The value of the validated field.
+
+        Returns:
+            The validated value unchanged.
+
+        Raises:
+            ValueError: If 'name' key is absent.
+        """
+        if "name" not in v:
+            raise ValueError("TARGET_COLUMN must contain a 'name' key.")
+        return v
+
 
 logger = get_logger(__name__)
 
@@ -56,8 +114,44 @@ class ConfigurationManager:
         self.params = read_yaml(params_filepath)
         self.schema = read_yaml(schema_filepath)
 
+        # Validate schema.yaml structure at load time
+        self._validate_schema(schema_filepath)
+
         # Ensure the top-level artifacts directory exists
         create_directories([Path("artifacts")])
+
+    def _validate_schema(self, schema_filepath: Path) -> None:
+        """Validates the loaded schema.yaml against _SchemaContract.
+
+        Raises SchemaContractViolation immediately if the file is missing
+        required top-level sections or contains empty column maps, preventing
+        silent fallback to hardcoded column lists in downstream stages.
+
+        Args:
+            schema_filepath: Path to the schema.yaml file (used in error context).
+
+        Raises:
+            SchemaContractViolation: If schema.yaml fails structural validation.
+        """
+        raw: dict[str, Any] = dict(self.schema)  # ConfigBox → plain dict
+        try:
+            _SchemaContract(**raw)
+            logger.info(f"schema.yaml structural validation passed: {schema_filepath}")
+        except ValidationError as exc:
+            # Flatten Pydantic error messages for the agent-readable context
+            errors = [f"{e['loc']}: {e['msg']}" for e in exc.errors()]
+            raise SchemaContractViolation(
+                message=(f"schema.yaml failed structural validation: {schema_filepath}. Errors: {errors}"),
+                context=DataQualityContext(
+                    dataset_id="schema.yaml",
+                    pipeline_stage="configuration",
+                    column=None,
+                    expectation="COLUMNS, ENRICHED_COLUMNS (non-empty), TARGET_COLUMN (with 'name' key) must all be present.",
+                    actual_value=errors,
+                    row_count_affected=0,
+                    suggested_action="Fix schema.yaml to include all required top-level sections with valid column definitions.",
+                ),
+            ) from exc
 
     def get_data_ingestion_config(self) -> DataIngestionConfig:
         """Returns the configuration for the data ingestion stage.

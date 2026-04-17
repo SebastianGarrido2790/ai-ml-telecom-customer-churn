@@ -20,11 +20,7 @@ if %ERRORLEVEL% NEQ 0 goto :FAILED
 echo [1/4] Pillar 1: Static Code Quality (Pyright ^& Ruff)...
 echo      - Running Pyright (Static Type Checking)...
 call uv run pyright src/
-if %ERRORLEVEL% NEQ 0 (
-    echo.
-    echo      [!] WARNING: Pyright reported type issues. Review them later.
-    echo          (Hardening Phase: Static checks are currently non-blocking)
-)
+if %ERRORLEVEL% NEQ 0 goto :FAILED
 
 echo.
 echo      - Running Ruff (Linting)...
