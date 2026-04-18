@@ -85,6 +85,7 @@ def temp_config_files(tmp_path):
             {
                 "COLUMNS": {"Churn": "int"},
                 "ENRICHED_COLUMNS": {"customerID": "str", "ticket_note": "str"},
+                "TARGET_COLUMN": {"name": "Churn"},
             },
             f,
         )

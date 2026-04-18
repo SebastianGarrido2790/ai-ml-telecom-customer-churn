@@ -172,7 +172,11 @@ def test_configuration_manager_basic(temp_dir):
         "  unzip_dir: artifacts/di\n"
     )
     params_yaml.write_text("training:\n  target_column: Churn\n")
-    schema_yaml.write_text("COLUMNS:\n  id: int\n")
+    schema_yaml.write_text(
+        "COLUMNS:\n  id: int\n"
+        "ENRICHED_COLUMNS:\n  id: int\n"
+        "TARGET_COLUMN:\n  name: Churn\n"
+    )
 
     with (
         patch("src.config.configuration.create_directories"),
@@ -184,7 +188,13 @@ def test_configuration_manager_basic(temp_dir):
         m_config.data_ingestion.local_data_file = "artifacts/di/data.zip"
         m_config.data_ingestion.unzip_dir = "artifacts/di"
 
-        mock_read_yaml.side_effect = [m_config, MagicMock(), MagicMock()]
+        m_schema = {
+            "COLUMNS": {"id": "int"},
+            "ENRICHED_COLUMNS": {"id": "int"},
+            "TARGET_COLUMN": {"name": "Churn"},
+        }
+
+        mock_read_yaml.side_effect = [m_config, MagicMock(), m_schema]
 
         cm = ConfigurationManager(config_filepath=config_yaml, params_filepath=params_yaml, schema_filepath=schema_yaml)
         config = cm.get_data_ingestion_config()
