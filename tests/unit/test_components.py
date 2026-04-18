@@ -172,11 +172,7 @@ def test_configuration_manager_basic(temp_dir):
         "  unzip_dir: artifacts/di\n"
     )
     params_yaml.write_text("training:\n  target_column: Churn\n")
-    schema_yaml.write_text(
-        "COLUMNS:\n  id: int\n"
-        "ENRICHED_COLUMNS:\n  id: int\n"
-        "TARGET_COLUMN:\n  name: Churn\n"
-    )
+    schema_yaml.write_text("COLUMNS:\n  id: int\nENRICHED_COLUMNS:\n  id: int\nTARGET_COLUMN:\n  name: Churn\n")
 
     with (
         patch("src.config.configuration.create_directories"),
