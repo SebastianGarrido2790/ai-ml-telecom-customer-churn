@@ -1,10 +1,6 @@
 # Telecom Customer Churn — Codebase Review & Production Readiness Assessment
 
-| **Date (v1.0)** | 2026-04-14 |
-| **Date (v1.1)** | 2026-04-15 |
-| **Date (v1.2)** | 2026-04-15 |
-| **Date (v1.3)** | 2026-04-16 |
-| **Date (v1.4)** | 2026-04-17 |
+| **Date** | 2026-04-17 |
 | **Version** | v1.4 |
 | **v1.0 Score** | **8.9 / 10** |
 | **v1.1 Score** | **9.2 / 10** |
@@ -15,7 +11,7 @@
 
 **Scope:** Full codebase — ~30 Python source files across `src/` (components, pipeline, entity, config, api, utils), 18 test files, 2 CI/CD workflows (CI + CD), 2 YAML configs (`config.yaml` + `params.yaml`), 5 Dockerfiles, 1 `docker-compose.yaml`, 1 `Makefile`, 1 `.pre-commit-config.yaml`, `pyproject.toml`, `dvc.yaml` (12-stage DAG), and auxiliary scripts (`validate_system.bat`, `launch_system.bat`, `entrypoint.sh`).
 
-### v1.1/v1.2 Implementation Log
+### Implementation Log
 
 | Date | Type | Item | Enhancement |
 |:---|:---|:---|:---|
